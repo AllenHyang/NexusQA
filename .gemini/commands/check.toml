@@ -1,0 +1,12 @@
+description = "Check browser and server logs for recent errors (last 5 mins)"
+prompt = """
+The following is the output from the log checking script (`node check_logs.js`):
+
+---
+!{node check_logs.js}
+---
+
+Instructions:
+1. If the output indicates "No fresh issues found", please reply with "✅ **No recent issues found.**" (and nothing else).
+2. If the output lists errors, please display them clearly, preserving the formatting and emojis if possible.
+"""

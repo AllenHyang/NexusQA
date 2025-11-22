@@ -1,0 +1,64 @@
+
+export type Role = "ADMIN" | "QA_LEAD" | "TESTER";
+
+export interface User {
+  id: string;
+  name: string;
+  role: Role;
+  avatar: string;
+}
+
+export interface TestStep {
+  id: string;
+  action: string;
+  expected: string;
+}
+
+export type TestStatus = "DRAFT" | "PASSED" | "FAILED" | "BLOCKED" | "UNTESTED";
+export type Priority = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+
+export interface ExecutionRecord {
+  id: string;
+  date: string;
+  status: TestStatus;
+  executedBy: string; // User Name
+  notes?: string;
+  bugId?: string;
+  environment?: string; // e.g., "Staging - Chrome", "Prod - iOS"
+  evidence?: string; // URL to screenshot or log
+}
+
+export interface TestCase {
+  id: string;
+  projectId: string;
+  title: string;
+  description: string;
+  
+  // Use Case Driven Development Fields
+  userStory?: string; // "As a [user], I want to [action], so that [benefit]"
+  requirementId?: string; // Link to Jira Ticket / PRD (e.g., PROJ-123)
+  
+  tags?: string[]; // e.g., "Smoke", "Regression", "API"
+
+  preconditions: string;
+  steps: TestStep[];
+  status: TestStatus;
+  priority: Priority;
+  authorId: string;
+  assignedToId?: string;
+  visualReference?: string; // Base64 image
+  history?: ExecutionRecord[]; // Audit trail
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  coverImage?: string; // Base64 image
+  createdAt: string;
+  
+  // New fields for Project Management
+  repositoryUrl?: string; // e.g. GitHub/GitLab link
+  startDate?: string;
+  dueDate?: string;
+}

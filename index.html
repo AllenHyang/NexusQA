@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NexusQA - Light</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Plus Jakarta Sans', 'sans-serif'],
+            },
+            colors: {
+              background: '#F2F0E9', // Light Cream
+              surface: '#FFFFFF',     // White
+              primary: '#FCD34D',     // Warm Yellow
+              dark: '#18181B',        // Zinc 900
+              subtle: '#A1A1AA',      // Zinc 400
+            },
+            animation: {
+              'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background-color: #F2F0E9;
+        color: #18181B;
+        overflow-x: hidden;
+      }
+
+      /* The "Bento" Card Style - Light Theme */
+      .bento-card, .glass-panel {
+        background-color: #FFFFFF;
+        border-radius: 2rem;
+        border: 1px solid rgba(0,0,0, 0.02);
+        box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+        transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
+      }
+
+      .bento-card:hover, .glass-panel:hover {
+        box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.1);
+      }
+      
+      /* Inputs for Light Mode */
+      .glass-input {
+        background: #F8F8F8;
+        border: 1px solid #E4E4E7;
+        color: #18181B;
+        transition: all 0.2s;
+      }
+      .glass-input:focus {
+        background: #FFFFFF;
+        border-color: #18181B;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
+      }
+
+      /* Custom Scrollbar Light */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #D4D4D8;
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #A1A1AA;
+      }
+
+      .glass-button {
+         background: #FFFFFF;
+         border: 1px solid #E4E4E7;
+         color: #18181B;
+         transition: all 0.2s;
+         box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+      }
+      .glass-button:hover {
+         background: #F4F4F5;
+         border-color: #D4D4D8;
+      }
+      
+      /* Modal Overlay */
+      .modal-overlay {
+          background-color: rgba(0,0,0, 0.2);
+          backdrop-filter: blur(8px);
+      }
+    </style>
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://aistudiocdn.com/react@^19.2.0",
+        "react/": "https://aistudiocdn.com/react@^19.2.0/",
+        "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0",
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+        "react-dom/client": "https://aistudiocdn.com/react-dom@^19.2.0/client",
+        "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
+        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0"
+      }
+    }
+    </script>
+  <link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="index.tsx"></script>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
