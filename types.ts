@@ -1,4 +1,3 @@
-
 export type Role = "ADMIN" | "QA_LEAD" | "TESTER";
 
 export interface User {
@@ -28,9 +27,20 @@ export interface ExecutionRecord {
   evidence?: string; // URL to screenshot or log
 }
 
+export interface TestSuite {
+  id: string;
+  projectId: string;
+  name: string;
+  parentId?: string | null; // For nested folders
+  description?: string;
+  createdAt: string;
+}
+
 export interface TestCase {
   id: string;
   projectId: string;
+  suiteId?: string; // Link to a TestSuite (Folder). If undefined, it's in the root.
+  
   title: string;
   description: string;
   

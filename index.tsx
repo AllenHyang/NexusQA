@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
+import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from "react-router-dom";
+import "./app/globals.css";
 import { 
-  User, Project, TestCase, TestStatus, ExecutionRecord, Priority 
+  User, Project, TestCase, TestStatus, ExecutionRecord, TestSuite 
 } from "./types";
 import { generateTestSteps, generateImage, generateAvatar } from "./api";
-import { SidebarItem } from "./components/ui";
 import { NewProjectModal } from "./components/NewProjectModal";
 import { TestCaseModal } from "./components/TestCaseModal";
 import { HistoryModal } from "./components/HistoryModal";
@@ -14,20 +15,10 @@ import { DashboardView } from "./views/DashboardView";
 import { ProjectListView } from "./views/ProjectListView";
 import { ProjectDetailView } from "./views/ProjectDetailView";
 import { SettingsView } from "./views/SettingsView";
+import { TestCaseDetailView } from "./views/TestCaseDetailView";
+import { MainLayout } from "./layouts/MainLayout";
 
-import { LanguageProvider, useLanguage } from "./contexts/LanguageContext"; // Added and moved to top level
-
-import {
-  LayoutDashboard,
-  Briefcase,
-  CheckSquare,
-  Settings,
-  LogOut,
-  Sparkles,
-  Search,
-  Menu,
-  Command
-} from "lucide-react";
+import { LanguageProvider, useLanguage } from "./contexts/LanguageContext";
 
 // --- Mock Data ---
 const MOCK_USERS: User[] = [
@@ -154,19 +145,111 @@ const INITIAL_TEST_CASES: TestCase[] = [
   }
 ];
 
+const compressImage = (base64Str: string, maxWidth: number = 128): Promise<string> => {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.src = base64Str;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const scaleSize = maxWidth / img.width;
+            canvas.width = maxWidth;
+            canvas.height = img.height * scaleSize;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL('image/jpeg', 0.7)); 
+            } else {
+                resolve(base64Str);
+            }
+        };
+        img.onerror = () => resolve(base64Str);
+    });
+};
+
+// --- Route Wrappers ---
+
+const ProjectDetailRoute = ({ 
+  projects, testCases, suites, currentUser, users, searchQuery, jiraUrl,
+  setEditCase, setShowCaseModal, handleDeleteCase, handleBulkDelete, handleBulkStatusUpdate, handleBulkMove, setHistoryViewCase,
+  handleCreateSuite, handleRenameSuite, handleDeleteSuite
+}: any) => {
+  const { projectId } = useParams();
+  const navigate = useNavigate();
+  const project = projects.find((p: Project) => p.id === projectId);
+  const projectCases = testCases.filter((tc: TestCase) => tc.projectId === projectId);
+  const projectSuites = suites.filter((s: TestSuite) => s.projectId === projectId);
+
+  if (!project) return <Navigate to="/" replace />;
+
+  return (
+    <ProjectDetailView 
+        project={project}
+        testCases={projectCases}
+        suites={projectSuites}
+        currentUser={currentUser}
+        users={users}
+        searchQuery={searchQuery}
+        defectTrackerUrl={jiraUrl}
+        onExport={() => alert("Exporting feature coming soon!")}
+        onCreateCase={() => { setEditCase({ projectId: project.id }); setShowCaseModal(true); }}
+        onEditCase={(tc: TestCase) => { setEditCase(tc); setShowCaseModal(true); }}
+        onDeleteCase={handleDeleteCase}
+        onDuplicateCase={(tc: TestCase) => {
+            const dupe = { ...tc, id: undefined, title: `${tc.title} (Copy)`, status: "UNTESTED", history: [] };
+            setEditCase(dupe);
+            setShowCaseModal(true);
+        }}
+        onViewHistory={(tc: TestCase) => setHistoryViewCase(tc)}
+        onBulkDelete={handleBulkDelete}
+        onBulkStatusUpdate={handleBulkStatusUpdate}
+        onBulkMove={handleBulkMove}
+        onViewCaseDetails={(pid: string, tid: string) => navigate(`/project/${pid}/case/${tid}`)}
+        
+        onCreateSuite={(parentId: string | null, name: string) => handleCreateSuite(projectId!, parentId, name)}
+        onRenameSuite={handleRenameSuite}
+        onDeleteSuite={handleDeleteSuite}
+    />
+  );
+};
+
+const TestCaseDetailRoute = ({ 
+  projects, testCases, users, currentUser, 
+  setEditCase, setShowCaseModal, handleDeleteCase 
+}: any) => {
+  const { projectId, testCaseId } = useParams();
+  const navigate = useNavigate();
+  
+  return (
+    <TestCaseDetailView
+        projectId={projectId!}
+        testCaseId={testCaseId!}
+        testCases={testCases}
+        users={users}
+        projects={projects}
+        currentUser={currentUser}
+        onBack={() => navigate(`/project/${projectId}`)}
+        onEdit={(tc: TestCase) => { setEditCase(tc); setShowCaseModal(true); }}
+        onRunTest={(tc: TestCase) => { setEditCase(tc); setShowCaseModal(true); }}
+        onDelete={(id: string) => { 
+             handleDeleteCase(id); 
+             navigate(`/project/${projectId}`);
+        }}
+    />
+  );
+};
+
 function App() {
-  const { t } = useLanguage(); // Correctly placed inside the App component
+  const { t } = useLanguage();
+  const navigate = useNavigate(); // Initialize useNavigate hook
+  
   // --- State ---
   const [users, setUsers] = useState<User[]>(MOCK_USERS);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS);
   const [testCases, setTestCases] = useState<TestCase[]>([]);
+  const [suites, setSuites] = useState<TestSuite[]>([]); // Suites State
   
-  const [view, setView] = useState<"DASHBOARD" | "PROJECTS" | "PROJECT" | "SETTINGS">("DASHBOARD");
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [loadingAI, setLoadingAI] = useState(false);
   
   // Config State
@@ -190,58 +273,47 @@ function App() {
 
   // --- Initialization ---
   useEffect(() => {
-    // Avatar Generation - Sequential to respect rate limits
+    // Avatar Generation
     const initAvatars = async () => {
         const storedUsers = localStorage.getItem("nexus_users_v2");
         if (storedUsers) {
             setUsers(JSON.parse(storedUsers));
         } else {
-            // Clone users for processing
             const usersToProcess = [...users];
             let updated = false;
-            
             for (let i = 0; i < usersToProcess.length; i++) {
                 const u = usersToProcess[i];
-                // Only generate if it's a placeholder avatar
                 if (u.avatar.includes("dicebear")) {
                     try {
-                       // Check local cache first to avoid re-generation and quota issues
                        const cacheKey = `avatar_cache_${u.name}`;
                        const cachedAvatar = localStorage.getItem(cacheKey);
-                       
                        if (cachedAvatar) {
                            usersToProcess[i] = { ...u, avatar: cachedAvatar };
                            updated = true;
                            continue; 
                        }
-
-                       // Artificial delay to prevent quota limits
                        if (i > 0) await new Promise(resolve => setTimeout(resolve, 1500));
-                       
-                       const avatar = await generateAvatar(u.name, u.role);
-                       if (avatar) {
-                           usersToProcess[i] = { ...u, avatar };
+                       const rawAvatar = await generateAvatar(u.name, u.role);
+                       if (rawAvatar) {
+                           const optimizedAvatar = await compressImage(rawAvatar);
+                           usersToProcess[i] = { ...u, avatar: optimizedAvatar };
                            updated = true;
                            try {
-                               localStorage.setItem(cacheKey, avatar);
+                               localStorage.setItem(cacheKey, optimizedAvatar);
                            } catch (e) {
-                               console.warn("Storage quota exceeded, could not cache avatar for", u.name);
+                               console.warn("Storage quota exceeded", u.name);
                            }
-                           // Incrementally update state to show progress
                            setUsers([...usersToProcess]); 
                        }
                     } catch (e) {
-                        console.warn("Skipping avatar generation due to quota/error for", u.name);
+                        console.warn("Skipping avatar", u.name);
                     }
                 }
             }
-            
             if (updated) {
                 try {
                     localStorage.setItem("nexus_users_v2", JSON.stringify(usersToProcess));
-                } catch (e) {
-                     console.warn("Storage quota exceeded, could not save full user list.");
-                }
+                } catch (e) {}
             }
         }
     };
@@ -250,37 +322,27 @@ function App() {
     const storedCases = localStorage.getItem("gemini_test_cases");
     if (storedCases) {
       const parsed = JSON.parse(storedCases);
-      if (parsed.length === 0) {
-         setTestCases(INITIAL_TEST_CASES); 
-      } else {
-         setTestCases(parsed);
-      }
+      if (parsed.length === 0) setTestCases(INITIAL_TEST_CASES); 
+      else setTestCases(parsed);
     } else {
       setTestCases(INITIAL_TEST_CASES);
     }
+
+    const storedSuites = localStorage.getItem("gemini_suites");
+    if (storedSuites) setSuites(JSON.parse(storedSuites));
     
     const storedProjects = localStorage.getItem("gemini_projects");
-    if (storedProjects) {
-      setProjects(JSON.parse(storedProjects));
-    } else {
-      generateInitialCovers();
-    }
+    if (storedProjects) setProjects(JSON.parse(storedProjects));
+    else generateInitialCovers();
 
     const storedJiraUrl = localStorage.getItem("gemini_jira_url");
     if (storedJiraUrl) setJiraUrl(storedJiraUrl);
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem("gemini_test_cases", JSON.stringify(testCases));
-  }, [testCases]);
-
-  useEffect(() => {
-    localStorage.setItem("gemini_projects", JSON.stringify(projects));
-  }, [projects]);
-
-  useEffect(() => {
-    localStorage.setItem("gemini_jira_url", jiraUrl);
-  }, [jiraUrl]);
+  useEffect(() => { localStorage.setItem("gemini_test_cases", JSON.stringify(testCases)); }, [testCases]);
+  useEffect(() => { localStorage.setItem("gemini_projects", JSON.stringify(projects)); }, [projects]);
+  useEffect(() => { localStorage.setItem("gemini_suites", JSON.stringify(suites)); }, [suites]);
+  useEffect(() => { localStorage.setItem("gemini_jira_url", jiraUrl); }, [jiraUrl]);
 
   const generateInitialCovers = async () => {
       const projs = [...INITIAL_PROJECTS];
@@ -288,17 +350,14 @@ function App() {
       for (let i = 0; i < projs.length; i++) {
           if (!projs[i].coverImage) {
               try {
-                  // Artificial delay to prevent quota limits
                   if (i > 0) await new Promise(resolve => setTimeout(resolve, 1500));
                   const cover = await generateImage(projs[i].description, "project");
                   if (cover) {
                       projs[i].coverImage = cover;
                       updated = true;
-                      setProjects([...projs]); // Incremental update
+                      setProjects([...projs]);
                   }
-              } catch(e) {
-                  console.warn("Skipping cover generation for", projs[i].name);
-              }
+              } catch(e) {}
           }
       }
       if (updated) localStorage.setItem("gemini_projects", JSON.stringify(projs));
@@ -312,23 +371,16 @@ function App() {
 
   const handleLogout = () => {
     setCurrentUser(null);
-    setView("DASHBOARD");
   };
 
   const handleCreateProject = async (data: Partial<Project>) => {
     setLoadingAI(true);
     let cover = editingProject?.coverImage;
-    
-    if (!cover) {
-        // Only generate if new or no cover exists
-        cover = await generateImage(data.description || data.name || "project", "project") || undefined;
-    }
+    if (!cover) cover = await generateImage(data.description || data.name || "project", "project") || undefined;
 
     if (editingProject) {
-        // Update
         setProjects(projects.map(p => p.id === editingProject.id ? { ...p, ...data, coverImage: cover } as Project : p));
     } else {
-        // Create
         const newProject: Project = {
             id: `p-${Date.now()}`,
             name: data.name!,
@@ -350,10 +402,6 @@ function App() {
       if (confirm("Are you sure? All test cases in this project will be deleted.")) {
           setProjects(projects.filter(p => p.id !== id));
           setTestCases(testCases.filter(tc => tc.projectId !== id));
-          if (selectedProjectId === id) {
-              setSelectedProjectId(null);
-              setView("DASHBOARD");
-          }
       }
   };
 
@@ -361,10 +409,8 @@ function App() {
       if (!editCase.title || !editCase.projectId) return;
       
       if (editCase.id) {
-          // Update
           setTestCases(testCases.map(tc => tc.id === editCase.id ? { ...tc, ...editCase } as TestCase : tc));
       } else {
-          // Create
           const newCase: TestCase = {
               ...editCase,
               id: `tc-${Date.now()}`,
@@ -395,18 +441,26 @@ function App() {
       const timestamp = new Date().toISOString();
       setTestCases(testCases.map(tc => {
           if (ids.includes(tc.id)) {
-              const newRecord: ExecutionRecord = {
-                  id: `ex-${Date.now()}-${Math.random()}`,
-                  date: timestamp,
-                  status: status,
-                  executedBy: currentUser!.name,
-                  notes: "Bulk status update",
-              };
               return {
                   ...tc,
                   status: status,
-                  history: [...(tc.history || []), newRecord]
+                  history: [...(tc.history || []), {
+                      id: `ex-${Date.now()}-${Math.random()}`,
+                      date: timestamp,
+                      status: status,
+                      executedBy: currentUser!.name,
+                      notes: "Bulk status update",
+                  }]
               };
+          }
+          return tc;
+      }));
+  };
+
+  const handleBulkMove = (ids: string[], targetSuiteId: string | null) => {
+      setTestCases(testCases.map(tc => {
+          if (ids.includes(tc.id)) {
+              return { ...tc, suiteId: targetSuiteId || undefined };
           }
           return tc;
       }));
@@ -428,27 +482,22 @@ function App() {
 
   const handleExecute = (status: TestStatus) => {
       if (!editCase.id) return;
-      
-      const newRecord: ExecutionRecord = {
-          id: `ex-${Date.now()}`,
-          date: new Date().toISOString(),
-          status,
-          executedBy: currentUser!.name,
-          notes: executionNote,
-          bugId: status === "FAILED" ? executionBugId : undefined,
-          environment: executionEnv,
-          evidence: executionEvidence
-      };
-
       const updatedCase = {
           ...editCase,
           status,
-          history: [...(editCase.history || []), newRecord]
+          history: [...(editCase.history || []), {
+              id: `ex-${Date.now()}`,
+              date: new Date().toISOString(),
+              status,
+              executedBy: currentUser!.name,
+              notes: executionNote,
+              bugId: status === "FAILED" ? executionBugId : undefined,
+              environment: executionEnv,
+              evidence: executionEvidence
+          }]
       } as TestCase;
 
       setTestCases(testCases.map(tc => tc.id === updatedCase.id ? updatedCase : tc));
-      
-      // Reset form
       setExecutionNote("");
       setExecutionBugId("");
       setExecutionEnv("QA");
@@ -456,189 +505,107 @@ function App() {
       setShowCaseModal(false);
   };
 
-  // --- View Routing ---
-  
-  if (!currentUser) {
-    return <LoginView users={users} onLogin={handleLogin} />;
-  }
+  // --- Suite Handlers ---
+  const handleCreateSuite = (projectId: string, parentId: string | null, name: string) => {
+      const newSuite: TestSuite = {
+          id: `suite-${Date.now()}`,
+          projectId,
+          name,
+          parentId,
+          createdAt: new Date().toISOString()
+      };
+      setSuites([...suites, newSuite]);
+  };
 
-  const selectedProject = projects.find(p => p.id === selectedProjectId);
-  const projectCases = testCases.filter(tc => tc.projectId === selectedProjectId);
+  const handleRenameSuite = (id: string, name: string) => {
+      setSuites(suites.map(s => s.id === id ? { ...s, name } : s));
+  };
+
+  const handleDeleteSuite = (id: string) => {
+      if (confirm("Delete this suite? Test cases inside will be moved to root.")) {
+          // Move cases to root
+          setTestCases(testCases.map(tc => tc.suiteId === id ? { ...tc, suiteId: undefined } : tc));
+          setSuites(suites.filter(s => s.id !== id));
+      }
+  };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F2F0E9] text-[#18181B]">
-      {/* Sidebar */}
-      <div className={`
-        ${isSidebarOpen ? "w-64" : "w-20"} 
-        bg-[#FFFFFF] border-r border-zinc-200 flex flex-col transition-all duration-300 z-20 shadow-sm
-      `}>
-        {/* Logo Area */}
-        <div className="p-6 flex items-center justify-center">
-            {isSidebarOpen ? (
-                <h1 className="text-2xl font-black tracking-tighter text-zinc-900 flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center text-white">
-                        <Briefcase className="w-4 h-4" />
-                    </div>
-                    Nexus
-                </h1>
-            ) : (
-                <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-white shadow-md">
-                    <Briefcase className="w-5 h-5" />
-                </div>
-            )}
-        </div>
-
-        {/* Nav Items */}
-        <div className="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar">
-          <SidebarItem 
-            icon={<LayoutDashboard className="w-5 h-5" />} 
-            label={t("app.dashboard")} 
-            active={view === "DASHBOARD"} 
-            collapsed={!isSidebarOpen}
-            onClick={() => { setView("DASHBOARD"); setSelectedProjectId(null); }}
-          />
-          <SidebarItem 
-            icon={<Briefcase className="w-5 h-5" />} 
-            label={t("app.projects")} 
-            active={view === "PROJECTS" || view === "PROJECT"} 
-            collapsed={!isSidebarOpen}
-            onClick={() => { setView("PROJECTS"); setSelectedProjectId(null); }}
-          />
-          
-          <div className="my-4 border-t border-zinc-100"></div>
-          
-          {/* Quick Project Access */}
-          {isSidebarOpen && <p className="px-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">{t("app.recent")}</p>}
-          {projects.slice(0, 5).map(p => (
-             <SidebarItem
-                key={p.id}
-                icon={<div className="w-2 h-2 rounded-full bg-yellow-400"></div>}
-                label={p.name}
-                active={selectedProjectId === p.id}
-                collapsed={!isSidebarOpen}
-                onClick={() => { setSelectedProjectId(p.id); setView("PROJECT"); }}
-             />
-          ))}
-        </div>
-
-        {/* User Profile */}
-        <div className="p-4 border-t border-zinc-100 bg-zinc-50/50">
-            <div className={`flex items-center ${!isSidebarOpen ? 'justify-center' : 'gap-3'}`}>
-                <img src={currentUser.avatar} className="w-9 h-9 rounded-full border border-zinc-200 shadow-sm" alt="Profile" />
-                {isSidebarOpen && (
-                    <div className="flex-1 overflow-hidden">
-                        <p className="text-sm font-bold text-zinc-800 truncate">{currentUser.name}</p>
-                        <p className="text-[10px] font-medium text-zinc-500 truncate">{t(`role.${currentUser.role}` as any)}</p>
-                    </div>
-                )}
-            </div>
-            {isSidebarOpen && (
-                <div className="flex gap-1 mt-3">
-                    <button onClick={() => setView("SETTINGS")} className="flex-1 p-1.5 rounded-lg hover:bg-zinc-200 text-zinc-500 transition-colors" title={t("app.settings")}>
-                        <Settings className="w-4 h-4 mx-auto" />
-                    </button>
-                    <button onClick={handleLogout} className="flex-1 p-1.5 rounded-lg hover:bg-red-100 text-zinc-500 hover:text-red-500 transition-colors" title={t("app.logout")}>
-                        <LogOut className="w-4 h-4 mx-auto" />
-                    </button>
-                </div>
-            )}
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden relative">
-         {/* Top Bar */}
-         <header className="h-16 px-8 flex items-center justify-between bg-[#F2F0E9] z-10">
-             <div className="flex items-center gap-4">
-                 <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-lg hover:bg-zinc-200 text-zinc-600">
-                     <Menu className="w-5 h-5" />
-                 </button>
-                 {/* Search Bar */}
-                 <div className="relative group hidden md:block">
-                     <Search className="w-4 h-4 absolute left-3 top-2.5 text-zinc-400 group-focus-within:text-zinc-800 transition-colors" />
-                     <input 
-                        type="text" 
-                        placeholder={t("app.search")} 
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9 pr-4 py-2 rounded-full bg-white border border-zinc-200 text-sm w-64 focus:w-80 transition-all outline-none focus:ring-2 focus:ring-zinc-900/5 shadow-sm text-zinc-800 placeholder-zinc-400"
-                     />
-                     <div className="absolute right-3 top-2.5 flex items-center gap-1 pointer-events-none">
-                        <span className="text-[10px] font-bold text-zinc-300 border border-zinc-200 rounded px-1">⌘ K</span>
-                     </div>
-                 </div>
-             </div>
-             
-             <div className="flex items-center gap-3">
-                 <div className="h-8 px-3 rounded-full bg-white border border-zinc-200 flex items-center gap-2 shadow-sm">
-                     <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                     <span className="text-xs font-bold text-zinc-600">{t("app.system_online")}</span>
-                 </div>
-             </div>
-         </header>
-
-         {/* View Content */}
-         <main className="flex-1 overflow-y-auto p-8 scroll-smooth">
-            {view === "DASHBOARD" && (
-                <DashboardView 
-                    testCases={testCases}
-                    projects={projects}
-                    currentUser={currentUser}
-                    searchQuery={searchQuery}
-                    onNewProject={() => { setEditingProject(null); setShowNewProjectModal(true); }}
-                    onProjectClick={(id) => { setSelectedProjectId(id); setView("PROJECT"); }}
-                    onDeleteProject={handleDeleteProject}
-                    onEditProject={(p) => { setEditingProject(p); setShowNewProjectModal(true); }}
-                />
-            )}
-
-            {view === "PROJECTS" && (
-                <ProjectListView 
-                    projects={projects}
-                    testCases={testCases}
-                    currentUser={currentUser}
-                    searchQuery={searchQuery}
-                    onNewProject={() => { setEditingProject(null); setShowNewProjectModal(true); }}
-                    onProjectClick={(id) => { setSelectedProjectId(id); setView("PROJECT"); }}
-                    onDeleteProject={handleDeleteProject}
-                    onEditProject={(p) => { setEditingProject(p); setShowNewProjectModal(true); }}
-                />
-            )}
+    <>
+      <Routes>
+        <Route path="/login" element={!currentUser ? <LoginView users={users} onLogin={handleLogin} /> : <Navigate to="/" />} />
+        
+        <Route element={currentUser ? <MainLayout 
+            currentUser={currentUser} 
+            projects={projects} 
+            onLogout={handleLogout} 
+            t={t}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+        /> : <Navigate to="/login" />}>
             
-            {view === "PROJECT" && selectedProject && (
-                <ProjectDetailView 
-                    project={selectedProject}
-                    testCases={projectCases}
-                    currentUser={currentUser}
-                    users={users}
-                    searchQuery={searchQuery}
-                    defectTrackerUrl={jiraUrl}
-                    onExport={() => alert("Exporting feature coming soon!")}
-                    onCreateCase={() => { setEditCase({ projectId: selectedProject.id }); setShowCaseModal(true); }}
-                    onEditCase={(tc) => { setEditCase(tc); setShowCaseModal(true); }}
-                    onDeleteCase={handleDeleteCase}
-                    onDuplicateCase={(tc) => {
-                        const dupe = { ...tc, id: undefined, title: `${tc.title} (Copy)`, status: "UNTESTED", history: [] };
-                        setEditCase(dupe);
-                        setShowCaseModal(true);
-                    }}
-                    onViewHistory={(tc) => setHistoryViewCase(tc)}
-                    onBulkDelete={handleBulkDelete}
-                    onBulkStatusUpdate={handleBulkStatusUpdate}
-                />
-            )}
+            <Route path="/" element={<DashboardView 
+                testCases={testCases}
+                projects={projects}
+                currentUser={currentUser!}
+                searchQuery={searchQuery}
+                onNewProject={() => { setEditingProject(null); setShowNewProjectModal(true); }}
+                onProjectClick={(id) => navigate(`/project/${id}`)}
+                onDeleteProject={handleDeleteProject}
+                onEditProject={(p) => { setEditingProject(p); setShowNewProjectModal(true); }}
+            />} />
+            
+            <Route path="/projects" element={<ProjectListView 
+                projects={projects}
+                testCases={testCases}
+                currentUser={currentUser!}
+                searchQuery={searchQuery}
+                onNewProject={() => { setEditingProject(null); setShowNewProjectModal(true); }}
+                onProjectClick={(id) => navigate(`/project/${id}`)}
+                onDeleteProject={handleDeleteProject}
+                onEditProject={(p) => { setEditingProject(p); setShowNewProjectModal(true); }}
+            />} />
 
-            {view === "SETTINGS" && (
-                <SettingsView 
+            <Route path="/project/:projectId" element={
+                <ProjectDetailRoute 
+                    projects={projects} 
+                    testCases={testCases}
+                    suites={suites}
                     currentUser={currentUser} 
+                    users={users} 
+                    searchQuery={searchQuery} 
                     jiraUrl={jiraUrl}
-                    setJiraUrl={setJiraUrl}
+                    setEditCase={setEditCase}
+                    setShowCaseModal={setShowCaseModal}
+                    handleDeleteCase={handleDeleteCase}
+                    handleBulkDelete={handleBulkDelete}
+                    handleBulkStatusUpdate={handleBulkStatusUpdate}
+                    handleBulkMove={handleBulkMove}
+                    setHistoryViewCase={setHistoryViewCase}
+                    handleCreateSuite={handleCreateSuite}
+                    handleRenameSuite={handleRenameSuite}
+                    handleDeleteSuite={handleDeleteSuite}
                 />
-            )}
-         </main>
-      </div>
+            } />
 
-      {/* Modals */}
+            <Route path="/project/:projectId/case/:testCaseId" element={
+                <TestCaseDetailRoute 
+                    projects={projects} 
+                    testCases={testCases} 
+                    users={users} 
+                    currentUser={currentUser}
+                    setEditCase={setEditCase}
+                    setShowCaseModal={setShowCaseModal}
+                    handleDeleteCase={handleDeleteCase}
+                />
+            } />
+
+            <Route path="/settings" element={
+                <SettingsView currentUser={currentUser!} jiraUrl={jiraUrl} setJiraUrl={setJiraUrl} />
+            } />
+        </Route>
+      </Routes>
+
+      {/* Global Modals */}
       {showNewProjectModal && (
           <NewProjectModal 
             onClose={() => setShowNewProjectModal(false)}
@@ -657,7 +624,7 @@ function App() {
             loadingAI={loadingAI}
             onGenerateSteps={handleGenerateSteps}
             onGenerateImage={handleGenerateMockup}
-            currentUser={currentUser}
+            currentUser={currentUser!}
             executionNote={executionNote}
             setExecutionNote={setExecutionNote}
             executionBugId={executionBugId}
@@ -667,6 +634,7 @@ function App() {
             executionEvidence={executionEvidence}
             setExecutionEvidence={setExecutionEvidence}
             onExecute={handleExecute}
+            suites={suites}
           />
       )}
       
@@ -677,13 +645,15 @@ function App() {
             defectTrackerUrl={jiraUrl}
           />
       )}
-    </div>
+    </>
   );
 }
 
 const root = createRoot(document.getElementById("root")!);
 root.render(
   <LanguageProvider>
-    <App />
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </LanguageProvider>
 );

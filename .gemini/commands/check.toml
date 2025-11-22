@@ -1,4 +1,4 @@
-description = "Check browser and server logs for recent errors (last 5 mins)"
+description = "Check logs for active errors and attempt to fix them if found"
 prompt = """
 The following is the output from the log checking script (`node check_logs.js`):
 
@@ -7,6 +7,13 @@ The following is the output from the log checking script (`node check_logs.js`):
 ---
 
 Instructions:
-1. If the output indicates "No fresh issues found", please reply with "✅ **No recent issues found.**" (and nothing else).
-2. If the output lists errors, please display them clearly, preserving the formatting and emojis if possible.
+
+1. **If the output indicates "No active issues found" (or similar success message):**
+   - Reply with "✅ **No active issues found.**" (and nothing else).
+
+2. **If the output lists errors:**
+   - **Step 1: Analyze.** Examine the error messages to understand the problem (e.g., missing files, syntax errors, network failures, logic bugs).
+   - **Step 2: Investigate.** Use your tools (like `read_file`, `search_file_content`, `codebase_investigator`) to locate the problematic code or configuration.
+   - **Step 3: Fix.** If the fix is clear and you are confident, use your tools (like `replace` or `write_file`) to apply the fix immediately.
+   - **Step 4: Report.** Briefly list the errors found and the actions you took (or recommend taking) to resolve them.
 """

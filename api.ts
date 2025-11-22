@@ -87,9 +87,7 @@ export const generateAvatar = async (name: string, role: string): Promise<string
       model: "gemini-2.5-flash-image", 
       contents: prompt,
       config: {
-        generationConfig: {
-          responseMimeType: "image/jpeg",
-        }
+        responseMimeType: "image/jpeg",
       }
     });
 

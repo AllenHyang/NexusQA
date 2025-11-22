@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+  
+  --color-background: #F2F0E9;
+  --color-surface: #FFFFFF;
+  --color-primary: #FCD34D;
+  --color-dark: #18181B;
+  --color-subtle: #A1A1AA;
+  
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Re-adding custom utility classes that might be missing */
+@layer utilities {
+  .bento-card {
+    @apply bg-surface border border-black/5 shadow-sm transition-all duration-300;
+    border-radius: 2rem;
+  }
+  .bento-card:hover {
+    @apply shadow-md;
+  }
+  
+  .glass-panel {
+    @apply bg-surface border border-black/5 shadow-sm;
+    border-radius: 2rem;
+  }
+
+  .glass-input {
+    @apply bg-gray-50 border border-zinc-200 text-dark transition-all duration-200;
+  }
+  .glass-input:focus {
+    @apply bg-white border-dark outline-none ring-2 ring-black/5;
+  }
+
+  .glass-button {
+     @apply bg-surface border border-zinc-200 text-dark transition-all duration-200 shadow-sm;
+  }
+  .glass-button:hover {
+     @apply bg-zinc-50 border-zinc-300;
+  }
+}

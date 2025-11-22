@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { TestCase, TestStatus, TestStep, Priority, User } from "../types";
+import { TestCase, TestStatus, TestStep, Priority, User, TestSuite } from "../types";
 import { StatusBadge, AILoader, TagBadge } from "./ui";
 import { ExecutionHistoryList } from "./ExecutionHistory";
-import { XCircle, Sparkles, Plus, ImageIcon, CheckCircle2, AlertCircle, History, BookOpen, Link2, Tag, Monitor, Paperclip } from "lucide-react";
+import { XCircle, Sparkles, Plus, ImageIcon, CheckCircle2, AlertCircle, History, BookOpen, Link2, Tag, Monitor, Paperclip, Folder } from "lucide-react";
 
 interface TestCaseModalProps {
   onClose: () => void;
@@ -22,6 +22,7 @@ interface TestCaseModalProps {
   executionEvidence: string;
   setExecutionEvidence: (s: string) => void;
   onExecute: (status: TestStatus) => void;
+  suites: TestSuite[]; // Added to support suite selection
 }
 
 export function TestCaseModal({
@@ -41,7 +42,8 @@ export function TestCaseModal({
   setExecutionEnv,
   executionEvidence,
   setExecutionEvidence,
-  onExecute
+  onExecute,
+  suites
 }: TestCaseModalProps) {
   const [tagInput, setTagInput] = useState("");
 
@@ -97,6 +99,37 @@ export function TestCaseModal({
               </div>
             </div>
 
+            {/* Metadata: Suite, Priority, Status */}
+            <div className="grid grid-cols-2 gap-6">
+                <div className="glass-input p-5 rounded-2xl border border-zinc-200 shadow-sm">
+                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2 flex items-center">
+                        <Folder className="w-3.5 h-3.5 mr-1.5" /> Test Suite
+                    </label>
+                    <select
+                        value={editCase.suiteId || ""}
+                        onChange={e => setEditCase({ ...editCase, suiteId: e.target.value || undefined })}
+                        className="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white text-sm font-bold focus:ring-2 focus:ring-zinc-900/5 outline-none transition-shadow text-zinc-800"
+                    >
+                        <option value="">(Root / No Suite)</option>
+                        {suites.filter(s => s.projectId === editCase.projectId).map(s => (
+                            <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="glass-input p-5 rounded-2xl border border-zinc-200 shadow-sm">
+                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Priority</label>
+                    <select 
+                    value={editCase.priority || "MEDIUM"}
+                    onChange={e => setEditCase({...editCase, priority: e.target.value as Priority})}
+                    className="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white text-sm font-bold focus:ring-2 focus:ring-zinc-900/5 outline-none transition-shadow text-zinc-800">
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High</option>
+                    <option value="CRITICAL">Critical</option>
+                    </select>
+                </div>
+            </div>
+
             {/* Tags Input */}
             <div className="glass-input p-6 rounded-2xl border border-zinc-200 shadow-sm">
                 <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-3 flex items-center">
@@ -130,25 +163,6 @@ export function TestCaseModal({
                 onChange={e => setEditCase({...editCase, userStory: e.target.value})}
               />
               <p className="text-[10px] text-blue-400 mt-2 font-bold">Defines the business value and context for this test case.</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6">
-              <div className="glass-input p-5 rounded-2xl border border-zinc-200 shadow-sm">
-                <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Priority</label>
-                <select 
-                  value={editCase.priority || "MEDIUM"}
-                  onChange={e => setEditCase({...editCase, priority: e.target.value as Priority})}
-                  className="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white text-sm font-bold focus:ring-2 focus:ring-zinc-900/5 outline-none transition-shadow text-zinc-800">
-                  <option value="LOW">Low</option>
-                  <option value="MEDIUM">Medium</option>
-                  <option value="HIGH">High</option>
-                  <option value="CRITICAL">Critical</option>
-                </select>
-              </div>
-              <div className="glass-input p-5 rounded-2xl border border-zinc-200 shadow-sm">
-                <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Current Status</label>
-                <div className="px-3 py-2 text-sm font-bold text-zinc-800">{editCase.status || "UNTESTED"}</div>
-              </div>
             </div>
 
             <div className="glass-input p-6 rounded-2xl border border-zinc-200 shadow-sm">

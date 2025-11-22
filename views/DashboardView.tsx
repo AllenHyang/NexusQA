@@ -41,7 +41,7 @@ export function DashboardView({ testCases, projects, currentUser, searchQuery, o
     .slice(0, 5);
 
   return (
-    <div className="max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
+    <div className="p-8 max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
       
       {/* Header Section */}
       <div className="flex items-end justify-between mb-10">
