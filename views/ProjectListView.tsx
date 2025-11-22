@@ -23,18 +23,18 @@ export function ProjectListView({ projects, testCases, currentUser, searchQuery,
   );
 
   return (
-    <div className="max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
+    <div className="p-8 max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
       
       {/* Modern Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+      <div className="flex items-end justify-between mb-10">
         <div>
-          <div className="flex items-center gap-3 mb-2">
-             <div className="w-10 h-10 rounded-2xl bg-yellow-400 text-white flex items-center justify-center shadow-lg shadow-yellow-400/20 rotate-3">
-                <Layers className="w-6 h-6 text-black" />
+          <div className="flex items-center gap-4 mb-3">
+             <div className="w-12 h-12 rounded-2xl bg-yellow-400 text-black flex items-center justify-center shadow-lg shadow-yellow-400/20 rotate-3">
+                <Layers className="w-7 h-7" />
              </div>
-             <h2 className="text-4xl font-black text-zinc-900 tracking-tighter">All Projects</h2>
+             <h2 className="text-5xl font-black text-zinc-900 tracking-tighter">All Projects</h2>
           </div>
-          <p className="text-zinc-500 font-medium text-lg max-w-2xl">
+          <p className="text-zinc-500 font-medium text-lg max-w-2xl ml-1">
             Manage your test suites, track progress, and organize workflows across all active projects.
           </p>
         </div>

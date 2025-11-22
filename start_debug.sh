@@ -1,33 +1,43 @@
 #!/bin/bash
 
-# Function to handle cleanup on exit
+# Start script for Nexus QA (Next.js)
+# This script starts the Next.js development server and logs output to files.
+
+# Ensure dependencies are installed
+if [ ! -d "node_modules" ]; then
+    echo "📦 Installing dependencies..."
+    npm install
+fi
+
+# Cleanup old logs
+rm -f server.log
+
+echo "🚀 Starting Next.js Development Server..."
+echo "📝 Server logs will be written to server.log"
+
+# Start Next.js dev server in background, redirecting output to server.log
+# We use unbuffer (if available) or just pipe to tee/file to keep colors if possible, 
+# but standard redirection `> server.log 2>&1` is safest for file logging.
+# To see output in console AND file, we use `tee`.
+
+npm run dev 2>&1 | tee server.log &
+
+SERVER_PID=$!
+
+echo "✅ Server started with PID $SERVER_PID"
+echo "🌐 Open http://localhost:3000 to view the app"
+echo "👉 Press Ctrl+C to stop the server"
+
+# Function to handle script exit
 cleanup() {
     echo ""
     echo "🛑 Stopping server..."
-    # Find and kill the process listening on port 3000
-    lsof -ti:3000 | xargs kill -9 2>/dev/null
+    kill $SERVER_PID
     exit
 }
 
-# Set trap to call cleanup function on script interruption
-trap cleanup INT
+# Trap SIGINT (Ctrl+C) and call cleanup
+trap cleanup SIGINT
 
-# Clear old logs
-echo "Clearing and initializing logs..." > server.log
-echo "" > browser.log
-
-# Kill any existing node/vite processes on port 3000
-lsof -ti:3000 | xargs kill -9 2>/dev/null
-
-echo "🚀 Starting Vite Server..."
-# Run vite in background, redirect output to server.log
-npm run dev > server.log 2>&1 &
-VITE_PID=$!
-
-echo "⏳ Waiting for server to launch..."
-sleep 4
-
-echo "👀 Launching Browser & Logger..."
-echo "   (Close the browser or Press Ctrl+C here to stop everything)"
-# Run the watcher which will open the browser
-node console_watcher.js
+# Wait for the server process
+wait $SERVER_PID
