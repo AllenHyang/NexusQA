@@ -1,0 +1,14 @@
+{
+  "id": 2,
+  "title": "Add Feedback Mechanism for AI Generation",
+  "description": "Implement Thumbs Up/Down buttons for generated test cases to collect data on model performance and enable future RLHF.",
+  "status": "done",
+  "priority": "medium",
+  "tags": [
+    "product",
+    "ai",
+    "data"
+  ],
+  "createdAt": "2025-11-23T00:00:01.000Z",
+  "completedAt": "2025-11-23T17:00:00.000Z"
+}
