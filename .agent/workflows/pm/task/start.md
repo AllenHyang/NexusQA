@@ -35,7 +35,7 @@ Two layers of checks are performed before starting:
 ## AI Actions
 
 1.  **Load Task Info**
-    - Read from `.project-log/tasks/tasks.json`.
+    - Read from `.project-log/tasks/<task_id>.json`.
 
 2.  **Execute Task Quality Check**
     - Read `.agent/prompts/task-quality-gate.md`.
@@ -54,7 +54,7 @@ Two layers of checks are performed before starting:
 5.  **Start Task**
     - Create branch `task/<id>-<slug>`.
     - Update `.pm/context.json` (set `currentTaskId`).
-    - Update `tasks.json` (set status to `in_progress`).
+    - Update `.project-log/tasks/<task_id>.json` (set status to `in_progress`).
 
 6.  **Notify User**
     - "🚀 Started Task #<id>"

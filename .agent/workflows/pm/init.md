@@ -29,11 +29,10 @@ This workflow initializes the project structure for the Project Manager system.
     mkdir -p .pm/events
     ```
 
-2.  **Initialize tasks.json**
-    Check if `.project-log/tasks/tasks.json` exists. If not, create it with initial content:
+2.  **Initialize Task Metadata**
+    Check if `.project-log/tasks/meta.json` exists. If not, create it with initial content:
     ```json
     {
-      "tasks": [],
       "nextId": 1
     }
     ```

@@ -13,19 +13,20 @@ Create a hotfix task, pause current work, and switch to main branch.
 1.  **Check Active Task**
     - Read `.pm/context.json`.
     - If `currentTaskId` is not null:
-      - Read `.project-log/tasks/tasks.json` to find the task.
-      - Update its status to "paused".
+      - Read `.project-log/tasks/<currentTaskId>.json`.
+      - Update status to "paused".
+      - Save `.project-log/tasks/<currentTaskId>.json`.
       - Run `git stash save "Auto-paused for hotfix"`.
       - Notify user: "⏸️ Paused Task #<id> and stashed changes."
 
 2.  **Create Hotfix Task**
-    - Read `.project-log/tasks/tasks.json`.
-    - Create new task:
+    - Read `.project-log/tasks/meta.json` to get `nextId`.
+    - Create task file `.project-log/tasks/<nextId>.json`:
       - Title: `<title>`
       - Priority: "urgent"
       - Tags: ["hotfix", "<severity>"]
       - Status: "in_progress"
-    - Save to `tasks.json`.
+    - Update `nextId` in `meta.json`.
 
 3.  **Switch Branch**
     - Run `git checkout main`.

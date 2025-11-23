@@ -21,7 +21,7 @@ Smartly check task completeness and clarity to ensure compliance with project st
 ## AI Actions
 
 1.  **Load Task Info**
-    - From `.project-log/tasks/tasks.json`.
+    - Read `.project-log/tasks/<id>.json`.
 
 2.  **Read Project Rules**
     - Read `.task-context.md` (latest focus/temp rules).

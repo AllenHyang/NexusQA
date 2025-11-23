@@ -10,13 +10,14 @@ Show details of a task.
 
 ## Steps
 
-1.  **Read Task Database**
-    Read `.project-log/tasks/tasks.json`.
+1.  **Find Task File**
+    - Check if `.project-log/tasks/<id>.json` exists.
+    - If not, error "Task #<id> not found".
 
-2.  **Find Task**
-    Find task by `<id>`.
+2.  **Read Details**
+    - Read the content of the file.
 
 3.  **Display Details**
     - Show all fields: ID, Title, Status, Priority, Tags, Description, Created/Updated timestamps.
-    - If `status` is "in_progress", maybe show duration if tracked (optional).
+    - If `status` is "in_progress", show duration if tracked.
 

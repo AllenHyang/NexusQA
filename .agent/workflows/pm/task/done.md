@@ -38,7 +38,7 @@ Before completing:
       - Just proceed.
 
 4.  **Update State**
-    - Update `tasks.json` (status: "done").
+    - Read/Update `.project-log/tasks/<currentTaskId>.json` (status: "done").
     - Clear `.pm/context.json`.
 
 5.  **Report**

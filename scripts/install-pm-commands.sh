@@ -162,7 +162,9 @@ Show the current status of the project.
 1.  **Gather Stats**
     - Count files in `.project-log/daily-logs/`.
     - Count files in `.project-log/decisions/`.
-    - Read `.project-log/tasks/tasks.json` and count tasks by status (todo, in_progress, done).
+    - **Task Stats**:
+      - Scan all files in `.project-log/tasks/*.json` (exclude `meta.json`).
+      - Count tasks by status (todo, in_progress, done).
 
 2.  **Display Dashboard**
     ```
@@ -235,11 +237,10 @@ This workflow initializes the project structure for the Project Manager system.
     mkdir -p .pm/events
     ```
 
-2.  **Initialize tasks.json**
-    Check if `.project-log/tasks/tasks.json` exists. If not, create it with initial content:
+2.  **Initialize Task Metadata**
+    Check if `.project-log/tasks/meta.json` exists. If not, create it with initial content:
     ```json
     {
-      "tasks": [],
       "nextId": 1
     }
     ```
@@ -312,7 +313,7 @@ Review today's work and generate a summary.
     - Get current date: `YYYY-MM-DD`.
 
 2.  **Scan Tasks**
-    - Read `.project-log/tasks/tasks.json`.
+    - Scan all files in `.project-log/tasks/*.json` (exclude `meta.json`).
     - Find tasks where `updated_at` matches today's date.
     - Group by status (Completed, In Progress, Created).
 
@@ -527,19 +528,20 @@ Create a hotfix task, pause current work, and switch to main branch.
 1.  **Check Active Task**
     - Read `.pm/context.json`.
     - If `currentTaskId` is not null:
-      - Read `.project-log/tasks/tasks.json` to find the task.
-      - Update its status to "paused".
+      - Read `.project-log/tasks/<currentTaskId>.json`.
+      - Update status to "paused".
+      - Save `.project-log/tasks/<currentTaskId>.json`.
       - Run `git stash save "Auto-paused for hotfix"`.
       - Notify user: "⏸️ Paused Task #<id> and stashed changes."
 
 2.  **Create Hotfix Task**
-    - Read `.project-log/tasks/tasks.json`.
-    - Create new task:
+    - Read `.project-log/tasks/meta.json` to get `nextId`.
+    - Create task file `.project-log/tasks/<nextId>.json`:
       - Title: `<title>`
       - Priority: "urgent"
       - Tags: ["hotfix", "<severity>"]
       - Status: "in_progress"
-    - Save to `tasks.json`.
+    - Update `nextId` in `meta.json`.
 
 3.  **Switch Branch**
     - Run `git checkout main`.
@@ -747,8 +749,7 @@ Pause the current task.
     - If null, error out "No active task to pause."
 
 2.  **Update Task Status**
-    - Read `.project-log/tasks/tasks.json`.
-    - Find the task with `currentTaskId`.
+    - Read `.project-log/tasks/<currentTaskId>.json`.
     - Set `status` to "paused".
     - Set `updated_at` to current timestamp.
     - Write updated JSON.
@@ -822,7 +823,7 @@ Before completing:
       - Just proceed.
 
 4.  **Update State**
-    - Update `tasks.json` (status: "done").
+    - Read/Update `.project-log/tasks/<currentTaskId>.json` (status: "done").
     - Clear `.pm/context.json`.
 
 5.  **Report**
@@ -881,17 +882,17 @@ List all tasks in the project.
 
 ## Steps
 
-1.  **Read Task Database**
-    Read the content of `.project-log/tasks/tasks.json`.
+1.  **Scan Task Database**
+    - Glob `.project-log/tasks/*.json` (exclude `meta.json`).
 
-2.  **Format Output**
-    - Parse the JSON.
-    - Filter for active tasks (status != "done" and status != "archived") unless `--all` is specified (if you want to support flags, otherwise just list active).
-    - Format the list as a table or a clean list:
-      `#<id> [<status>] <title> (Priority: <priority>)`
+2.  **Process and Filter**
+    - Read each file.
+    - Filter for active tasks (status != "done" and status != "archived") unless `--all` is specified.
+    - Sort by ID.
 
 3.  **Display Tasks**
-    - Print the formatted list to the user.
+    - Format the list as a table or a clean list:
+      `#<id> [<status>] <title> (Priority: <priority>)`
     - If no tasks are found, say "No active tasks found."
 
 EOF_MD
@@ -927,23 +928,20 @@ Resume a paused or todo task.
 
 ## Steps
 
-1.  **Read Task Database**
-    Read `.project-log/tasks/tasks.json`.
+1.  **Find Task**
+    - Read `.project-log/tasks/<id>.json`.
 
-2.  **Find Task**
-    Find task by `<id>`.
-
-3.  **Update Task Status**
+2.  **Update Task Status**
     - Set `status` to "in_progress".
     - Set `updated_at` to current timestamp.
     - Write updated JSON.
 
-4.  **Update Context**
+3.  **Update Context**
     - Set `currentTaskId` to `<id>`.
     - Set `workSession.startTime` to current timestamp.
     - Write updated `.pm/context.json`.
 
-5.  **Notify User**
+4.  **Notify User**
     - "▶️ Resumed Task #<id>"
 
 EOF_MD
@@ -979,19 +977,26 @@ Create a new task.
 
 ## Steps
 
-1.  **Read Task Database**
-    - Read `.project-log/tasks/tasks.json`.
+1.  **Read Meta Info**
+    - Read `.project-log/tasks/meta.json`.
+    - Get `nextId`.
 
 2.  **Prepare Task Data**
-    - Get `nextId`.
-    - Construct new task object (status: "todo").
+    - Construct new task object:
+      - `id`: `nextId`
+      - `status`: "todo"
+      - `created_at`: Current Timestamp
+      - `updated_at`: Current Timestamp
+      - ...other fields
 
-3.  **Create Task**
-    - Append task to `tasks.json`.
-    - Increment `nextId`.
-    - Write `tasks.json`.
+3.  **Create Task File**
+    - Write task data to `.project-log/tasks/<nextId>.json`.
 
-4.  **Quality Check (Strict)**
+4.  **Update Meta Info**
+    - Increment `nextId` in `.project-log/tasks/meta.json`.
+    - Write `meta.json`.
+
+5.  **Quality Check (Strict)**
     - **Read Prompt**: Read `.agent/prompts/task-quality-gate.md`.
     - **Evaluate**: Check title, description, and TDD compliance.
     - **Feedback**:
@@ -1005,7 +1010,7 @@ Create a new task.
       - **Score >= 50 (EXCELLENT)**:
         - "🟢 Task #<id> created. Ready to start!"
 
-5.  **Notify User**
+6.  **Notify User**
     - Display the created task details and the Quality Gate result.
 
 EOF_MD
@@ -1041,18 +1046,16 @@ Update task details.
 
 ## Steps
 
-1.  **Read Task Database**
-    Read `.project-log/tasks/tasks.json`.
+1.  **Find Task File**
+    - Check if `.project-log/tasks/<id>.json` exists.
 
-2.  **Find Task**
-    Find task by `<id>`.
-
-3.  **Update Fields**
+2.  **Update Fields**
+    - Read existing JSON.
     - Update provided fields (title, description, priority, tags).
     - Set `updated_at` to current timestamp.
-    - Write updated JSON.
+    - Write updated JSON back to `.project-log/tasks/<id>.json`.
 
-4.  **Notify User**
+3.  **Notify User**
     - "✅ Updated Task #<id>"
 
 EOF_MD
@@ -1088,15 +1091,16 @@ Show details of a task.
 
 ## Steps
 
-1.  **Read Task Database**
-    Read `.project-log/tasks/tasks.json`.
+1.  **Find Task File**
+    - Check if `.project-log/tasks/<id>.json` exists.
+    - If not, error "Task #<id> not found".
 
-2.  **Find Task**
-    Find task by `<id>`.
+2.  **Read Details**
+    - Read the content of the file.
 
 3.  **Display Details**
     - Show all fields: ID, Title, Status, Priority, Tags, Description, Created/Updated timestamps.
-    - If `status` is "in_progress", maybe show duration if tracked (optional).
+    - If `status` is "in_progress", show duration if tracked.
 
 EOF_MD
 
@@ -1156,7 +1160,7 @@ Two layers of checks are performed before starting:
 ## AI Actions
 
 1.  **Load Task Info**
-    - Read from `.project-log/tasks/tasks.json`.
+    - Read from `.project-log/tasks/<task_id>.json`.
 
 2.  **Execute Task Quality Check**
     - Read `.agent/prompts/task-quality-gate.md`.
@@ -1175,7 +1179,7 @@ Two layers of checks are performed before starting:
 5.  **Start Task**
     - Create branch `task/<id>-<slug>`.
     - Update `.pm/context.json` (set `currentTaskId`).
-    - Update `tasks.json` (set status to `in_progress`).
+    - Update `.project-log/tasks/<task_id>.json` (set status to `in_progress`).
 
 6.  **Notify User**
     - "🚀 Started Task #<id>"
@@ -1280,12 +1284,12 @@ Create a task specifically for code refactoring.
 ## Steps
 
 1.  **Create Task**
-    - Read `.project-log/tasks/tasks.json`.
-    - Create new task:
+    - Read `.project-log/tasks/meta.json` to get `nextId`.
+    - Create task file `.project-log/tasks/<nextId>.json`:
       - Title: `<title>`
       - Tags: ["refactor"]
       - Status: "todo"
-    - Save to `tasks.json`.
+    - Update `nextId` in `meta.json`.
 
 2.  **Quality Check**
     - Remind user to add "Before/After" examples in description.
@@ -1338,7 +1342,7 @@ Smartly check task completeness and clarity to ensure compliance with project st
 ## AI Actions
 
 1.  **Load Task Info**
-    - From `.project-log/tasks/tasks.json`.
+    - Read `.project-log/tasks/<id>.json`.
 
 2.  **Read Project Rules**
     - Read `.task-context.md` (latest focus/temp rules).

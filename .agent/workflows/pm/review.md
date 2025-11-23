@@ -14,7 +14,7 @@ Review today's work and generate a summary.
     - Get current date: `YYYY-MM-DD`.
 
 2.  **Scan Tasks**
-    - Read `.project-log/tasks/tasks.json`.
+    - Scan all files in `.project-log/tasks/*.json` (exclude `meta.json`).
     - Find tasks where `updated_at` matches today's date.
     - Group by status (Completed, In Progress, Created).
 

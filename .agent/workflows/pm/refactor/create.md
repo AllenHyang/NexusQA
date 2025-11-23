@@ -11,12 +11,12 @@ Create a task specifically for code refactoring.
 ## Steps
 
 1.  **Create Task**
-    - Read `.project-log/tasks/tasks.json`.
-    - Create new task:
+    - Read `.project-log/tasks/meta.json` to get `nextId`.
+    - Create task file `.project-log/tasks/<nextId>.json`:
       - Title: `<title>`
       - Tags: ["refactor"]
       - Status: "todo"
-    - Save to `tasks.json`.
+    - Update `nextId` in `meta.json`.
 
 2.  **Quality Check**
     - Remind user to add "Before/After" examples in description.

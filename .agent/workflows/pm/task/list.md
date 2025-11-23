@@ -10,16 +10,16 @@ List all tasks in the project.
 
 ## Steps
 
-1.  **Read Task Database**
-    Read the content of `.project-log/tasks/tasks.json`.
+1.  **Scan Task Database**
+    - Glob `.project-log/tasks/*.json` (exclude `meta.json`).
 
-2.  **Format Output**
-    - Parse the JSON.
-    - Filter for active tasks (status != "done" and status != "archived") unless `--all` is specified (if you want to support flags, otherwise just list active).
-    - Format the list as a table or a clean list:
-      `#<id> [<status>] <title> (Priority: <priority>)`
+2.  **Process and Filter**
+    - Read each file.
+    - Filter for active tasks (status != "done" and status != "archived") unless `--all` is specified.
+    - Sort by ID.
 
 3.  **Display Tasks**
-    - Print the formatted list to the user.
+    - Format the list as a table or a clean list:
+      `#<id> [<status>] <title> (Priority: <priority>)`
     - If no tasks are found, say "No active tasks found."
 

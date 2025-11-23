@@ -15,8 +15,7 @@ Pause the current task.
     - If null, error out "No active task to pause."
 
 2.  **Update Task Status**
-    - Read `.project-log/tasks/tasks.json`.
-    - Find the task with `currentTaskId`.
+    - Read `.project-log/tasks/<currentTaskId>.json`.
     - Set `status` to "paused".
     - Set `updated_at` to current timestamp.
     - Write updated JSON.

@@ -10,17 +10,15 @@ Update task details.
 
 ## Steps
 
-1.  **Read Task Database**
-    Read `.project-log/tasks/tasks.json`.
+1.  **Find Task File**
+    - Check if `.project-log/tasks/<id>.json` exists.
 
-2.  **Find Task**
-    Find task by `<id>`.
-
-3.  **Update Fields**
+2.  **Update Fields**
+    - Read existing JSON.
     - Update provided fields (title, description, priority, tags).
     - Set `updated_at` to current timestamp.
-    - Write updated JSON.
+    - Write updated JSON back to `.project-log/tasks/<id>.json`.
 
-4.  **Notify User**
+3.  **Notify User**
     - "✅ Updated Task #<id>"
 
