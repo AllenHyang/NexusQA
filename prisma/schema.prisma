@@ -58,6 +58,7 @@ model TestCase {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   acceptanceCriteria String?
+  reviewStatus String? @default("PENDING")
 }
 
 model TestStep {

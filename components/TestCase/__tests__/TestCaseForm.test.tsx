@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { TestCaseForm } from '../TestCaseForm';
-import { TestCase, TestSuite } from '@/types';
+import { TestCase, TestSuite, User } from '@/types';
 
 describe('TestCaseForm', () => {
   const mockSetEditCase = jest.fn();
@@ -10,6 +10,10 @@ describe('TestCaseForm', () => {
     { id: 'suite-1', projectId: 'project-1', name: 'Smoke Tests', createdAt: '2025-01-01' },
     { id: 'suite-2', projectId: 'project-1', name: 'Regression Tests', createdAt: '2025-01-01' },
   ];
+
+  const mockAdminUser: User = { id: 'u1', name: 'Admin User', role: 'ADMIN', avatar: '' };
+  const mockQALeadUser: User = { id: 'u2', name: 'QA Lead User', role: 'QA_LEAD', avatar: '' };
+  const mockTesterUser: User = { id: 'u3', name: 'Tester User', role: 'TESTER', avatar: '' };
 
   const defaultEditCase: Partial<TestCase> = {
     projectId: 'project-1',
@@ -19,7 +23,8 @@ describe('TestCaseForm', () => {
     acceptanceCriteria: 'Given A, When B, Then C.',
     tags: ['initial', 'tag'],
     priority: 'MEDIUM',
-    description: 'Initial description'
+    description: 'Initial description',
+    reviewStatus: 'PENDING',
   };
 
   beforeEach(() => {
@@ -32,6 +37,7 @@ describe('TestCaseForm', () => {
         editCase={defaultEditCase}
         setEditCase={mockSetEditCase}
         suites={mockSuites}
+        currentUser={mockTesterUser}
       />
     );
 
@@ -43,6 +49,60 @@ describe('TestCaseForm', () => {
     expect(screen.getByPlaceholderText('e.g. User is on the login page, Database is reset...')).toHaveValue('User is logged in.');
     expect(screen.getByText('initial')).toBeInTheDocument();
     expect(screen.getByText('tag')).toBeInTheDocument();
+    expect(screen.getByText('PENDING')).toBeInTheDocument();
+  });
+
+  it('shows review status as read-only for TESTER role', () => {
+    render(
+      <TestCaseForm
+        editCase={{ ...defaultEditCase, reviewStatus: 'PENDING' }}
+        setEditCase={mockSetEditCase}
+        suites={mockSuites}
+        currentUser={mockTesterUser}
+      />
+    );
+    expect(screen.getByText('PENDING')).toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: /review status/i })).not.toBeInTheDocument();
+  });
+
+  it('shows review status as editable for ADMIN role', () => {
+    render(
+      <TestCaseForm
+        editCase={{ ...defaultEditCase, reviewStatus: 'PENDING' }}
+        setEditCase={mockSetEditCase}
+        suites={mockSuites}
+        currentUser={mockAdminUser}
+      />
+    );
+    const select = screen.getByRole('combobox', { name: /review status/i });
+    expect(select).toBeInTheDocument();
+    expect(select).toHaveValue('PENDING');
+
+    fireEvent.change(select, { target: { value: 'APPROVED' } });
+    expect(mockSetEditCase).toHaveBeenCalledWith({
+      ...defaultEditCase,
+      reviewStatus: 'APPROVED',
+    });
+  });
+
+  it('shows review status as editable for QA_LEAD role', () => {
+    render(
+      <TestCaseForm
+        editCase={{ ...defaultEditCase, reviewStatus: 'PENDING' }}
+        setEditCase={mockSetEditCase}
+        suites={mockSuites}
+        currentUser={mockQALeadUser}
+      />
+    );
+    const select = screen.getByRole('combobox', { name: /review status/i });
+    expect(select).toBeInTheDocument();
+    expect(select).toHaveValue('PENDING');
+
+    fireEvent.change(select, { target: { value: 'CHANGES_REQUESTED' } });
+    expect(mockSetEditCase).toHaveBeenCalledWith({
+      ...defaultEditCase,
+      reviewStatus: 'CHANGES_REQUESTED',
+    });
   });
 
   it('updates title correctly', () => {
@@ -51,6 +111,7 @@ describe('TestCaseForm', () => {
         editCase={defaultEditCase}
         setEditCase={mockSetEditCase}
         suites={mockSuites}
+        currentUser={mockTesterUser}
       />
     );
     const titleInput = screen.getByPlaceholderText('e.g. Verify successful login with valid credentials');
@@ -67,6 +128,7 @@ describe('TestCaseForm', () => {
         editCase={defaultEditCase}
         setEditCase={mockSetEditCase}
         suites={mockSuites}
+        currentUser={mockTesterUser}
       />
     );
     const acInput = screen.getByPlaceholderText('Given [context], When [event], Then [outcome]...');
@@ -84,6 +146,7 @@ describe('TestCaseForm', () => {
         editCase={tagsEditCase}
         setEditCase={mockSetEditCase}
         suites={mockSuites}
+        currentUser={mockTesterUser}
       />
     );
 
@@ -105,6 +168,7 @@ describe('TestCaseForm', () => {
           editCase={{ ...tagsEditCase, tags: ['existing', 'another'] }}
           setEditCase={mockSetEditCase}
           suites={mockSuites}
+          currentUser={mockTesterUser}
         />
       );
     const removeIcon = screen.getByText('existing').parentElement?.querySelector('svg');
@@ -126,6 +190,7 @@ describe('TestCaseForm', () => {
         editCase={defaultEditCase}
         setEditCase={mockSetEditCase}
         suites={mockSuites}
+        currentUser={mockTesterUser}
       />
     );
     // Using display value which is what user sees
