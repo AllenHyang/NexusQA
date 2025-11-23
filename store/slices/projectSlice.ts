@@ -4,17 +4,26 @@ import { generateImage } from '@/app/actions';
 
 export interface ProjectSlice {
   projects: Project[];
-  createProject: (data: Partial<Project>) => Promise<void>;
-  updateProject: (project: Project) => Promise<void>;
+  createProject: (data: Partial<Project>, onAIError: (message: string) => void) => Promise<void>; // Updated signature
+  updateProject: (project: Partial<Project>, onAIError: (message: string) => void) => Promise<void>; // Updated signature
   deleteProject: (id: string) => Promise<void>;
+  generateProjectCover: (prompt: string, onAIError: (message: string) => void) => Promise<string | undefined>; // New prop
 }
 
-export const createProjectSlice: StateCreator<ProjectSlice> = (set) => ({
+export const createProjectSlice: StateCreator<ProjectSlice> = (set, get) => ({
   projects: [],
-  createProject: async (data) => {
+  generateProjectCover: async (prompt, onAIError) => {
+      const result = await generateImage(prompt, "project");
+      if (result.error) {
+          onAIError(result.error);
+          return undefined;
+      }
+      return result.data || undefined;
+  },
+  createProject: async (data, onAIError) => {
     let cover = data.coverImage;
-    if (!cover) {
-       cover = await generateImage(data.description || data.name || "project", "project") || undefined;
+    if (cover === undefined) { // Check for undefined to regenerate
+       cover = await get().generateProjectCover(data.description || data.name || "project", onAIError);
     }
     const payload = { ...data, coverImage: cover };
     
@@ -28,11 +37,24 @@ export const createProjectSlice: StateCreator<ProjectSlice> = (set) => ({
         set(state => ({ projects: [newProject, ...state.projects] }));
     }
   },
-  updateProject: async (project) => {
-      // Placeholder
-      set(state => ({
-          projects: state.projects.map(p => p.id === project.id ? project : p)
-      }));
+  updateProject: async (project, onAIError) => {
+      let cover = project.coverImage;
+      if (cover === null) { // If coverImage is explicitly set to null, regenerate
+          cover = await get().generateProjectCover(project.description || project.name || "project", onAIError);
+      }
+      const payload = { ...project, coverImage: cover };
+
+      const res = await fetch('/api/projects', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+          const updatedProject = await res.json();
+          set(state => ({
+              projects: state.projects.map(p => p.id === updatedProject.id ? updatedProject : p)
+          }));
+      }
   },
   deleteProject: async (id) => {
       // Placeholder

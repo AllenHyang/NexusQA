@@ -10,9 +10,26 @@ import { NewProjectModal } from "@/components/NewProjectModal";
 import { TestCaseModal } from "@/components/TestCaseModal";
 import { HistoryModal } from "@/components/HistoryModal";
 import { ExecutionRecord, Project, TestCase, TestStatus } from "@/types";
+import { XCircle } from "lucide-react"; // Added XCircle for toast component
+
+interface Toast {
+  id: string;
+  message: string;
+  type: 'success' | 'error' | 'info';
+}
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const { t } = useLanguage();
+  
+  const [toasts, setToasts] = React.useState<Toast[]>([]);
+
+  const showToast = (message: string, type: Toast['type'] = 'info') => {
+    const id = Date.now().toString();
+    setToasts((prevToasts) => [...prevToasts, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
+    }, 5000); // Toast disappears after 5 seconds
+  };
   
   // Store
   const { 
@@ -49,9 +66,9 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const handleCreateProjectWrapper = async (data: Partial<Project>) => {
     setLoadingAI(true);
     if (editingProject) {
-      await updateProject({ ...editingProject, ...data } as Project); 
+      await updateProject({ ...editingProject, ...data } as Project, showToast); 
     } else {
-      await createProject(data);
+      await createProject(data, showToast);
     }
     setLoadingAI(false);
     closeNewProjectModal();
@@ -67,10 +84,10 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     setLoadingAI(true);
     setEditCase({ steps: [] }); // Clear steps before starting generation
     try {
-      await generateStepsForCase(editCase.title || "", editCase.description || "", setEditCase);
+      await generateStepsForCase(editCase.title || "", editCase.description || "", setEditCase, showToast);
     } catch (error) {
       console.error("Error in handleGenerateSteps:", error);
-      // Optional: Add a user-friendly toast notification here for error handling
+      showToast("An unexpected error occurred during step generation.", 'error');
     } finally {
       setLoadingAI(false);
     }
@@ -78,8 +95,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   
   const handleGenerateMockup = async () => {
     setLoadingAI(true);
-    const img = await generateMockupForCase(editCase.title + " " + editCase.userStory);
-    if (img) setEditCase({ ...editCase, visualReference: img });
+    const result = await generateMockupForCase(editCase.title + " " + editCase.userStory, showToast);
+    if (result) setEditCase({ ...editCase, visualReference: result });
     setLoadingAI(false);
   };
 
@@ -177,8 +194,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             setExecutionEvidence={setExecutionEvidence}
             onExecute={handleExecute}
             suites={suites}
-            onStepFeedback={handleStepFeedback} // Pass new prop
-            onVisualFeedback={handleVisualFeedback} // Pass new prop
+            onStepFeedback={handleStepFeedback}
+            onVisualFeedback={handleVisualFeedback}
           />
       )}
       
@@ -189,6 +206,24 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             defectTrackerUrl="" // TODO: Add global settings context for this
           />
       )}
+
+      {/* Toast Notifications */}
+      <div className="fixed bottom-4 right-4 z-[99] space-y-2">
+        {toasts.map((toast) => (
+          <div 
+            key={toast.id}
+            className={`relative p-4 pr-10 rounded-xl shadow-lg text-white max-w-sm transform transition-all duration-300 ease-out animate-in slide-in-from-right-8 fade-in ${toast.type === 'success' ? 'bg-green-600' : toast.type === 'error' ? 'bg-red-600' : 'bg-blue-600'}`}
+          >
+            {toast.message}
+            <button 
+              onClick={() => setToasts(toasts.filter(t => t.id !== toast.id))}
+              className="absolute top-2 right-2 p-1 rounded-full hover:bg-white/20 transition-colors"
+            >
+              <XCircle className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+      </div>
     </>
   );
 }

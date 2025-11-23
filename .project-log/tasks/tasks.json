@@ -32,7 +32,7 @@
       "id": 3,
       "title": "Enhance Error Handling for AI Actions",
       "description": "Improve `app/actions.ts` and frontend components to handle API errors gracefully (e.g., quota exceeded, network issues) with user-friendly toast notifications instead of crashes.",
-      "status": "todo",
+      "status": "in_progress",
       "priority": "medium",
       "tags": [
         "quality",

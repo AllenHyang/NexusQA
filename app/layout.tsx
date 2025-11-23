@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { UIProvider } from "@/contexts/UIContext";
-import ClientLayout from "./ClientLayout";
+import ClientWrapper from "./ClientWrapper";
 
 export const metadata: Metadata = {
   title: "Nexus QA",
@@ -20,9 +20,9 @@ export default function RootLayout({
       <body>
         <LanguageProvider>
           <UIProvider>
-            <ClientLayout>
+            <ClientWrapper>
               {children}
-            </ClientLayout>
+            </ClientWrapper>
           </UIProvider>
         </LanguageProvider>
       </body>

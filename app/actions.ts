@@ -13,7 +13,7 @@ const getGeminiClient = () => {
   return new GoogleGenAI({ apiKey });
 };
 
-export async function* generateTestSteps(title: string, description: string): AsyncGenerator<TestStep, void, void> {
+export async function* generateTestSteps(title: string, description: string): AsyncGenerator<TestStep | { error: string }, void, void> {
   try {
     const ai = getGeminiClient();
     const prompt = `
@@ -67,12 +67,11 @@ export async function* generateTestSteps(title: string, description: string): As
     } // This closes the 'for await' loop (line 43)
   } catch (error: unknown) { // This catch block now correctly follows the 'try' block (line 18)
     console.error("AI Streaming Gen Error", String(error));
-    // Rethrow or handle error appropriately in the stream consumer
-    throw error;
+    yield { error: "Failed to generate test steps. Please try again." }; // Yield error object
   }
 }
 
-export const generateImage = async (prompt: string, type: "project" | "reference"): Promise<string | null> => {
+export const generateImage = async (prompt: string, type: "project" | "reference"): Promise<{ data?: string; error?: string }> => {
   try {
     const ai = getGeminiClient();
     // Optimized prompts for better results with Nano Banana models + Light Theme Compatibility
@@ -85,21 +84,19 @@ export const generateImage = async (prompt: string, type: "project" | "reference
       contents: fullPrompt,
     });
 
-    // Handle image response structure for gemini-2.5-flash-image
-    // The SDK might return base64 directly in inlineData
     for (const part of response.candidates?.[0]?.content?.parts || []) {
         if (part.inlineData) {
-            return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+            return { data: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}` };
         }
     }
-    return null;
+    return { error: "No image data received from AI." };
   } catch (error: unknown) {
     console.error("Image Gen Error", JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
-    return null;
+    return { error: `Failed to generate image: ${String(error)}` };
   }
 };
 
-export const generateAvatar = async (name: string, role: string): Promise<string | null> => {
+export const generateAvatar = async (name: string, role: string): Promise<{ data?: string; error?: string }> => {
   try {
     const ai = getGeminiClient();
     const prompt = `Professional photorealistic headshot of ${name}, a tech professional working as ${role}. High quality, 8k, studio lighting, neutral bright background, looking at camera, confident expression.`;
@@ -114,12 +111,12 @@ export const generateAvatar = async (name: string, role: string): Promise<string
 
     for (const part of response.candidates?.[0]?.content?.parts || []) {
       if (part.inlineData) {
-        return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        return { data: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}` };
       }
     }
-    return null;
+    return { error: "No avatar data received from AI." };
   } catch (error: unknown) {
     console.error("Avatar Gen Error", JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
-    return null;
+    return { error: `Failed to generate avatar: ${String(error)}` };
   }
 };

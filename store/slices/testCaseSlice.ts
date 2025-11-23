@@ -16,8 +16,8 @@ export interface TestCaseSlice {
   renameSuite: (id: string, name: string) => Promise<void>;
   deleteSuite: (id: string) => Promise<void>;
 
-  generateStepsForCase: (title: string, description: string, setEditCase: (c: Partial<TestCase>) => void) => Promise<void>; // Updated signature
-  generateMockupForCase: (prompt: string) => Promise<string | null>;
+  generateStepsForCase: (title: string, description: string, setEditCase: (c: Partial<TestCase>) => void, onAIError: (message: string) => void) => Promise<void>; // Updated signature
+  generateMockupForCase: (prompt: string, onAIError: (message: string) => void) => Promise<string | null>; // Updated signature
 }
 
 export const createTestCaseSlice: StateCreator<TestCaseSlice> = (set) => ({
@@ -97,20 +97,32 @@ export const createTestCaseSlice: StateCreator<TestCaseSlice> = (set) => ({
       set(state => ({ suites: state.suites.filter(s => s.id !== id) }));
   },
 
-  generateStepsForCase: async (title, description, setEditCase) => { // Updated implementation
+  generateStepsForCase: async (title, description, setEditCase, onAIError) => { // Updated implementation
       const currentSteps: TestStep[] = [];
       try {
-          for await (const step of generateTestSteps(title, description)) {
-              currentSteps.push(step);
-              setEditCase({ steps: [...currentSteps] }); // Update state with each new step
+          for await (const result of generateTestSteps(title, description)) {
+              if ('error' in result) {
+                  onAIError(result.error); // Show toast
+                  setEditCase({ steps: [] }); // Clear any partial steps
+                  return; // Stop processing
+              } else {
+                  currentSteps.push(result);
+                  setEditCase({ steps: [...currentSteps] }); // Update state with each new step
+              }
           }
       } catch (error) {
           console.error("Error streaming steps:", error);
+          onAIError("An unexpected error occurred during step generation.");
           setEditCase({ steps: [] }); // Clear steps on error or partial steps
       }
   },
 
-  generateMockupForCase: async (prompt) => {
-      return await generateImage(prompt, "reference");
+  generateMockupForCase: async (prompt, onAIError) => {
+      const result = await generateImage(prompt, "reference");
+      if (result.error) {
+          onAIError(result.error);
+          return null;
+      }
+      return result.data || null;
   }
 });
