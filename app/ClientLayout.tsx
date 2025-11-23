@@ -9,6 +9,7 @@ import { LoginView } from "@/views/LoginView";
 import { NewProjectModal } from "@/components/NewProjectModal";
 import { TestCaseModal } from "@/components/TestCaseModal";
 import { HistoryModal } from "@/components/HistoryModal";
+import { ImportCasesModal } from "@/components/ImportCasesModal";
 import { ExecutionRecord, Project, TestCase, TestStatus, Priority, TestStep } from "@/types";
 import { XCircle } from "lucide-react"; // Added XCircle for toast component
 
@@ -54,6 +55,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     showNewProjectModal, editingProject, closeNewProjectModal,
     showCaseModal, editCase, closeTestCaseModal, setEditCase,
     historyViewCase, closeHistoryModal,
+    showImportCasesModal, importTargetProjectId, closeImportCasesModal,
     loadingAI, setLoadingAI,
     executionNote, setExecutionNote,
     executionBugId, setExecutionBugId,
@@ -247,6 +249,35 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             onClose={closeHistoryModal}
             defectTrackerUrl="" // TODO: Add global settings context for this
           />
+      )}
+
+      {showImportCasesModal && importTargetProjectId && (
+        <ImportCasesModal 
+          projectId={importTargetProjectId}
+          onClose={closeImportCasesModal}
+          onImport={async (projectId, data) => {
+            setLoadingAI(true);
+            try {
+              const res = await fetch('/api/testcases/bulk', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ projectId, cases: data }),
+              });
+
+              if (!res.ok) throw new Error('Import failed');
+
+              const result = await res.json();
+              showToast(`Successfully imported ${result.count} test cases.`, 'success');
+              refreshData(); // Refresh the project data to show new cases
+              closeImportCasesModal();
+            } catch (error) {
+              console.error("Import error:", error);
+              showToast("Failed to import test cases. Please try again.", 'error');
+            } finally {
+              setLoadingAI(false);
+            }
+          }}
+        />
       )}
 
       {/* Toast Notifications */}

@@ -21,6 +21,7 @@ interface ProjectDetailViewProps {
   onBulkStatusUpdate: (ids: string[], status: TestStatus) => void;
   onBulkMove: (ids: string[], targetSuiteId: string | null) => void; // New prop
   onViewCaseDetails: (projectId: string, testCaseId: string) => void;
+  onImportCases: () => void;
   // Suite Handlers
   onCreateSuite: (parentId: string | null, name: string) => void;
   onRenameSuite: (id: string, name: string) => void;
@@ -72,6 +73,7 @@ export function ProjectDetailView({
   onCreateSuite,
   onRenameSuite,
   onDeleteSuite,
+  onImportCases,
   defectTrackerUrl
 }: ProjectDetailViewProps) {
   const [priorityFilter, setPriorityFilter] = useState<Priority[]>([]);
@@ -233,6 +235,14 @@ export function ProjectDetailView({
           >
             <Download className="w-4 h-4 mr-2" /> Export
           </button>
+          {(currentUser.role === "ADMIN" || currentUser.role === "QA_LEAD") && (
+            <button
+              onClick={onImportCases}
+              className="glass-button px-4 py-2.5 rounded-xl text-sm font-bold flex items-center"
+            >
+              <FolderInput className="w-4 h-4 mr-2" /> Import
+            </button>
+          )}
           {(currentUser.role !== "TESTER") && (
             <button 
               onClick={onCreateCase}

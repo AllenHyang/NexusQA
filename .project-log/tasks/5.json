@@ -2,7 +2,7 @@
   "id": "5",
   "title": "Implement Excel/CSV Import for Test Cases",
   "description": "## Context\nNew users need to migrate existing test cases from spreadsheets. Manual entry is a barrier to adoption. This feature allows bulk import.\n\n## User Story\nAs a Project Admin, I want to upload an Excel or CSV file containing test cases so that I can bulk import them into a project.\n\n## Functional Requirements\n1.  **UI**: Add an \"Import Cases\" button in `ProjectDetailView` (header area).\n2.  **File Parsing**: Support `.csv` and `.xlsx`. Use a library like `papaparse` or `xlsx` (check bundle size impact).\n3.  **Mapping**: Expect columns: `Title`, `Description`, `Preconditions`, `Priority`, `Steps` (e.g., formatted as \"Action|Expected\\nAction|Expected\").\n4.  **Preview**: Show a modal with parsed data table before confirming import.\n\n## Test Design (TDD)\n1.  **Unit Test (Parser)**: Create `lib/importParser.ts`. Test parsing a sample CSV string and mapping it to the `TestCase` / `TestStep` structure.\n2.  **API Test**: Ensure the bulk create action handles typical payloads correctly.\n3.  **Edge Cases**: Test empty files, missing required columns (Title), and malformed Step formats.",
-  "status": "todo",
+  "status": "done",
   "priority": "high",
   "tags": [
     "feature",
@@ -10,5 +10,6 @@
     "migration"
   ],
   "created_at": "2025-11-23T00:00:00.000Z",
-  "updated_at": "2025-11-23T00:00:00.000Z"
+  "updated_at": "2025-11-23T00:00:00.000Z",
+  "completed_at": "2025-11-23T00:00:00.000Z"
 }

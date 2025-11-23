@@ -20,7 +20,7 @@ export default function ProjectDetailPage() {
   } = useAppStore();
   
   const { 
-    openTestCaseModal, openHistoryModal, searchQuery 
+    openTestCaseModal, openHistoryModal, searchQuery, openImportCasesModal
   } = useUI();
 
   const project = projects.find(p => p.id === projectId);
@@ -50,6 +50,7 @@ export default function ProjectDetailPage() {
         }}
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onViewHistory={openHistoryModal as any}
+        onImportCases={() => openImportCasesModal(project.id)}
         onBulkDelete={bulkDeleteTestCases}
         onBulkStatusUpdate={bulkUpdateStatus}
         onBulkMove={bulkMoveTestCases}
