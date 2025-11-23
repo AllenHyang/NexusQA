@@ -1,14 +1,17 @@
 
 import React from "react";
+import { TestCase, TestStep } from "@prisma/client";
 import { ExecutionRecord, TestStatus } from "../types";
-import { Bug, Calendar, History, User as UserIcon, ExternalLink, Monitor, Paperclip } from "lucide-react";
+import { Bug, Calendar, History, User as UserIcon, ExternalLink, Monitor, Paperclip, Copy } from "lucide-react";
+import { formatBugReportMarkdown } from "../lib/formatters";
 
 interface ExecutionHistoryListProps {
   history?: ExecutionRecord[];
   defectTrackerUrl?: string;
+  testCase: TestCase & { steps: TestStep[] };
 }
 
-export function ExecutionHistoryList({ history, defectTrackerUrl }: ExecutionHistoryListProps) {
+export function ExecutionHistoryList({ history, defectTrackerUrl, testCase }: ExecutionHistoryListProps) {
   if (!history || history.length === 0) {
     return (
       <div className="p-8 text-center flex flex-col items-center justify-center text-gray-400 bg-gray-50/30 rounded-xl border border-dashed border-gray-200 mx-4 my-4">
@@ -40,6 +43,13 @@ export function ExecutionHistoryList({ history, defectTrackerUrl }: ExecutionHis
       }
   };
 
+  const copyBugReport = (record: ExecutionRecord) => {
+    const markdown = formatBugReportMarkdown(testCase, record);
+    navigator.clipboard.writeText(markdown)
+      .then(() => alert('Bug report copied to clipboard!'))
+      .catch((err) => console.error('Failed to copy bug report: ', err));
+  };
+
   return (
     <div className="relative pl-6 pr-4 py-6">
       {/* Connector Line */}
@@ -50,16 +60,25 @@ export function ExecutionHistoryList({ history, defectTrackerUrl }: ExecutionHis
           <div key={record.id} className="relative flex gap-4 group">
             {/* Status Dot */}
             <div className="relative z-10 flex h-8 w-8 flex-none items-center justify-center rounded-full bg-white ring-4 ring-white shadow-sm border border-gray-100">
-               <div className={`h-2.5 w-2.5 rounded-full ${getStatusColor(record.status)}`} />
+               <div className={`h-2.5 w-2.5 rounded-full ${getStatusColor(record.status as TestStatus)}`} />
             </div>
 
             {/* Card Content */}
-            <div className={`flex-auto rounded-xl border p-4 shadow-sm transition-all hover:shadow-md ${getStatusBorder(record.status)}`}>
+            <div className={`flex-auto rounded-xl border p-4 shadow-sm transition-all hover:shadow-md ${getStatusBorder(record.status as TestStatus)}`}>
               <div className="flex items-center justify-between gap-x-4 border-b border-gray-200/50 pb-2 mb-2">
                 <div className="flex items-center gap-2">
                     <span className={`text-xs font-bold px-2 py-0.5 rounded-md bg-white border border-gray-100 shadow-sm`}>
                         {record.status}
                     </span>
+                    {record.status === "FAILED" && (
+                        <button
+                            onClick={() => copyBugReport(record)}
+                            className="flex items-center text-red-600 hover:text-red-700 text-xs font-bold transition-colors"
+                            title="Copy bug report to clipboard"
+                        >
+                            <Copy className="w-3 h-3 mr-1" /> Copy Report
+                        </button>
+                    )}
                     <span className="text-xs text-gray-500 flex items-center">
                         <UserIcon className="w-3 h-3 mr-1" />
                         {record.executedBy}

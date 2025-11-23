@@ -40,13 +40,16 @@ export default function ProjectDetailPage() {
         defectTrackerUrl="" // TODO
         onExport={() => alert("Exporting feature coming soon!")}
         onCreateCase={() => openTestCaseModal({ projectId: project.id })}
-        onEditCase={openTestCaseModal}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onEditCase={openTestCaseModal as any}
         onDeleteCase={deleteTestCase}
         onDuplicateCase={(tc: TestCase) => {
             const dupe = { ...tc, id: undefined, title: `${tc.title} (Copy)`, status: "UNTESTED" as TestStatus, history: [] };
-            openTestCaseModal(dupe);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            openTestCaseModal(dupe as any);
         }}
-        onViewHistory={openHistoryModal}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onViewHistory={openHistoryModal as any}
         onBulkDelete={bulkDeleteTestCases}
         onBulkStatusUpdate={bulkUpdateStatus}
         onBulkMove={bulkMoveTestCases}

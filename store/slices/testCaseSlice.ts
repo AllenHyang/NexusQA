@@ -25,10 +25,15 @@ export const createTestCaseSlice: StateCreator<TestCaseSlice> = (set) => ({
   suites: [],
 
   saveTestCase: async (testCase) => {
+      let dataToSave: Partial<TestCase> = { ...testCase };
+      if (Array.isArray(dataToSave.tags)) {
+          dataToSave.tags = JSON.stringify(dataToSave.tags) as any; // Cast to any to bypass type checking
+      }
+
       const res = await fetch('/api/testcases', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(testCase)
+          body: JSON.stringify(dataToSave)
       });
       
       if (res.ok) {

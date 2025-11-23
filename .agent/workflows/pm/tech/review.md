@@ -27,3 +27,10 @@
 
 ## 4. Security & Best Practices (安全与规范)
 * **Basic Security:** 检查 `.env` 敏感信息处理、输入验证等基础安全底线。
+
+# Phase 5: Deliverable (交付成果)
+**必须自动执行以下保存操作，无需询问用户：**
+1.  **Generate Filename:** `YYYY-MM-DD-tech-review.md` (e.g., `2025-11-23-tech-review.md`).
+2.  **Ensure Directory:** Create `.project-log/reports/tech-reviews/` if it does not exist.
+3.  **Save Report:** Write the complete Markdown report to `.project-log/reports/tech-reviews/YYYY-MM-DD-tech-review.md`.
+4.  **Notify:** "✅ Technical Review saved to .project-log/reports/tech-reviews/YYYY-MM-DD-tech-review.md"

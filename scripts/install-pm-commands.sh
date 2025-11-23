@@ -394,6 +394,13 @@ cat << 'EOF_MD' > ".agent/workflows/pm/tech/review.md"
 
 ## 4. Security & Best Practices (安全与规范)
 * **Basic Security:** 检查 `.env` 敏感信息处理、输入验证等基础安全底线。
+
+# Phase 5: Deliverable (交付成果)
+**必须自动执行以下保存操作，无需询问用户：**
+1.  **Generate Filename:** `YYYY-MM-DD-tech-review.md` (e.g., `2025-11-23-tech-review.md`).
+2.  **Ensure Directory:** Create `.project-log/reports/tech-reviews/` if it does not exist.
+3.  **Save Report:** Write the complete Markdown report to `.project-log/reports/tech-reviews/YYYY-MM-DD-tech-review.md`.
+4.  **Notify:** "✅ Technical Review saved to .project-log/reports/tech-reviews/YYYY-MM-DD-tech-review.md"
 EOF_MD
 
 # --- Creating Command .gemini/commands/pm/tech/review.toml ---
@@ -442,6 +449,13 @@ cat << 'EOF_MD' > ".agent/workflows/pm/prod/review.md"
 ## 4. Strategic Roadmap (战略建议)
 * **MVP Status:** 当前版本是否达到了大厂发布的最小标准 (Launch Bar)？
 * **High-Leverage Features:** 建议 1-2 个开发成本低但能极大提升产品价值的功能 (Quick Wins)。
+
+# Phase 5: Deliverable (交付成果)
+**必须自动执行以下保存操作，无需询问用户：**
+1.  **Generate Filename:** `YYYY-MM-DD-prod-review.md` (e.g., `2025-11-23-prod-review.md`).
+2.  **Ensure Directory:** Create `.project-log/reports/prod-reviews/` if it does not exist.
+3.  **Save Report:** Write the complete Markdown report to `.project-log/reports/prod-reviews/YYYY-MM-DD-prod-review.md`.
+4.  **Notify:** "✅ Product Review saved to .project-log/reports/prod-reviews/YYYY-MM-DD-prod-review.md"
 EOF_MD
 
 # --- Creating Command .gemini/commands/pm/prod/review.toml ---

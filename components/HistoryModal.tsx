@@ -1,11 +1,12 @@
 import React from "react";
 import { Modal } from "./ui";
 import { ExecutionHistoryList } from "./ExecutionHistory";
-import { TestCase } from "../types";
+import { TestCase as PrismaTestCase, TestStep as PrismaTestStep } from "@prisma/client";
 import { History } from "lucide-react";
+import { ExecutionRecord } from "../types";
 
 interface HistoryModalProps {
-  testCase: TestCase;
+  testCase: PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] };
   onClose: () => void;
   defectTrackerUrl?: string;
 }
@@ -27,7 +28,7 @@ export function HistoryModal({ testCase, onClose, defectTrackerUrl }: HistoryMod
         </div>
 
         <div className="bg-white rounded-xl border border-gray-200 shadow-inner max-h-[500px] overflow-y-auto custom-scrollbar">
-          <ExecutionHistoryList history={testCase.history} defectTrackerUrl={defectTrackerUrl} />
+          <ExecutionHistoryList history={testCase.history} defectTrackerUrl={defectTrackerUrl} testCase={testCase} />
         </div>
 
         <div className="flex justify-end pt-2">

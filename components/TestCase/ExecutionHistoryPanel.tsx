@@ -1,13 +1,14 @@
-import React from "react";
+import { TestCase as PrismaTestCase, TestStep as PrismaTestStep } from "@prisma/client";
 import { ExecutionRecord } from "@/types";
 import { History } from "lucide-react";
 import { ExecutionHistoryList } from "../ExecutionHistory"; 
 
 interface ExecutionHistoryPanelProps {
   history: ExecutionRecord[];
+  testCase: PrismaTestCase & { steps: PrismaTestStep[] };
 }
 
-export function ExecutionHistoryPanel({ history }: ExecutionHistoryPanelProps) {
+export function ExecutionHistoryPanel({ history, testCase }: ExecutionHistoryPanelProps) {
   return (
     <div className="glass-panel rounded-3xl shadow-sm overflow-hidden flex flex-col bg-white border border-zinc-200">
       <div className="px-6 py-5 border-b border-zinc-100 bg-zinc-50 flex items-center justify-between flex-shrink-0">
@@ -18,7 +19,7 @@ export function ExecutionHistoryPanel({ history }: ExecutionHistoryPanelProps) {
         <span className="text-xs font-bold text-zinc-500 bg-white px-2 py-1 rounded-lg shadow-sm">{history?.length || 0} runs</span>
       </div>
       <div className="flex-1 max-h-[350px] overflow-y-auto custom-scrollbar bg-white">
-        <ExecutionHistoryList history={history} />
+        <ExecutionHistoryList history={history} testCase={testCase} />
       </div>
     </div>
   );

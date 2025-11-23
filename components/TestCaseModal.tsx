@@ -113,7 +113,8 @@ export function TestCaseModal({
               />
             )}
 
-            <ExecutionHistoryPanel history={editCase.history || []} />
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <ExecutionHistoryPanel history={editCase.history || []} testCase={editCase as any} />
           </div>
         </div>
 

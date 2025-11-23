@@ -1,7 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Project, TestCase, TestStatus } from '@/types';
+import { Project, TestStatus, ExecutionRecord } from '@/types';
+import { TestCase as PrismaTestCase, TestStep as PrismaTestStep } from '@prisma/client';
 
 interface UIContextType {
   // Project Modal
@@ -13,14 +14,14 @@ interface UIContextType {
 
   // Test Case Modal
   showCaseModal: boolean;
-  editCase: Partial<TestCase>;
-  openTestCaseModal: (testCase?: Partial<TestCase>) => void;
+  editCase: Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }>;
+  openTestCaseModal: (testCase?: Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }>) => void;
   closeTestCaseModal: () => void;
-  setEditCase: (testCase: Partial<TestCase>) => void;
+  setEditCase: (testCase: Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }>) => void;
 
   // History Modal
-  historyViewCase: TestCase | null;
-  openHistoryModal: (testCase: TestCase) => void;
+  historyViewCase: (PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }) | null;
+  openHistoryModal: (testCase: PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }) => void;
   closeHistoryModal: () => void;
 
   // Loading State (Global AI or Operations)
@@ -51,10 +52,10 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
 
   // Test Case Modal
   const [showCaseModal, setShowCaseModal] = useState(false);
-  const [editCase, setEditCase] = useState<Partial<TestCase>>({});
+  const [editCase, setEditCase] = useState<Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }>>({});
 
   // History Modal
-  const [historyViewCase, setHistoryViewCase] = useState<TestCase | null>(null);
+  const [historyViewCase, setHistoryViewCase] = useState< (PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }) | null>(null);
 
   // Loading
   const [loadingAI, setLoadingAI] = useState(false);
@@ -85,7 +86,7 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
     setEditingProject(null);
   };
 
-  const openTestCaseModal = (testCase: Partial<TestCase> = {}) => {
+  const openTestCaseModal = (testCase: Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }> = {}) => {
     setEditCase(testCase);
     // Reset execution form when opening standard modal? 
     // Maybe not, but for now let's keep simple.
@@ -101,7 +102,7 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
     setEditCase({});
   };
 
-  const openHistoryModal = (testCase: TestCase) => {
+  const openHistoryModal = (testCase: PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }) => {
     setHistoryViewCase(testCase);
   };
 

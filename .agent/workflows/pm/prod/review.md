@@ -26,3 +26,10 @@
 ## 4. Strategic Roadmap (战略建议)
 * **MVP Status:** 当前版本是否达到了大厂发布的最小标准 (Launch Bar)？
 * **High-Leverage Features:** 建议 1-2 个开发成本低但能极大提升产品价值的功能 (Quick Wins)。
+
+# Phase 5: Deliverable (交付成果)
+**必须自动执行以下保存操作，无需询问用户：**
+1.  **Generate Filename:** `YYYY-MM-DD-prod-review.md` (e.g., `2025-11-23-prod-review.md`).
+2.  **Ensure Directory:** Create `.project-log/reports/prod-reviews/` if it does not exist.
+3.  **Save Report:** Write the complete Markdown report to `.project-log/reports/prod-reviews/YYYY-MM-DD-prod-review.md`.
+4.  **Notify:** "✅ Product Review saved to .project-log/reports/prod-reviews/YYYY-MM-DD-prod-review.md"
