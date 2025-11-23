@@ -16,6 +16,22 @@ module.exports = {
       setupFilesAfterEnv: ['<rootDir>/jest.setup.js'], // Optional: for browser mocks if needed
     },
     {
+      displayName: 'components',
+      preset: 'ts-jest',
+      testEnvironment: 'jsdom',
+      testMatch: ['<rootDir>/components/**/*.test.tsx'],
+      moduleFileExtensions: ['ts', 'tsx', 'js', 'json', 'node'],
+      transform: {
+        '^.+\.tsx?$': ['ts-jest', {
+          tsconfig: 'tsconfig.jest.json',
+        }],
+      },
+      setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+      moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/$1',
+      },
+    },
+    {
       displayName: 'api',
       preset: 'ts-jest',
       testEnvironment: 'node',
