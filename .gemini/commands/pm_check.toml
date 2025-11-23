@@ -1,4 +1,4 @@
-description = "Check logs for active errors and attempt to fix them if found"
+description = "Check logs for active errors and attempt to fix them if found (pm:check)"
 prompt = """
 The following is the output from the log checking script (`node check_logs.js`):
 
