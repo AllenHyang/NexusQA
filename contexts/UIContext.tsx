@@ -24,6 +24,12 @@ interface UIContextType {
   openHistoryModal: (testCase: PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }) => void;
   closeHistoryModal: () => void;
 
+  // Import Cases Modal
+  showImportCasesModal: boolean;
+  importTargetProjectId: string | null;
+  openImportCasesModal: (projectId: string) => void;
+  closeImportCasesModal: () => void;
+
   // Loading State (Global AI or Operations)
   loadingAI: boolean;
   setLoadingAI: (loading: boolean) => void;
@@ -56,6 +62,10 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
 
   // History Modal
   const [historyViewCase, setHistoryViewCase] = useState< (PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }) | null>(null);
+
+  // Import Cases Modal
+  const [showImportCasesModal, setShowImportCasesModal] = useState(false);
+  const [importTargetProjectId, setImportTargetProjectId] = useState<string | null>(null);
 
   // Loading
   const [loadingAI, setLoadingAI] = useState(false);
@@ -110,11 +120,22 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
     setHistoryViewCase(null);
   };
 
+  const openImportCasesModal = (projectId: string) => {
+    setImportTargetProjectId(projectId);
+    setShowImportCasesModal(true);
+  };
+
+  const closeImportCasesModal = () => {
+    setShowImportCasesModal(false);
+    setImportTargetProjectId(null);
+  };
+
   return (
     <UIContext.Provider value={{
       showNewProjectModal, editingProject, openNewProjectModal, openEditProjectModal, closeNewProjectModal,
       showCaseModal, editCase, openTestCaseModal, closeTestCaseModal, setEditCase,
       historyViewCase, openHistoryModal, closeHistoryModal,
+      showImportCasesModal, importTargetProjectId, openImportCasesModal, closeImportCasesModal,
       loadingAI, setLoadingAI,
       executionNote, setExecutionNote,
       executionBugId, setExecutionBugId,
