@@ -1,1 +1,0 @@
-self.__REACT_LOADABLE_MANIFEST='{"app/[[...slug]]/page.tsx -> ../AppShell":{"id":6570,"files":["static/chunks/20f5c3b2.2190680ffc99c15b.js","static/chunks/95247769.9079b22acb069921.js","static/chunks/973.28013ac40e26e2f8.js","static/chunks/570.39eaca972495dcb1.js"]}}';
