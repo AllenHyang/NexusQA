@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { TestStatus, Priority, Project, TestCase } from "../types";
-import { CheckSquare, ImageIcon, Check, XCircle, Pencil, Trash2 } from "lucide-react";
+import { TestStatus, Priority, Project, TestCase, ReviewStatus } from "../types";
+import { CheckSquare, ImageIcon, Check, XCircle, Pencil, Trash2, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 
-export const StatusBadge = ({ status }: { status: TestStatus }) => {
-  const colors: Record<string, string> = {
+export const StatusBadge = ({ status, reviewStatus }: { status: TestStatus; reviewStatus?: ReviewStatus; }) => {
+  const statusColors: Record<TestStatus, string> = {
     DRAFT: "bg-zinc-100 text-zinc-500 border-zinc-200",
     PASSED: "bg-green-100 text-green-700 border-green-200",
     FAILED: "bg-red-100 text-red-700 border-red-200",
@@ -11,10 +11,27 @@ export const StatusBadge = ({ status }: { status: TestStatus }) => {
     SKIPPED: "bg-gray-100 text-gray-500 border-gray-200 italic",
     UNTESTED: "bg-gray-100 text-gray-600 border-gray-200",
   };
+
+  const reviewColors: Record<ReviewStatus, { badge: string; icon: React.ElementType }> = {
+    PENDING: { badge: "bg-yellow-100 text-yellow-700 border-yellow-200", icon: Clock },
+    APPROVED: { badge: "bg-blue-100 text-blue-700 border-blue-200", icon: CheckCircle2 },
+    CHANGES_REQUESTED: { badge: "bg-red-100 text-red-700 border-red-200", icon: AlertCircle },
+  };
+
+  const currentStatusColors = statusColors[status] || statusColors.DRAFT;
+  const currentReviewColors = reviewStatus ? reviewColors[reviewStatus] : null;
+
   return (
-    <span className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider border ${colors[status] || colors.DRAFT}`}>
-      {status}
-    </span>
+    <div className="flex items-center gap-2">
+      <span className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider border ${currentStatusColors}`}>
+        {status}
+      </span>
+      {reviewStatus && currentReviewColors && (
+        <span className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider border ${currentReviewColors.badge}`}>
+          <currentReviewColors.icon className="w-3 h-3 mr-1" /> {reviewStatus}
+        </span>
+      )}
+    </div>
   );
 };
 

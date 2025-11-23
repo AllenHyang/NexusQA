@@ -1,15 +1,16 @@
 import React from "react";
-import { TestCase, Priority, TestSuite } from "@/types";
-import { Folder, Link2, Tag, BookOpen, CheckCircle2 } from "lucide-react";
+import { TestCase, Priority, TestSuite, ReviewStatus, User } from "@/types";
+import { Folder, Link2, Tag, BookOpen, CheckCircle2, Clock } from "lucide-react";
 import { TagBadge } from "../ui";
 
 interface TestCaseFormProps {
   editCase: Partial<TestCase>;
   setEditCase: (c: Partial<TestCase>) => void;
   suites: TestSuite[];
+  currentUser: User;
 }
 
-export function TestCaseForm({ editCase, setEditCase, suites }: TestCaseFormProps) {
+export function TestCaseForm({ editCase, setEditCase, suites, currentUser }: TestCaseFormProps) {
   const [tagInput, setTagInput] = React.useState("");
 
   const handleAddTag = (e: React.KeyboardEvent) => {
@@ -48,7 +49,7 @@ export function TestCaseForm({ editCase, setEditCase, suites }: TestCaseFormProp
           </div>
         </div>
 
-        {/* Metadata: Suite, Priority */}
+        {/* Metadata: Suite, Priority, Review Status */}
         <div className="grid grid-cols-2 gap-6">
             <div className="glass-input p-5 rounded-2xl border border-zinc-200 shadow-sm">
                 <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2 flex items-center">
@@ -79,6 +80,29 @@ export function TestCaseForm({ editCase, setEditCase, suites }: TestCaseFormProp
                 <option value="CRITICAL">Critical</option>
                 </select>
             </div>
+        </div>
+
+        {/* Review Status */}
+        <div className="glass-input p-6 rounded-2xl border border-zinc-200 shadow-sm">
+          <label htmlFor="review-status-select" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-3 flex items-center">
+              <Clock className="w-3.5 h-3.5 mr-1.5" /> Review Status
+          </label>
+          {(currentUser?.role === "ADMIN" || currentUser?.role === "QA_LEAD") ? (
+            <select 
+              id="review-status-select"
+              value={editCase.reviewStatus || "PENDING"}
+              onChange={e => setEditCase({...editCase, reviewStatus: e.target.value as ReviewStatus})}
+              className="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white text-sm font-bold focus:ring-2 focus:ring-zinc-900/5 outline-none transition-shadow text-zinc-800"
+            >
+              <option value="PENDING">Pending</option>
+              <option value="APPROVED">Approved</option>
+              <option value="CHANGES_REQUESTED">Changes Requested</option>
+            </select>
+          ) : (
+            <span className="inline-flex items-center rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider border bg-zinc-100 text-zinc-500 border-zinc-200">
+              {editCase.reviewStatus || "PENDING"}
+            </span>
+          )}
         </div>
 
         {/* Tags Input */}

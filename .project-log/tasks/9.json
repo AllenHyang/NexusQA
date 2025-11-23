@@ -2,7 +2,7 @@
   "id": "9",
   "title": "Implement Test Case Review Workflow (Review Status Field)",
   "description": "## Context\nThe NexusQA SOP mandates a 'Case Review' phase, but the current system lacks explicit support for it. Introducing a review status will formalize this gatekeeping step.\n\n## Functional Requirements\n1.  **Data Model**: Add an optional `reviewStatus: ReviewStatus;` field to the `TestCase` interface in `types.ts` and `schema.prisma`. Define `ReviewStatus` as `"PENDING" | "APPROVED" | "CHANGES_REQUESTED"`.\n2.  **UI Integration**: \n    *   In `TestCaseForm.tsx`, display the `reviewStatus` (read-only for non-QA Lead/Admin roles, editable for QA Lead/Admin).\n    *   Add a dropdown/buttons in `TestCaseModal.tsx` for QA Leads/Admins to change the `reviewStatus`.\n    *   Update `StatusBadge.tsx` to potentially show a distinct badge for `reviewStatus` or integrate it visually.\n3.  **API**: Ensure the API correctly handles updates to the new `reviewStatus` field.\n\n## Test Design (TDD)\n1.  **Unit Test (Type)**: Verify `ReviewStatus` type definition.\n2.  **Component Test (UI)**: Test `TestCaseForm` and `TestCaseModal` to ensure `reviewStatus` is displayed/editable based on user role and updates correctly.\n3.  **API Test**: Ensure the API correctly updates `reviewStatus`.",
-  "status": "todo",
+  "status": "done",
   "priority": "medium",
   "tags": [
     "feature",
@@ -11,5 +11,6 @@
     "qa"
   ],
   "created_at": "2025-11-23T00:00:00.000Z",
-  "updated_at": "2025-11-23T00:00:00.000Z"
+  "updated_at": "2025-11-23T00:00:00.000Z",
+  "completed_at": "2025-11-23T00:00:00.000Z"
 }

@@ -76,6 +76,7 @@ export function TestCaseModal({
                 editCase={editCase} 
                 setEditCase={setEditCase} 
                 suites={suites} 
+                currentUser={currentUser}
             />
 
             <TestStepList 

@@ -15,6 +15,7 @@ export interface TestStep {
 }
 
 export type TestStatus = "DRAFT" | "PASSED" | "FAILED" | "BLOCKED" | "UNTESTED" | "SKIPPED";
+export type ReviewStatus = "PENDING" | "APPROVED" | "CHANGES_REQUESTED";
 export type Priority = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
 export interface ExecutionRecord {
@@ -63,6 +64,7 @@ export interface TestCase {
   createdAt?: string;
   updatedAt?: string;
   acceptanceCriteria?: string;
+  reviewStatus?: ReviewStatus;
 }
 
 export interface Project {

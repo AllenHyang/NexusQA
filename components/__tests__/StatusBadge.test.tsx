@@ -35,4 +35,25 @@ describe('StatusBadge', () => {
     expect(badge).toBeInTheDocument();
     expect(badge).toHaveClass('bg-zinc-100'); // Matches DRAFT styling which is default fallback in logic
   });
+
+  it('renders with PENDING review status', () => {
+    render(<StatusBadge status="PASSED" reviewStatus="PENDING" />);
+    const reviewBadge = screen.getByText('PENDING');
+    expect(reviewBadge).toBeInTheDocument();
+    expect(reviewBadge).toHaveClass('bg-yellow-100');
+  });
+
+  it('renders with APPROVED review status', () => {
+    render(<StatusBadge status="PASSED" reviewStatus="APPROVED" />);
+    const reviewBadge = screen.getByText('APPROVED');
+    expect(reviewBadge).toBeInTheDocument();
+    expect(reviewBadge).toHaveClass('bg-blue-100');
+  });
+
+  it('renders with CHANGES_REQUESTED review status', () => {
+    render(<StatusBadge status="PASSED" reviewStatus="CHANGES_REQUESTED" />);
+    const reviewBadge = screen.getByText('CHANGES_REQUESTED');
+    expect(reviewBadge).toBeInTheDocument();
+    expect(reviewBadge).toHaveClass('bg-red-100');
+  });
 });
