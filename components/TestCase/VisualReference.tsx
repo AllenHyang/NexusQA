@@ -1,5 +1,4 @@
-import React from "react";
-import { ImageIcon, Sparkles } from "lucide-react";
+import { ImageIcon, Sparkles, ThumbsUp, ThumbsDown } from "lucide-react";
 import { AILoader } from "../ui";
 
 interface VisualReferenceProps {
@@ -7,9 +6,11 @@ interface VisualReferenceProps {
   onGenerate: () => void;
   loadingAI: boolean;
   hasTitle: boolean;
+  onFeedback: (feedback: 'up' | 'down') => void; // New prop
+  imageFeedback?: 'up' | 'down'; // New prop
 }
 
-export function VisualReference({ imageUrl, onGenerate, loadingAI, hasTitle }: VisualReferenceProps) {
+export function VisualReference({ imageUrl, onGenerate, loadingAI, hasTitle, onFeedback, imageFeedback }: VisualReferenceProps) {
   return (
     <div className="glass-panel rounded-3xl p-6 h-fit bg-white border border-zinc-200 shadow-sm">
       <div className="flex items-center justify-between mb-5">
@@ -30,7 +31,25 @@ export function VisualReference({ imageUrl, onGenerate, loadingAI, hasTitle }: V
         {imageUrl ? (
           <>
             <img src={imageUrl} className="w-full h-full object-cover animate-in fade-in duration-700" alt="Ref" />
-            <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-end justify-end p-4">
+            <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-end justify-between p-4"> {/* Changed to justify-between for buttons */}
+              {/* Feedback Buttons */}
+              <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onFeedback('up'); }}
+                  className={`p-2 rounded-xl transition-colors ${imageFeedback === 'up' ? 'bg-green-100 text-green-600' : 'bg-white text-zinc-400 hover:bg-zinc-100 hover:text-green-500'} shadow-md`}
+                  title="Good image"
+                >
+                  <ThumbsUp className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onFeedback('down'); }}
+                  className={`p-2 rounded-xl transition-colors ${imageFeedback === 'down' ? 'bg-red-100 text-red-600' : 'bg-white text-zinc-400 hover:bg-zinc-100 hover:text-red-500'} shadow-md`}
+                  title="Bad image"
+                >
+                  <ThumbsDown className="w-4 h-4" />
+                </button>
+              </div>
+              {/* Download Button */}
               <a href={imageUrl} download="mockup.png" className="opacity-0 group-hover:opacity-100 bg-white p-3 rounded-xl shadow-lg hover:scale-110 transition-all border border-zinc-100">
                 <ImageIcon className="w-5 h-5 text-zinc-800"/>
               </a>

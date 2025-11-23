@@ -11,6 +11,7 @@ export interface TestStep {
   id: string;
   action: string;
   expected: string;
+  feedback?: 'up' | 'down'; // Added for AI generation feedback
 }
 
 export type TestStatus = "DRAFT" | "PASSED" | "FAILED" | "BLOCKED" | "UNTESTED";
@@ -57,6 +58,7 @@ export interface TestCase {
   authorId: string;
   assignedToId?: string;
   visualReference?: string; // Base64 image
+  imageFeedback?: 'up' | 'down'; // Added for AI image generation feedback
   history?: ExecutionRecord[]; // Audit trail
 }
 

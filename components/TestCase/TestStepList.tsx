@@ -1,6 +1,5 @@
-import React from "react";
 import { TestStep } from "@/types";
-import { Plus, Sparkles, XCircle } from "lucide-react";
+import { Plus, Sparkles, XCircle, ThumbsUp, ThumbsDown } from "lucide-react";
 import { AILoader } from "../ui";
 
 interface TestStepListProps {
@@ -9,9 +8,10 @@ interface TestStepListProps {
   onGenerate: () => void;
   loadingAI: boolean;
   hasTitle: boolean;
+  onFeedback: (stepId: string, feedback: 'up' | 'down') => void; // New prop
 }
 
-export function TestStepList({ steps, onUpdateSteps, onGenerate, loadingAI, hasTitle }: TestStepListProps) {
+export function TestStepList({ steps, onUpdateSteps, onGenerate, loadingAI, hasTitle, onFeedback }: TestStepListProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -32,10 +32,26 @@ export function TestStepList({ steps, onUpdateSteps, onGenerate, loadingAI, hasT
               <p className="font-bold text-zinc-800 text-sm leading-relaxed">{step.action}</p>
               <p className="text-zinc-500 mt-1.5 text-xs font-medium bg-zinc-50 p-2 rounded-lg inline-block border border-zinc-100">Expect: {step.expected}</p>
             </div>
-            <button onClick={() => {
-              const newSteps = steps.filter((_, i) => i !== idx);
-              onUpdateSteps(newSteps);
-            }} className="text-zinc-300 hover:text-red-500 ml-2 opacity-0 group-hover:opacity-100 transition-all"><XCircle className="w-5 h-5"/></button>
+            <div className="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-all">
+              <button
+                onClick={(e) => { e.stopPropagation(); onFeedback(step.id, 'up'); }}
+                className={`p-1 rounded-md transition-colors ${step.feedback === 'up' ? 'bg-green-100 text-green-600' : 'text-zinc-400 hover:bg-zinc-100 hover:text-green-500'}`}
+                title="Good result"
+              >
+                <ThumbsUp className="w-4 h-4" />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); onFeedback(step.id, 'down'); }}
+                className={`p-1 rounded-md transition-colors ${step.feedback === 'down' ? 'bg-red-100 text-red-600' : 'text-zinc-400 hover:bg-zinc-100 hover:text-red-500'}`}
+                title="Bad result"
+              >
+                <ThumbsDown className="w-4 h-4" />
+              </button>
+              <button onClick={() => {
+                const newSteps = steps.filter((_, i) => i !== idx);
+                onUpdateSteps(newSteps);
+              }} className="text-zinc-300 hover:text-red-500"><XCircle className="w-5 h-5"/></button>
+            </div>
           </div>
         ))}
         <button 

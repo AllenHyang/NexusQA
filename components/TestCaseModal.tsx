@@ -27,6 +27,8 @@ interface TestCaseModalProps {
   setExecutionEvidence: (s: string) => void;
   onExecute: (status: TestStatus) => void;
   suites: TestSuite[]; 
+  onStepFeedback: (stepId: string, feedback: 'up' | 'down') => void;
+  onVisualFeedback: (feedback: 'up' | 'down') => void; // New prop
 }
 
 export function TestCaseModal({
@@ -47,7 +49,9 @@ export function TestCaseModal({
   executionEvidence,
   setExecutionEvidence,
   onExecute,
-  suites
+  suites,
+  onStepFeedback,
+  onVisualFeedback // Destructure new prop
 }: TestCaseModalProps) {
   
   return (
@@ -80,6 +84,7 @@ export function TestCaseModal({
                 onGenerate={onGenerateSteps}
                 loadingAI={loadingAI}
                 hasTitle={!!editCase.title}
+                onFeedback={onStepFeedback} // Pass new prop
             />
           </div>
 
@@ -90,6 +95,8 @@ export function TestCaseModal({
                 onGenerate={onGenerateImage}
                 loadingAI={loadingAI}
                 hasTitle={!!editCase.title}
+                onFeedback={onVisualFeedback} // Pass new prop
+                imageFeedback={editCase.imageFeedback} // Pass new prop
             />
 
             {currentUser.role === "TESTER" && (

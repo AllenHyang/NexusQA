@@ -1,49 +1,66 @@
-# /pm:task:done - Complete a task
+# /pm:task:done - Complete task with validation (V3.7)
 
-Mark a task as completed, run tests, and merge changes.
+Complete the current task, run final validation, and merge to main.
 
 ## Usage
 
 ```bash
-/pm/task/done <id>
+# Complete task (Recommended)
+/pm/task/done
+
+# Skip validation (Not Recommended)
+/pm/task/done --skip-checks
 ```
 
-## Steps
+## Final Validation Gates
+
+Before completing:
+- ✅ All changes committed (Git clean)
+- ✅ Tests passed (if configured)
+- ⚠️ Unpushed commits check (Warning only)
+
+## AI Actions
 
 1.  **Identify Task**
-    - Get `currentTaskId` from `.pm/context.json` or argument.
+    - Get `currentTaskId` from `.pm/context.json`.
 
-2.  **Automated Testing**
-    - **Detect Project Type**:
-      - If `package.json` exists: `npm test`
-      - If `pom.xml` exists: `mvn test`
-      - If `go.mod` exists: `go test ./...`
-      - If `pytest.ini` or `requirements.txt` exists: `pytest`
-      - If `Cargo.toml` exists: `cargo test`
-    - **Run Test**: Execute the detected command.
-    - **Failure Handling**:
-      - If tests fail, **STOP**.
-      - "❌ Tests failed. Please fix them before completing the task."
+2.  **Final Validation**
+    - **Git Check**: Ensure working directory is clean.
+    - **Test Check**: Run tests (if project has tests).
+    - If validation fails: STOP and report.
 
-3.  **Git Operations**
-    - **Check Branch**: Confirm we are on the task branch.
-    - **Commit**: Ensure clean working directory.
-    - **Checkout Main**: `git checkout main`.
-    - **Merge**: `git merge --no-ff <task-branch>`.
-    - **Conflict Handling**:
-      - If merge fails (exit code != 0):
-        - **STOP**.
-        - "⚠️ Merge conflicts detected."
-        - "Please resolve conflicts manually, then run `/pm/task/done` again."
-        - (Optional) Restore state if needed, or leave in merging state for user to fix.
+3.  **Merge Operations**
+    - If on task branch:
+      - Checkout `main`.
+      - Merge task branch (`git merge --no-ff`).
+      - Delete task branch.
+    - If on `main` (fast fix):
+      - Just proceed.
 
-4.  **Cleanup & Update**
-    - **Delete Branch**: `git branch -d <task-branch>` (only if merge successful).
-    - **Update Status**: Set `status` to "done" in `tasks.json`.
-    - **Clear Context**: Clear `currentTaskId` in `context.json`.
+4.  **Update State**
+    - Update `tasks.json` (status: "done").
+    - Clear `.pm/context.json`.
 
-5.  **Notify User**
-    - "✅ Completed Task #<id>"
-    - "🧪 Tests passed"
-    - "🔀 Merged to main"
+5.  **Report**
+    - Show statistics (Duration, Commits, Files).
 
+## Output Example
+
+```
+🔍 Running final validation...
+  ✅ All changes are committed
+  ✅ Tests passed (skipped)
+  ⚠️  You have 2 unpushed commit(s)
+
+📦 Merging task/123-fix-email to main...
+  ✅ Merged to main
+
+🗑️  Deleted branch: task/123-fix-email
+
+✅ Completed task #123: Fix email sync timeout
+
+📊 Statistics:
+   Duration: 3h 25m
+   Commits: 5
+   Files changed: 12
+```

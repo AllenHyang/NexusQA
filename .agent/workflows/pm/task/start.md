@@ -1,46 +1,78 @@
-# /pm:task:start - Start a task
+# /pm:task:start - Start a task with quality gates (V3.7)
 
-Start working on a task with strict checks and context syncing.
+Start a task, triggering pre-flight quality gates.
 
 ## Usage
 
 ```bash
-/pm/task/start <id>
+# Start task
+/pm/task/start <task_id>
+
+# Start with specific branch name
+/pm/task/start <task_id> --branch task/123-feature
+
+# Skip checks (Not Recommended)
+/pm/task/start <task_id> --skip-checks
 ```
 
-## Steps
+## Pre-flight Quality Gates
 
-1.  **Context Sync & Pre-flight**
-    - **Auto-Sync**:
-      - Get current branch: `git branch --show-current`.
-      - If branch matches `task/<id>-*`:
-        - Check if `context.json` matches this ID.
-        - If not, update `context.json` to reflect this active task.
-        - Notify: "🔄 Synced context to Task #<id> from git branch."
-    - **Check Active Task**: If `context.json` has a *different* active task, STOP.
-    - **Check Git Status**: `git status --porcelain`. If dirty, STOP.
+Two layers of checks are performed before starting:
 
-2.  **Read Task Database**
-    - Read `.project-log/tasks/tasks.json`.
-    - Find task with `<id>`.
+### Layer 1: Git Environment Check
+- ✅ Git working directory clean (no uncommitted changes)
+- ✅ No merge conflicts
+- ✅ On a valid branch
+- ✅ No other active tasks
 
-3.  **Quality Gate (Strict)**
+### Layer 2: Task Quality Check ⭐
+- ✅ Task description completeness
+- ✅ Purpose clarity
+- ✅ Acceptance criteria definition
+- ✅ Project rules compliance
+- ✅ Latest focus alignment
+
+## AI Actions
+
+1.  **Load Task Info**
+    - Read from `.project-log/tasks/tasks.json`.
+
+2.  **Execute Task Quality Check**
     - Read `.agent/prompts/task-quality-gate.md`.
-    - Evaluate task.
-    - **Rule**:
-      - If Score < 30: **STOP**. "🔴 Task quality is too low to start. Please run `/pm:task:update` to add details."
-      - If Score < 40: **WARN**. "🟠 Task quality is low. Are you sure you want to start? (Proceeding...)"
+    - Read `.task-context.md` (if exists) and `.pm/task-rules.yaml` (if exists).
+    - Analyze task quality (6 dimensions).
+    - Generate detailed quality report.
 
-4.  **Update Task Status**
-    - Set `status` to "in_progress".
-    - Write `tasks.json`.
+3.  **Decision**
+    - If Score < 40: **STOP**. Give improvement suggestions.
+    - If Score >= 40: **PROCEED**.
 
-5.  **Update Context**
-    - Update `.pm/context.json`.
+4.  **Git Environment Check**
+    - Check for uncommitted changes.
+    - Check for active tasks in `context.json`.
 
-6.  **Git Operations**
-    - Checkout/Create branch `task/<id>-<slug>`.
+5.  **Start Task**
+    - Create branch `task/<id>-<slug>`.
+    - Update `.pm/context.json` (set `currentTaskId`).
+    - Update `tasks.json` (set status to `in_progress`).
 
-7.  **Notify User**
+6.  **Notify User**
     - "🚀 Started Task #<id>"
+    - "🌿 Branch: task/<id>-<slug>"
+
+## Output Example
+
+```
+🔍 Running pre-flight checks...
+  ✅ Git working directory is clean
+  ✅ No merge conflicts
+  ✅ On branch: main
+
+📋 Starting task #123: Fix email sync timeout
+
+🌿 Creating branch: task/123-fix-email-sync
+
+🚀 Started working on task #123
+   All future events will be associated with this task.
+```
 

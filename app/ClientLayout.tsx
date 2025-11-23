@@ -114,6 +114,22 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     closeTestCaseModal();
   };
 
+  const handleStepFeedback = (stepId: string, feedback: 'up' | 'down') => {
+    if (!editCase || !editCase.steps) return;
+
+    const updatedSteps = editCase.steps.map(step => 
+      step.id === stepId ? { ...step, feedback: step.feedback === feedback ? undefined : feedback } : step
+    );
+    setEditCase({ ...editCase, steps: updatedSteps });
+  };
+
+  const handleVisualFeedback = (feedback: 'up' | 'down') => {
+    if (!editCase) return;
+
+    const updatedFeedback = editCase.imageFeedback === feedback ? undefined : feedback;
+    setEditCase({ ...editCase, imageFeedback: updatedFeedback });
+  };
+
   // --- Render ---
 
   if (!currentUser) {
@@ -161,6 +177,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             setExecutionEvidence={setExecutionEvidence}
             onExecute={handleExecute}
             suites={suites}
+            onStepFeedback={handleStepFeedback} // Pass new prop
+            onVisualFeedback={handleVisualFeedback} // Pass new prop
           />
       )}
       

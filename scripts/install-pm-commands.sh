@@ -782,55 +782,72 @@ EOF_TOML
 # --- Restoring .agent/workflows/pm/task/done.md ---
 mkdir -p "$(dirname ".agent/workflows/pm/task/done.md")"
 cat << 'EOF_MD' > ".agent/workflows/pm/task/done.md" 
-# /pm:task:done - Complete a task
+# /pm:task:done - Complete task with validation (V3.7)
 
-Mark a task as completed, run tests, and merge changes.
+Complete the current task, run final validation, and merge to main.
 
 ## Usage
 
 ```bash
-/pm/task/done <id>
+# Complete task (Recommended)
+/pm/task/done
+
+# Skip validation (Not Recommended)
+/pm/task/done --skip-checks
 ```
 
-## Steps
+## Final Validation Gates
+
+Before completing:
+- ✅ All changes committed (Git clean)
+- ✅ Tests passed (if configured)
+- ⚠️ Unpushed commits check (Warning only)
+
+## AI Actions
 
 1.  **Identify Task**
-    - Get `currentTaskId` from `.pm/context.json` or argument.
+    - Get `currentTaskId` from `.pm/context.json`.
 
-2.  **Automated Testing**
-    - **Detect Project Type**:
-      - If `package.json` exists: `npm test`
-      - If `pom.xml` exists: `mvn test`
-      - If `go.mod` exists: `go test ./...`
-      - If `pytest.ini` or `requirements.txt` exists: `pytest`
-      - If `Cargo.toml` exists: `cargo test`
-    - **Run Test**: Execute the detected command.
-    - **Failure Handling**:
-      - If tests fail, **STOP**.
-      - "❌ Tests failed. Please fix them before completing the task."
+2.  **Final Validation**
+    - **Git Check**: Ensure working directory is clean.
+    - **Test Check**: Run tests (if project has tests).
+    - If validation fails: STOP and report.
 
-3.  **Git Operations**
-    - **Check Branch**: Confirm we are on the task branch.
-    - **Commit**: Ensure clean working directory.
-    - **Checkout Main**: `git checkout main`.
-    - **Merge**: `git merge --no-ff <task-branch>`.
-    - **Conflict Handling**:
-      - If merge fails (exit code != 0):
-        - **STOP**.
-        - "⚠️ Merge conflicts detected."
-        - "Please resolve conflicts manually, then run `/pm/task/done` again."
-        - (Optional) Restore state if needed, or leave in merging state for user to fix.
+3.  **Merge Operations**
+    - If on task branch:
+      - Checkout `main`.
+      - Merge task branch (`git merge --no-ff`).
+      - Delete task branch.
+    - If on `main` (fast fix):
+      - Just proceed.
 
-4.  **Cleanup & Update**
-    - **Delete Branch**: `git branch -d <task-branch>` (only if merge successful).
-    - **Update Status**: Set `status` to "done" in `tasks.json`.
-    - **Clear Context**: Clear `currentTaskId` in `context.json`.
+4.  **Update State**
+    - Update `tasks.json` (status: "done").
+    - Clear `.pm/context.json`.
 
-5.  **Notify User**
-    - "✅ Completed Task #<id>"
-    - "🧪 Tests passed"
-    - "🔀 Merged to main"
+5.  **Report**
+    - Show statistics (Duration, Commits, Files).
 
+## Output Example
+
+```
+🔍 Running final validation...
+  ✅ All changes are committed
+  ✅ Tests passed (skipped)
+  ⚠️  You have 2 unpushed commit(s)
+
+📦 Merging task/123-fix-email to main...
+  ✅ Merged to main
+
+🗑️  Deleted branch: task/123-fix-email
+
+✅ Completed task #123: Fix email sync timeout
+
+📊 Statistics:
+   Duration: 3h 25m
+   Commits: 5
+   Files changed: 12
+```
 EOF_MD
 
 # --- Creating Command .gemini/commands/pm/task/done.toml ---
@@ -1102,51 +1119,83 @@ EOF_TOML
 # --- Restoring .agent/workflows/pm/task/start.md ---
 mkdir -p "$(dirname ".agent/workflows/pm/task/start.md")"
 cat << 'EOF_MD' > ".agent/workflows/pm/task/start.md" 
-# /pm:task:start - Start a task
+# /pm:task:start - Start a task with quality gates (V3.7)
 
-Start working on a task with strict checks and context syncing.
+Start a task, triggering pre-flight quality gates.
 
 ## Usage
 
 ```bash
-/pm/task/start <id>
+# Start task
+/pm/task/start <task_id>
+
+# Start with specific branch name
+/pm/task/start <task_id> --branch task/123-feature
+
+# Skip checks (Not Recommended)
+/pm/task/start <task_id> --skip-checks
 ```
 
-## Steps
+## Pre-flight Quality Gates
 
-1.  **Context Sync & Pre-flight**
-    - **Auto-Sync**:
-      - Get current branch: `git branch --show-current`.
-      - If branch matches `task/<id>-*`:
-        - Check if `context.json` matches this ID.
-        - If not, update `context.json` to reflect this active task.
-        - Notify: "🔄 Synced context to Task #<id> from git branch."
-    - **Check Active Task**: If `context.json` has a *different* active task, STOP.
-    - **Check Git Status**: `git status --porcelain`. If dirty, STOP.
+Two layers of checks are performed before starting:
 
-2.  **Read Task Database**
-    - Read `.project-log/tasks/tasks.json`.
-    - Find task with `<id>`.
+### Layer 1: Git Environment Check
+- ✅ Git working directory clean (no uncommitted changes)
+- ✅ No merge conflicts
+- ✅ On a valid branch
+- ✅ No other active tasks
 
-3.  **Quality Gate (Strict)**
+### Layer 2: Task Quality Check ⭐
+- ✅ Task description completeness
+- ✅ Purpose clarity
+- ✅ Acceptance criteria definition
+- ✅ Project rules compliance
+- ✅ Latest focus alignment
+
+## AI Actions
+
+1.  **Load Task Info**
+    - Read from `.project-log/tasks/tasks.json`.
+
+2.  **Execute Task Quality Check**
     - Read `.agent/prompts/task-quality-gate.md`.
-    - Evaluate task.
-    - **Rule**:
-      - If Score < 30: **STOP**. "🔴 Task quality is too low to start. Please run `/pm:task:update` to add details."
-      - If Score < 40: **WARN**. "🟠 Task quality is low. Are you sure you want to start? (Proceeding...)"
+    - Read `.task-context.md` (if exists) and `.pm/task-rules.yaml` (if exists).
+    - Analyze task quality (6 dimensions).
+    - Generate detailed quality report.
 
-4.  **Update Task Status**
-    - Set `status` to "in_progress".
-    - Write `tasks.json`.
+3.  **Decision**
+    - If Score < 40: **STOP**. Give improvement suggestions.
+    - If Score >= 40: **PROCEED**.
 
-5.  **Update Context**
-    - Update `.pm/context.json`.
+4.  **Git Environment Check**
+    - Check for uncommitted changes.
+    - Check for active tasks in `context.json`.
 
-6.  **Git Operations**
-    - Checkout/Create branch `task/<id>-<slug>`.
+5.  **Start Task**
+    - Create branch `task/<id>-<slug>`.
+    - Update `.pm/context.json` (set `currentTaskId`).
+    - Update `tasks.json` (set status to `in_progress`).
 
-7.  **Notify User**
+6.  **Notify User**
     - "🚀 Started Task #<id>"
+    - "🌿 Branch: task/<id>-<slug>"
+
+## Output Example
+
+```
+🔍 Running pre-flight checks...
+  ✅ Git working directory is clean
+  ✅ No merge conflicts
+  ✅ On branch: main
+
+📋 Starting task #123: Fix email sync timeout
+
+🌿 Creating branch: task/123-fix-email-sync
+
+🚀 Started working on task #123
+   All future events will be associated with this task.
+```
 
 EOF_MD
 
@@ -1261,6 +1310,124 @@ You are an expert Project Manager agent. Follow the strict workflow defined belo
 {{args}}
 """
 
+EOF_TOML
+
+# --- Restoring .agent/workflows/pm/task/check.md ---
+mkdir -p "$(dirname ".agent/workflows/pm/task/check.md")"
+cat << 'EOF_MD' > ".agent/workflows/pm/task/check.md"
+# /pm:task:check - Check Task Quality
+
+Smartly check task completeness and clarity to ensure compliance with project standards.
+
+## Usage
+
+```bash
+# Check specific task
+/pm/task/check <id>
+
+# Check current active task
+/pm/task/check
+
+# Strict mode (treat warnings as errors)
+/pm/task/check <id> --strict
+
+# Issues only (hide passing items)
+/pm/task/check <id> --issues-only
+```
+
+## AI Actions
+
+1.  **Load Task Info**
+    - From `.project-log/tasks/tasks.json`.
+
+2.  **Read Project Rules**
+    - Read `.task-context.md` (latest focus/temp rules).
+    - Read `.pm/task-rules.yaml` (stable project rules).
+
+3.  **Smart Quality Analysis**
+    - Follow guidance in `.agent/prompts/task-quality-gate.md`.
+    - Evaluate on 6 dimensions (0-10 pts each):
+      1. Basic Completeness
+      2. Purpose Clarity
+      3. Type Matching
+      4. Acceptance Criteria
+      5. Project Rules Compliance
+      6. Latest Focus Compliance
+
+4.  **Generate Report**
+    - Detailed scoring and explanation.
+    - Specific issues and improvement suggestions.
+    - Actionable commands.
+    - Overall Rating (Excellent/Good/Fair/Reject).
+
+## Output Example
+
+```
+🔍 Task Quality Check Report
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Task Info
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Task ID: #123
+Title: [Bug] Fix email sync timeout
+Type: Bug
+Priority: high
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Scoring Details (Total 60)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Basic Completeness: 9/10
+  ✓ Title format good
+  ✓ Detailed description present
+  
+⚠️ Purpose Clarity: 7/10
+  ✓ Issue described clearly
+  ⚠️ Missing: Specific data volume threshold
+
+... (more details) ...
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Overall Assessment
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 Total Score: 48/60
+
+🟡 GOOD (40-49)
+Main content complete, suggest refining details.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Improvement Suggestions
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 Required Improvements:
+1. Add reproduction steps
+
+⚠️ Suggested Improvements:
+2. Specific acceptance criteria
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Conclusion
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ Suggest refining before starting.
+```
+
+EOF_MD
+
+# --- Creating Command .gemini/commands/pm/task/check.toml ---
+mkdir -p "$(dirname ".gemini/commands/pm/task/check.toml")"
+cat << 'EOF_TOML' > ".gemini/commands/pm/task/check.toml"
+description = "Run task/check workflow"
+prompt = """
+You are an expert Project Manager agent. Follow the strict workflow defined below.
+
+# Workflow Definition
+!{cat .agent/workflows/pm/task/check.md}
+
+# User Request
+{{args}}
+"""
 EOF_TOML
 
 echo '✅ Installation complete!'
