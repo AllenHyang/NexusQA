@@ -1,6 +1,6 @@
 import React from "react";
 import { TestStatus } from "@/types";
-import { CheckCircle2, XCircle, AlertCircle, Monitor, Paperclip } from "lucide-react";
+import { CheckCircle2, XCircle, AlertCircle, Monitor, Paperclip, Forward } from "lucide-react";
 
 interface ExecutionPanelProps {
   env: string;
@@ -63,7 +63,7 @@ export function ExecutionPanel({
               <AlertCircle className="w-4 h-4 text-zinc-400 absolute left-3 top-3 group-focus-within:text-red-500 transition-colors" />
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-3">
           <button 
             onClick={() => onExecute("PASSED")}
             className="py-3.5 rounded-2xl font-bold text-sm border transition-all flex flex-col items-center justify-center gap-1 bg-green-50 text-green-600 border-green-100 hover:bg-green-100 hover:border-green-200 hover:-translate-y-1 hover:shadow-md">
@@ -81,6 +81,12 @@ export function ExecutionPanel({
             className="py-3.5 rounded-2xl font-bold text-sm border transition-all flex flex-col items-center justify-center gap-1 bg-orange-50 text-orange-600 border-orange-100 hover:bg-orange-100 hover:border-orange-200 hover:-translate-y-1 hover:shadow-md">
             <AlertCircle className="w-5 h-5" />
             Block
+          </button>
+          <button 
+            onClick={() => onExecute("SKIPPED")}
+            className="py-3.5 rounded-2xl font-bold text-sm border transition-all flex flex-col items-center justify-center gap-1 bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100 hover:border-gray-300 hover:-translate-y-1 hover:shadow-md">
+            <Forward className="w-5 h-5" />
+            Skip
           </button>
         </div>
       </div>

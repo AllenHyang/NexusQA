@@ -53,6 +53,12 @@ describe('ExecutionPanel', () => {
     expect(mockOnExecute).toHaveBeenCalledWith('BLOCKED');
   });
 
+  it('calls onExecute with SKIPPED when Skip button is clicked', () => {
+    render(<ExecutionPanel {...defaultProps} />);
+    fireEvent.click(screen.getByText('Skip'));
+    expect(mockOnExecute).toHaveBeenCalledWith('SKIPPED');
+  });
+
   it('applies warning style to Bug ID input when empty', () => {
      render(<ExecutionPanel {...defaultProps} bugId="" />);
      const input = screen.getByPlaceholderText('Bug ID / Jira Ticket (Mandatory for FAILED)');

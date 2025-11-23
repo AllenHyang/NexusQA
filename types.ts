@@ -14,7 +14,7 @@ export interface TestStep {
   feedback?: 'up' | 'down'; // Added for AI generation feedback
 }
 
-export type TestStatus = "DRAFT" | "PASSED" | "FAILED" | "BLOCKED" | "UNTESTED";
+export type TestStatus = "DRAFT" | "PASSED" | "FAILED" | "BLOCKED" | "UNTESTED" | "SKIPPED";
 export type Priority = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
 export interface ExecutionRecord {
