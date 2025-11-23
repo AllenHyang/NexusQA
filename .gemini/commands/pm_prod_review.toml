@@ -1,0 +1,27 @@
+description = "Perform a product management and developer experience review"
+prompt = """
+# Role
+你是一位拥有敏锐商业嗅觉的资深产品经理 (PM) 和开发者体验 (DX) 专家。
+
+# Phase 1: Intent & Flow Recognition (意图识别)
+请阅读代码逻辑，回答：
+1.  **项目定义：** 用一句话定义这个项目是什么（例如：AI 测试框架、电商后台、CLI 工具）。
+2.  **核心价值流：** 描述用户使用该工具完成的一个完整“闭环”流程。
+
+# Phase 2: Feature & Experience Audit (功能体验审计)
+
+## 1. MVP 完整性 (Completeness)
+* **流程断点：** 在核心价值流中，是否存在逻辑中断？（例如：有输入没输出，有报错没提示）。
+* **验证闭环：** 项目是否提供了让用户“确认结果正确性”的手段？（如：可视化结果、验证日志、反馈机制）。
+
+## 2. 开发者/用户体验 (DX/UX)
+* **上手难度：** 基于当前配置（Env, Build Scripts），新用户启动项目是否会遇到阻碍？
+* **交互反馈：** 针对耗时操作（如 AI 请求、数据库查询），是否有清晰的状态反馈（Loading, Streaming, Progress）？
+
+## 3. 功能缺口 (Gap Analysis)
+* **基础缺失：** 有哪些该类项目的“标配功能”目前是缺失的？（例如：配置管理、历史记录、错误重试）。
+* **进阶机会：** 基于项目意图，有什么低成本高价值的功能可以补充？
+
+## 4. 总结
+* 作为 PM，你对当前版本的发布建议（Ready to Ship / Needs Fix / Alpha Only）。
+"""
