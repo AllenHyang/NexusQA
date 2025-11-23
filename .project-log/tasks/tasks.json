@@ -1,0 +1,43 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Implement Streaming UI for AI Test Step Generation",
+      "description": "Replace the current 'all-or-nothing' loading state with a streaming response for `generateTestSteps` to improve perceived latency and user experience.",
+      "status": "todo",
+      "priority": "high",
+      "tags": [
+        "ux",
+        "ai",
+        "performance"
+      ],
+      "createdAt": "2025-11-23T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "title": "Add Feedback Mechanism for AI Generation",
+      "description": "Implement Thumbs Up/Down buttons for generated test cases to collect data on model performance and enable future RLHF.",
+      "status": "todo",
+      "priority": "medium",
+      "tags": [
+        "product",
+        "ai",
+        "data"
+      ],
+      "createdAt": "2025-11-23T00:00:01.000Z"
+    },
+    {
+      "id": 3,
+      "title": "Enhance Error Handling for AI Actions",
+      "description": "Improve `app/actions.ts` and frontend components to handle API errors gracefully (e.g., quota exceeded, network issues) with user-friendly toast notifications instead of crashes.",
+      "status": "todo",
+      "priority": "medium",
+      "tags": [
+        "quality",
+        "dx"
+      ],
+      "createdAt": "2025-11-23T00:00:02.000Z"
+    }
+  ],
+  "nextId": 4
+}

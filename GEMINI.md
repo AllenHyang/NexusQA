@@ -1,138 +1,56 @@
-# 项目概览
+# Project Context: Internal Tool Portal (DevPortal)
 
-这是一个基于 **React 的软件开发测试框架**应用程序，旨在管理测试用例、项目和执行。它利用 **Google 的 Gemini AI** 自动生成测试步骤、UI 模型和用户头像。
+## Workflow Rules (CRITICAL)
+This project enforces strict workflow execution rules.
+!{cat .agent/references/workflow-rules.md}
 
-## 主要功能
+## Overview
+This project is a **React-based dashboard** designed to serve as a central hub for internal engineering tools. It allows users to:
+- View a catalog of internal services (CI/CD, Databases, Monitoring, etc.).
+- Filter tools by category or search by name/description.
+- Access direct links to tool interfaces, logs, admin panels, and repositories.
+- Simulate adding new tools (currently client-side only).
 
-*   **项目管理：** 创建和查看带有 AI 生成封面图像的项目。
-*   **测试用例管理：**
-    *   创建包含详细描述、前置条件和优先级的测试用例。
-    *   **AI 驱动的步骤生成：** 使用 `gemini-2.5-flash` 根据测试用例标题和描述自动生成逻辑测试步骤（动作/预期结果）。
-    *   **视觉参考：** 使用 `gemini-2.5-flash-image` 生成 UI 模型图像或图标。
-*   **执行历史：** 跟踪测试执行状态（通过、失败、阻塞）、负责人和历史记录。
-*   **用户管理：** 用户角色（管理员、QA 负责人、测试人员）和 AI 生成的头像。
+**Project Name:** `radiant-nova` (Package Name) / "内部工具门户" (Directory Name)
 
-# 技术架构
+## Architecture & Technologies
 
-## 核心技术栈
+### Core Stack
+- **Framework:** [React 19](https://react.dev/)
+- **Build Tool:** [Vite 7](https://vitejs.dev/)
+- **Language:** JavaScript (ESModules)
 
-*   **前端框架：** React 19
-*   **构建工具：** Vite（服务器端口：3000）
-*   **语言：** TypeScript
-*   **样式：** Tailwind CSS（根据使用模式推断，尽管未明确读取配置，但此技术栈的标准配置）/标准 CSS
-*   **图标：** Lucide React
+### Project Structure
+- **`src/App.jsx`**: Main entry point containing the layout (Sidebar + Main Content), state management (tools list, search, filter), and routing logic (simulated via categories).
+- **`src/data/mockData.js`**: Contains the `tools` array, which acts as the mock database for the application.
+- **`src/components/`**:
+    - `ToolCard.jsx`: Displays individual tool details (status, version, links).
+    - `AddToolModal.jsx`: Form to add a new tool.
+    - `StatusBadge.jsx`: Visual indicator for tool status (online, offline, maintenance).
+- **`public/`**: Static assets.
 
-## AI 集成 (`src/app/actions.ts`)
+### Styling
+- **Approach:** A mix of global CSS classes (likely in `index.css`) and inline React styles for dynamic values (e.g., mouse tracking effects).
+- **Theme:** Dark mode aesthetic with glassmorphism effects (`backdrop-filter`), utilizing CSS variables for colors (e.g., `--accent-primary`, `--bg-mesh`).
 
-应用程序使用 `@google/genai` SDK 与 Gemini 模型进行交互。所有调用均通过 Next.js Server Actions 处理以确保 API 密钥安全。
+## Development Workflow
 
-*   **文本生成 (`gemini-2.5-flash`)：** 用于生成结构化的 JSON 测试步骤。
-*   **图像生成 (`gemini-2.5-flash-image`)：** 用于生成：
-    *   项目封面图像（抽象科技图标）。
-    *   测试用例视觉参考（UI 模型）。
-    *   用户头像（写实人像）。
+### Prerequisites
+- Node.js (Latest LTS recommended)
+- npm
 
-## 数据模型 (`types.ts`)
-
-*   **Project：** `id`, `name`, `description`, `coverImage`, `repositoryUrl`。
-*   **TestCase：** `id`, `steps`（动作/预期）、`status`、`priority`、`visualReference`、`history`。
-*   **User：** `id`, `name`, `role`, `avatar`。
-*   **ExecutionRecord：** 跟踪带有状态、环境和备注的单独测试运行。
-
-# 开发
-
-## 前提条件
-
-*   Node.js（推荐 v18+）
-*   Google Gemini API 密钥
-
-## 设置
-
-1.  **安装依赖项：**
-    ```bash
-    npm install
-    ```
-
-2.  **配置环境变量：**
-    在根目录创建 `.env.local` 文件：
-    ```env
-    GEMINI_API_KEY=your_actual_api_key_here
-    ```
-
-## 脚本
-
-| 命令 | 描述 |
+### Key Commands
+| Command | Description |
 | :--- | :--- |
-| `npm run dev` | 在 `http://0.0.0.0:3000` 启动本地开发服务器。 |
-| `npm run build` | 构建生产就绪应用程序。 |
-| `npm run preview` | 在本地预览构建的应用程序。 |
-| `./start_debug.sh` | **推荐的开发启动脚本。** 启动 Vite 开发服务器并在可见的 Chrome 浏览器中打开应用。同时，它会将服务器日志重定向到 `server.log`，并将浏览器控制台日志（包括错误和网络请求失败）实时写入 `browser.log`。此脚本还配置了 `Ctrl+C` 信号处理，以确保在退出时正确关闭所有后台进程。 |
+| `npm install` | Install dependencies. |
+| `npm run dev` | Start the development server (typically at `http://localhost:5173`). |
+| `npm run build` | Build the application for production. |
+| `npm run preview` | Preview the production build locally. |
+| `npm run lint` | Run ESLint to check for code quality issues. |
 
-## 工作流强制要求
+## Conventions
 
-为确保代码变更不会引入新的错误，**在完成一轮对话或一系列相关修改后，必须执行以下命令进行验证：**
-
-```bash
-node check_logs.js
-```
-(或者使用简化命令 `/check` 如果在 CLI 环境中)
-
-如果命令输出显示错误，必须在提交或继续开发前修复这些问题。
-
-### 日志系统
-
-为了便于调试，应用程序已集成一个日志系统，它将关键运行时信息持久化到文件中：
-*   **`server.log`**: 包含 `npm run dev` (Vite) 的所有输出，例如构建信息、Vite 服务器启动消息以及任何后端代理日志。
-*   **`browser.log`**: 通过 `console_watcher.js` 捕获的浏览器控制台日志。这包括应用内部的 `console.log`、JavaScript 运行时错误、未捕获的异常以及失败的网络请求。此文件由非无头模式的 `puppeteer` 驱动，允许用户在浏览器中交互时收集日志。
-
-当您需要排查问题时，可以通过检查这两个文件来获取完整的上下文。
-
-## 目录结构
-
-*   `src/app/actions.ts`：所有 Gemini API 调用的集中逻辑（服务器端 Server Actions）。
-*   `src/types.ts`：所有领域实体的 TypeScript 接口。
-*   `src/components/`：可重用的 UI 组件（模态框、列表）。
-
-## 数据持久化
-
-*   **Database:** `dev.db` (SQLite) 是唯一的数据源。
-*   **ORM:** Prisma 用于管理数据库架构和访问。
-*   **初始化:** 数据库已通过一次性脚本 `seed-db.ts` (已删除) 初始化，包含项目和测试用例的演示数据。
-
-*   `src/views/`：页面级组件（仪表板、登录、项目详细信息）。
-*   `src/vite.config.ts`：Vite 配置，包括环境变量处理。
-
-# 约定
-
-*   **路径别名：** `@` 符号配置为解析到项目根目录 (`.`)。
-*   **环境变量：** 通过 `process.env.GEMINI_API_KEY` 访问（在 `vite.config.ts` 中填充）。
-*   **状态管理：** 
-    *   **`Zustand` (`store/useAppStore.ts`):** 核心应用状态管理，替代了之前的 `UserContext` 和 `DataContext`。管理用户会话、项目数据、测试用例数据以及 API 交互。
-    *   **`UIContext`:** 仅管理全局 UI 状态（模态框可见性、加载指示器、搜索查询）。
-    *   **`LanguageContext`**: 管理国际化翻译。
-
-### 数据持久化 (SQLite + Prisma)
-
-项目已从文件系统 JSON 迁移到 **SQLite** 数据库，使用 **Prisma ORM** 进行管理。
-
-*   **Database:** `dev.db` (本地 SQLite 文件)。
-*   **ORM:** Prisma (`lib/prisma.ts`, `prisma/schema.prisma`)。
-*   **API:** 后端路由 (`app/api/`) 现在通过 Prisma Client 读写数据库。
-*   **扩展性:** 要切换到 **PostgreSQL** 或 **MySQL**，只需修改 `prisma/schema.prisma` 中的 `provider` 并更新 `.env` 中的 `DATABASE_URL`，然后运行 `prisma migrate deploy`。
-
-### 路由架构 (Next.js App Router)
-
-项目已完全迁移至 Next.js App Router。
-
-
-*   `app/layout.tsx`: 根布局，包含 `LanguageProvider` 和 `UIProvider`。
-*   `app/ClientLayout.tsx`: 客户端逻辑包装器，处理 Zustand 状态初始化、用户认证检查、全局模态框渲染和侧边栏导航。
-*   `app/error.tsx` & `app/global-error.tsx`: 错误边界，优雅处理运行时错误。
-*   `app/not-found.tsx`: 自定义 404 页面。
-*   `app/api/`: 后端 API 路由，处理基于文件系统的数据持久化（JSON 文件）。
-
-*   `app/page.tsx`: 仪表板页面。
-*   `app/login/page.tsx`: 登录页面。
-*   `app/projects/page.tsx`: 项目列表页面。
-*   `app/project/[projectId]/page.tsx`: 项目详情页面。
-*   `app/project/[projectId]/case/[testCaseId]/page.tsx`: 测试用例详情页面。
+*   **Components:** Functional components with hooks (`useState`, `useMemo`).
+*   **State Management:** Local component state (`useState`) in `App.jsx` passed down via props. No global state manager (Redux/Context) is currently in use.
+*   **Data Flow:** Unidirectional. Data originates in `App.jsx` (initialized from `mockData.js`) and flows down to `ToolCard`.
+*   **Styling:** Use CSS variables for theming. Maintain the dark/glassmorphic visual style.

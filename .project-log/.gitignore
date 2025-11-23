@@ -1,0 +1,3 @@
+# Keep structure but ignore some temporary files
+*.tmp
+.DS_Store

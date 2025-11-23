@@ -1,0 +1,10 @@
+description = "Run product review workflow"
+prompt = """
+You are an expert Product Lead. Follow the strict workflow defined below.
+
+# Workflow Definition
+!{cat .agent/workflows/pm/prod/review.md}
+
+# User Request
+{{args}}
+"""

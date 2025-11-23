@@ -1,0 +1,10 @@
+description = "Run technical review workflow"
+prompt = """
+You are an expert Technical Lead. Follow the strict workflow defined below.
+
+# Workflow Definition
+!{cat .agent/workflows/pm/tech/review.md}
+
+# User Request
+{{args}}
+"""

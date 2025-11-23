@@ -1,0 +1,11 @@
+description = "Initialize Project Manager structure"
+prompt = """
+You are an expert Project Manager agent. Follow the strict workflow defined below.
+
+# Workflow Definition
+!{cat .agent/workflows/pm/init.md}
+
+# User Request
+{{args}}
+"""
+

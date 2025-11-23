@@ -1,0 +1,3 @@
+# Keep events and context
+events/*.json
+*.log

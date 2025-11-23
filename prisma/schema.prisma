@@ -34,9 +34,17 @@ model TestCase {
   id              String   @id @default(cuid())
   title           String
   description     String?
+  preconditions   String?
+  userStory       String?
+  requirementId   String?
+  tags            String   @default("[]")
+  
   status          String   @default("UNTESTED")
   priority        String   @default("P2")
   visualReference String?
+  
+  authorId        String?
+  assignedToId    String?
   
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId String
@@ -44,9 +52,33 @@ model TestCase {
   suite     TestSuite? @relation(fields: [suiteId], references: [id])
   suiteId   String?
 
-  steps     String @default("[]") 
-  history   String @default("[]") 
+  steps     TestStep[]
+  history   ExecutionRecord[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model TestStep {
+  id        String   @id @default(cuid())
+  action    String
+  expected  String
+  order     Int      @default(0)
+  
+  testCase   TestCase @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+  testCaseId String
+}
+
+model ExecutionRecord {
+  id         String   @id @default(cuid())
+  date       DateTime @default(now())
+  status     String
+  executedBy String
+  notes      String?
+  bugId      String?
+  env        String?
+  evidence   String?
+  
+  testCase   TestCase @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+  testCaseId String
 }
