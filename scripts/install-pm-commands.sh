@@ -42,23 +42,46 @@ cat << 'EOF_MD' > ".agent/prompts/task-quality-gate.md"
 
 You are a strict Quality Assurance gatekeeper. Your job is to evaluate if a task is ready to be worked on.
 
-## Evaluation Criteria
+## Evaluation Criteria (Total 60 pts)
 
-1.  **Clarity (40 pts)**: Is the goal of the task immediately clear? Is the title descriptive?
-2.  **Context (30 pts)**: Does the description provide enough context (Why is this needed? Where does it happen?)?
-3.  **Acceptance Criteria (30 pts)**: Are there specific, testable conditions that define "Done"? (e.g., "User can log in," "Error is logged to console").
+1.  **Basic Completeness (10 pts)**:
+    - Is the title specific? (e.g., "Fix bug" = 0, "Fix login timeout" = 10)
+    - Are tags/priority set?
 
-## Scoring
+2.  **Purpose Clarity (10 pts)**:
+    - Does the description explain *why* this is needed?
+    - Is the context clear?
 
--   **Score < 30**: REJECT. The task is too vague.
--   **Score >= 30**: APPROVE.
+3.  **Type Matching (10 pts)**:
+    - If Bug: Are reproduction steps included?
+    - If Feature: Is the user story clear?
+
+4.  **Acceptance Criteria (10 pts)**:
+    - Are there clear "Done" conditions?
+    - **CRITICAL**: Are there specific verification steps?
+
+5.  **Project Rules & TDD (10 pts)**:
+    - Does it follow project conventions?
+    - **TDD Requirement**: Does the description include a "Test Design" or "Regression Test" section? (Required for high score)
+
+6.  **Latest Focus (10 pts)**:
+    - Does it align with current project goals?
+
+## Scoring Thresholds
+
+-   **Score < 30**: 🔴 REJECT. (Missing critical info)
+-   **30 <= Score < 40**: 🟠 NEEDS IMPROVEMENT. (Vague)
+-   **40 <= Score < 50**: 🟡 GOOD. (Acceptable)
+-   **50 <= Score <= 60**: 🟢 EXCELLENT. (Ready to start)
 
 ## Instructions
 
-1.  Read the task title and description provided by the agent.
-2.  Calculate the score based on the criteria above.
-3.  If the score is low, list specifically what is missing (e.g., "Missing acceptance criteria").
-4.  Output the final decision clearly: "SCORE: <n>/100. STATUS: [APPROVE/REJECT]".
+1.  Read the task title and description.
+2.  Calculate the score for each category.
+3.  Sum the scores.
+4.  Output the detailed breakdown and final decision:
+    "SCORE: <n>/60. STATUS: [REJECT/NEEDS_IMPROVEMENT/GOOD/EXCELLENT]"
+    "MISSING: <list of missing items>"
 EOF_MD
 
 # --- Restoring GEMINI.md ---
@@ -934,7 +957,7 @@ Create a new task.
 ## Usage
 
 ```bash
-/pm/task/create "Fix email sync bug" --description "User reports timeout" --priority high --tags "bug,email"
+/pm/task/create "Fix email sync bug" --description "User reports timeout..." --priority high --tags "bug,email"
 ```
 
 ## Steps
@@ -951,16 +974,22 @@ Create a new task.
     - Increment `nextId`.
     - Write `tasks.json`.
 
-4.  **Quality Check (Advisory)**
+4.  **Quality Check (Strict)**
     - **Read Prompt**: Read `.agent/prompts/task-quality-gate.md`.
-    - **Evaluate**: Check title and description.
+    - **Evaluate**: Check title, description, and TDD compliance.
     - **Feedback**:
-      - If Score < 30: "⚠️ Task created, but quality is low. You will need to improve it before starting."
-      - If Score >= 30: "✅ Task created."
+      - **Score < 30 (REJECT)**: 
+        - "🔴 Task #<id> created but **REJECTED** by Quality Gate."
+        - "⚠️ YOU MUST IMPROVE THIS TASK BEFORE STARTING."
+        - Show missing items.
+      - **30 <= Score < 40 (NEEDS IMPROVEMENT)**:
+        - "🟠 Task #<id> created. Quality is low."
+        - "Suggest adding: <missing items>"
+      - **Score >= 50 (EXCELLENT)**:
+        - "🟢 Task #<id> created. Ready to start!"
 
 5.  **Notify User**
-    - "✅ Created Task #<id>"
-    - Show advisory warning if applicable.
+    - Display the created task details and the Quality Gate result.
 
 EOF_MD
 
@@ -1102,7 +1131,9 @@ Start working on a task with strict checks and context syncing.
 3.  **Quality Gate (Strict)**
     - Read `.agent/prompts/task-quality-gate.md`.
     - Evaluate task.
-    - If Score < 30: STOP.
+    - **Rule**:
+      - If Score < 30: **STOP**. "🔴 Task quality is too low to start. Please run `/pm:task:update` to add details."
+      - If Score < 40: **WARN**. "🟠 Task quality is low. Are you sure you want to start? (Proceeding...)"
 
 4.  **Update Task Status**
     - Set `status` to "in_progress".

@@ -27,7 +27,9 @@ Start working on a task with strict checks and context syncing.
 3.  **Quality Gate (Strict)**
     - Read `.agent/prompts/task-quality-gate.md`.
     - Evaluate task.
-    - If Score < 30: STOP.
+    - **Rule**:
+      - If Score < 30: **STOP**. "🔴 Task quality is too low to start. Please run `/pm:task:update` to add details."
+      - If Score < 40: **WARN**. "🟠 Task quality is low. Are you sure you want to start? (Proceeding...)"
 
 4.  **Update Task Status**
     - Set `status` to "in_progress".

@@ -5,7 +5,7 @@ Create a new task.
 ## Usage
 
 ```bash
-/pm/task/create "Fix email sync bug" --description "User reports timeout" --priority high --tags "bug,email"
+/pm/task/create "Fix email sync bug" --description "User reports timeout..." --priority high --tags "bug,email"
 ```
 
 ## Steps
@@ -22,14 +22,20 @@ Create a new task.
     - Increment `nextId`.
     - Write `tasks.json`.
 
-4.  **Quality Check (Advisory)**
+4.  **Quality Check (Strict)**
     - **Read Prompt**: Read `.agent/prompts/task-quality-gate.md`.
-    - **Evaluate**: Check title and description.
+    - **Evaluate**: Check title, description, and TDD compliance.
     - **Feedback**:
-      - If Score < 30: "⚠️ Task created, but quality is low. You will need to improve it before starting."
-      - If Score >= 30: "✅ Task created."
+      - **Score < 30 (REJECT)**: 
+        - "🔴 Task #<id> created but **REJECTED** by Quality Gate."
+        - "⚠️ YOU MUST IMPROVE THIS TASK BEFORE STARTING."
+        - Show missing items.
+      - **30 <= Score < 40 (NEEDS IMPROVEMENT)**:
+        - "🟠 Task #<id> created. Quality is low."
+        - "Suggest adding: <missing items>"
+      - **Score >= 50 (EXCELLENT)**:
+        - "🟢 Task #<id> created. Ready to start!"
 
 5.  **Notify User**
-    - "✅ Created Task #<id>"
-    - Show advisory warning if applicable.
+    - Display the created task details and the Quality Gate result.
 
