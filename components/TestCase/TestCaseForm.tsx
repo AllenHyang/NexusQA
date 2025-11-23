@@ -1,6 +1,6 @@
 import React from "react";
 import { TestCase, Priority, TestSuite } from "@/types";
-import { Folder, Link2, Tag, BookOpen } from "lucide-react";
+import { Folder, Link2, Tag, BookOpen, CheckCircle2 } from "lucide-react";
 import { TagBadge } from "../ui";
 
 interface TestCaseFormProps {
@@ -70,7 +70,9 @@ export function TestCaseForm({ editCase, setEditCase, suites }: TestCaseFormProp
                 <select 
                 value={editCase.priority || "MEDIUM"}
                 onChange={e => setEditCase({...editCase, priority: e.target.value as Priority})}
-                className="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white text-sm font-bold focus:ring-2 focus:ring-zinc-900/5 outline-none transition-shadow text-zinc-800">
+                className="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white text-sm font-bold focus:ring-2 focus:ring-zinc-900/5 outline-none transition-shadow text-zinc-800"
+                defaultValue="MEDIUM"
+                >
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
                 <option value="HIGH">High</option>
@@ -112,6 +114,21 @@ export function TestCaseForm({ editCase, setEditCase, suites }: TestCaseFormProp
             onChange={e => setEditCase({...editCase, userStory: e.target.value})}
           />
           <p className="text-[10px] text-blue-400 mt-2 font-bold">Defines the business value and context for this test case.</p>
+        </div>
+
+        {/* Acceptance Criteria Section */}
+        <div className="bg-emerald-50/50 p-6 rounded-2xl border border-emerald-100 shadow-sm">
+          <label className="block text-xs font-bold text-emerald-600 uppercase tracking-wider mb-3 flex items-center">
+             <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+             Acceptance Criteria (AC)
+          </label>
+          <textarea 
+            className="w-full px-4 py-3 border border-emerald-100 rounded-xl text-sm bg-white focus:bg-white focus:ring-2 focus:ring-emerald-100 outline-none transition-colors min-h-[80px] font-medium text-zinc-800 placeholder-zinc-400"
+            placeholder="Given [context], When [event], Then [outcome]..."
+            value={editCase.acceptanceCriteria || ""}
+            onChange={e => setEditCase({...editCase, acceptanceCriteria: e.target.value})}
+          />
+          <p className="text-[10px] text-emerald-400 mt-2 font-bold">Defines the 'Done' conditions for this test case.</p>
         </div>
 
         {/* Preconditions */}

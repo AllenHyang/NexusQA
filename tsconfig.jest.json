@@ -3,6 +3,7 @@
   "compilerOptions": {
     "module": "commonjs",
     "target": "es2016",
+    "jsx": "react-jsx",
     "types": ["jest", "node"]
   },
   "include": [

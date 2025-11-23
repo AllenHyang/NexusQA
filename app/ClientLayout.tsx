@@ -87,6 +87,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       description: editCase.description,
       userStory: editCase.userStory,
       requirementId: editCase.requirementId,
+      acceptanceCriteria: editCase.acceptanceCriteria,
       preconditions: editCase.preconditions,
       status: editCase.status as TestStatus,
       priority: editCase.priority as Priority,

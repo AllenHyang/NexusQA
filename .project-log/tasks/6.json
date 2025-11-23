@@ -2,7 +2,7 @@
   "id": "6",
   "title": "Implement dedicated Acceptance Criteria field in TestCaseForm",
   "description": "## Context\nThe current SOP requires clear Acceptance Criteria (AC) for user stories, but NexusQA lacks a dedicated field for it. AC is often mixed into the User Story or Description, making it harder to track and enforce.\n\n## User Story\nAs a Product Manager, I want a dedicated \"Acceptance Criteria\" field in the Test Case form so that I can clearly define the \"Done\" conditions for each test case.\n\n## Functional Requirements\n1.  **Data Model**: Add an optional `acceptanceCriteria: string;` field to the `TestCase` interface in `types.ts` and `schema.prisma`.\n2.  **UI**: Add a new multiline text input field for Acceptance Criteria in `TestCaseForm.tsx`, preferably below the User Story section, with a placeholder like \"Given... When... Then...\" or similar Gherkin-like examples.\n3.  **Display**: Ensure the AC field is displayed when viewing a test case.\n\n## Test Design (TDD)\n1.  **Unit Test (Form)**: Test `TestCaseForm` component to ensure the new field correctly updates `editCase.acceptanceCriteria` state.\n2.  **E2E Test**: Verify that AC can be created, saved, and displayed correctly from end-to-end.",
-  "status": "todo",
+  "status": "in_progress",
   "priority": "medium",
   "tags": [
     "feature",

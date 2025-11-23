@@ -62,6 +62,7 @@ export interface TestCase {
   history?: ExecutionRecord[]; // Audit trail
   createdAt?: string;
   updatedAt?: string;
+  acceptanceCriteria?: string;
 }
 
 export interface Project {
