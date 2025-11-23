@@ -1,0 +1,14 @@
+{
+  "id": "8",
+  "title": "Add SKIPPED status to TestStatus type and UI",
+  "description": "## Context\nThe NexusQA SOP defines a 'Skipped' status for test execution, but this status is currently missing from the `TestStatus` type definition and its corresponding UI selectors.\n\n## Functional Requirements\n1.  **Data Model**: Add `"SKIPPED"` to the `TestStatus` type in `types.ts` and `schema.prisma`.\n2.  **UI Integration**: Update relevant UI components (e.g., `StatusBadge.tsx`, `TestCaseModal.tsx`'s `onExecute` dropdown/buttons) to support and display the `SKIPPED` status.\n3.  **API**: Ensure the API correctly handles the new `SKIPPED` status for updates.\n\n## Test Design (TDD)\n1.  **Unit Test (Type)**: Add a simple test to verify `TestStatus` includes `SKIPPED`.\n2.  **Component Test (UI)**: Test `StatusBadge` to render `SKIPPED` correctly. Test `TestCaseModal`'s execution panel to ensure `SKIPPED` can be selected and `onExecute` is called with it.",
+  "status": "todo",
+  "priority": "medium",
+  "tags": [
+    "sop-compliance",
+    "feature",
+    "qa"
+  ],
+  "created_at": "2025-11-23T00:00:00.000Z",
+  "updated_at": "2025-11-23T00:00:00.000Z"
+}
