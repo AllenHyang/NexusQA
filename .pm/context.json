@@ -1,8 +1,8 @@
 {
-  "currentTaskId": 4,
-  "lastTaskId": 3,
+  "currentTaskId": null,
+  "lastTaskId": 4,
   "workSession": {
-    "startTime": "2025-11-23T00:00:00.000Z",
-    "taskId": 4
+    "startTime": null,
+    "taskId": null
   }
 }
