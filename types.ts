@@ -60,6 +60,8 @@ export interface TestCase {
   visualReference?: string; // Base64 image
   imageFeedback?: 'up' | 'down'; // Added for AI image generation feedback
   history?: ExecutionRecord[]; // Audit trail
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Project {

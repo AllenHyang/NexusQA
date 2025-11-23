@@ -9,7 +9,7 @@ import { LoginView } from "@/views/LoginView";
 import { NewProjectModal } from "@/components/NewProjectModal";
 import { TestCaseModal } from "@/components/TestCaseModal";
 import { HistoryModal } from "@/components/HistoryModal";
-import { ExecutionRecord, Project, TestCase, TestStatus } from "@/types";
+import { ExecutionRecord, Project, TestCase, TestStatus, Priority, TestStep } from "@/types";
 import { XCircle } from "lucide-react"; // Added XCircle for toast component
 
 interface Toast {
@@ -76,7 +76,43 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   const handleSaveTestCaseWrapper = async () => {
     if (!editCase.title || !editCase.projectId) return;
-    await saveTestCase(editCase);
+
+    const frontendTestCase: Partial<TestCase> = {
+      id: editCase.id,
+      projectId: editCase.projectId,
+      suiteId: editCase.suiteId,
+      title: editCase.title,
+      description: editCase.description,
+      userStory: editCase.userStory,
+      requirementId: editCase.requirementId,
+      preconditions: editCase.preconditions,
+      status: editCase.status as TestStatus,
+      priority: editCase.priority as Priority,
+      authorId: editCase.authorId,
+      assignedToId: editCase.assignedToId,
+      visualReference: editCase.visualReference,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ...((editCase as any).imageFeedback !== undefined && { imageFeedback: (editCase as any).imageFeedback }),
+      history: editCase.history,
+      steps: editCase.steps as TestStep[], // Cast steps as well
+      // tags and dates handled below
+      createdAt: editCase.createdAt instanceof Date ? editCase.createdAt.toISOString() : editCase.createdAt as string | undefined,
+      updatedAt: editCase.updatedAt instanceof Date ? editCase.updatedAt.toISOString() : editCase.updatedAt as string | undefined,
+    };
+
+    // Handle tags conversion
+    if (typeof editCase.tags === 'string') {
+      try {
+        frontendTestCase.tags = JSON.parse(editCase.tags);
+      } catch (e) {
+        console.error("Failed to parse tags string:", editCase.tags, e);
+        frontendTestCase.tags = [];
+      }
+    } else if (editCase.tags) {
+      frontendTestCase.tags = editCase.tags;
+    }
+
+    await saveTestCase(frontendTestCase);
     closeTestCaseModal();
   };
 
@@ -84,7 +120,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     setLoadingAI(true);
     setEditCase({ steps: [] }); // Clear steps before starting generation
     try {
-      await generateStepsForCase(editCase.title || "", editCase.description || "", setEditCase, showToast);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await generateStepsForCase(editCase.title || "", editCase.description || "", setEditCase as any, showToast);
     } catch (error) {
       console.error("Error in handleGenerateSteps:", error);
       showToast("An unexpected error occurred during step generation.", 'error');
@@ -114,11 +151,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         evidence: executionEvidence
     };
 
-    const updatedCase = {
-        ...editCase,
+    const updatedCase: Partial<TestCase> = {
+        ...editCase as unknown as Partial<TestCase>,
         status,
         history: [...(editCase.history || []), newRecord]
-    } as TestCase;
+    };
 
     await saveTestCase(updatedCase);
     
@@ -135,7 +172,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     if (!editCase || !editCase.steps) return;
 
     const updatedSteps = editCase.steps.map(step => 
-      step.id === stepId ? { ...step, feedback: step.feedback === feedback ? undefined : feedback } : step
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      step.id === stepId ? { ...step, feedback: (step as any).feedback === feedback ? undefined : feedback } : step
     );
     setEditCase({ ...editCase, steps: updatedSteps });
   };
@@ -143,8 +181,10 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const handleVisualFeedback = (feedback: 'up' | 'down') => {
     if (!editCase) return;
 
-    const updatedFeedback = editCase.imageFeedback === feedback ? undefined : feedback;
-    setEditCase({ ...editCase, imageFeedback: updatedFeedback });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updatedFeedback = (editCase as any).imageFeedback === feedback ? undefined : feedback;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setEditCase({ ...editCase, imageFeedback: updatedFeedback } as any);
   };
 
   // --- Render ---
@@ -176,8 +216,10 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
       {showCaseModal && (
           <TestCaseModal 
-            editCase={editCase}
-            setEditCase={setEditCase}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            editCase={editCase as any}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setEditCase={setEditCase as any}
             onClose={closeTestCaseModal}
             onSave={handleSaveTestCaseWrapper}
             loadingAI={loadingAI}

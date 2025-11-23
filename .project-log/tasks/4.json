@@ -2,7 +2,7 @@
   "id": "4",
   "title": "Implement \"One-Click Bug Reporting\" (Copy to Clipboard)",
   "description": "## Context\nWhen a QA marks an execution record as \"Failed\", manually copying steps to Jira/GitHub is tedious. We need a quick way to export this info.\n\n## User Story\nAs a QA Engineer, I want to click a \"Copy as Markdown\" button on a failed test execution so that I can quickly paste the report into a bug tracker.\n\n## Functional Requirements\n1.  **UI**: Add a \"Copy Report\" button/icon in the `ExecutionHistoryPanel` for each record.\n2.  **Format**: The clipboard content should be formatted as Markdown:\n    ```markdown\n    ### Defect Report: [Test Case Title]\n    **Status:** [Status]\n    **Environment:** [Env]\n    **Preconditions:**\n    [Preconditions]\n    **Steps to Reproduce:**\n    1. [Action] -> [Expected]\n    2. ...\n    **Actual Result/Notes:**\n    [Execution Notes]\n    ```\n\n## Test Design (TDD)\n1.  **Unit Test**: Create `lib/formatters.ts`. Write a test that passes a mock `TestCase` and `ExecutionRecord` and asserts the returned string matches the expected Markdown format.\n2.  **Component Test**: Mock `navigator.clipboard.writeText`. Render the button. Click it. Verify the mock was called with the correct string.",
-  "status": "todo",
+  "status": "in_progress",
   "priority": "high",
   "tags": [
     "feature",
