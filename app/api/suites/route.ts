@@ -1,53 +1,57 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const DATA_DIR = path.join(process.cwd(), 'data');
-const SUITES_FILE = path.join(DATA_DIR, 'suites.json');
-
-const readSuites = () => {
-  if (!fs.existsSync(SUITES_FILE)) return [];
-  return JSON.parse(fs.readFileSync(SUITES_FILE, 'utf-8'));
-};
-
-const writeSuites = (suites: any[]) => {
-  fs.writeFileSync(SUITES_FILE, JSON.stringify(suites, null, 2));
-};
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get('projectId');
-    let suites = readSuites();
-    if (projectId) suites = suites.filter((s: any) => s.projectId === projectId);
-    return NextResponse.json(suites);
+    
+    try {
+        const where = projectId ? { projectId } : {};
+        const suites = await prisma.testSuite.findMany({ where });
+        return NextResponse.json(suites);
+    } catch (e) {
+        return NextResponse.json({ error: "Failed to fetch suites" }, { status: 500 });
+    }
 }
 
 export async function POST(request: Request) {
-    const body = await request.json();
-    const suites = readSuites();
-    const newSuite = { ...body, id: `suite-${Date.now()}`, createdAt: new Date().toISOString() };
-    suites.push(newSuite);
-    writeSuites(suites);
-    return NextResponse.json(newSuite);
+    try {
+        const body = await request.json();
+        const newSuite = await prisma.testSuite.create({
+            data: {
+                name: body.name,
+                projectId: body.projectId,
+                parentId: body.parentId
+            }
+        });
+        return NextResponse.json(newSuite);
+    } catch (e) {
+        return NextResponse.json({ error: "Failed to create suite" }, { status: 500 });
+    }
 }
 
 export async function PUT(request: Request) {
-    const body = await request.json();
-    const suites = readSuites();
-    const index = suites.findIndex((s: any) => s.id === body.id);
-    if (index !== -1) {
-        suites[index] = { ...suites[index], ...body };
-        writeSuites(suites);
-        return NextResponse.json(suites[index]);
+    try {
+        const body = await request.json();
+        const updatedSuite = await prisma.testSuite.update({
+            where: { id: body.id },
+            data: { name: body.name }
+        });
+        return NextResponse.json(updatedSuite);
+    } catch (e) {
+        return NextResponse.json({ error: "Failed to update suite" }, { status: 500 });
     }
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
 }
 
 export async function DELETE(request: Request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    let suites = readSuites();
-    suites = suites.filter((s: any) => s.id !== id);
-    writeSuites(suites);
-    return NextResponse.json({ success: true });
+    if (!id) return NextResponse.json({ error: "Missing ID" }, { status: 400 });
+
+    try {
+        await prisma.testSuite.delete({ where: { id } });
+        return NextResponse.json({ success: true });
+    } catch (e) {
+        return NextResponse.json({ error: "Failed to delete suite" }, { status: 500 });
+    }
 }

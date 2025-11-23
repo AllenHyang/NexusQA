@@ -12,6 +12,16 @@ fi
 # Cleanup old logs
 rm -f server.log
 
+# Check if port 3000 is in use and kill the process
+PORT=3000
+PID_ON_PORT=$(lsof -t -i:$PORT)
+
+if [ ! -z "$PID_ON_PORT" ]; then
+    echo "⚠️  Port $PORT is already in use by PID $PID_ON_PORT. Killing it..."
+    kill -9 $PID_ON_PORT
+    echo "✅ Process on port $PORT killed."
+fi
+
 echo "🚀 Starting Next.js Development Server..."
 echo "📝 Server logs will be written to server.log"
 
@@ -31,12 +41,18 @@ echo "👉 Press Ctrl+C to stop the server"
 tail -f server.log &
 TAIL_PID=$!
 
+# Start the Puppeteer Console Watcher
+echo "👀 Starting Console Watcher (opens Chrome)..."
+node console_watcher.js &
+WATCHER_PID=$!
+
 # Function to handle script exit
 cleanup() {
     echo ""
     echo "🛑 Stopping server..."
     kill $SERVER_PID
     kill $TAIL_PID
+    kill $WATCHER_PID
     exit
 }
 

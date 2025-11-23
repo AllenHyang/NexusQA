@@ -1,43 +1,32 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const DATA_DIR = path.join(process.cwd(), 'data');
-const PROJECTS_FILE = path.join(DATA_DIR, 'projects.json');
-
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR);
-}
-
-// Helper to read projects
-const readProjects = () => {
-  if (!fs.existsSync(PROJECTS_FILE)) {
-    return [];
-  }
-  const data = fs.readFileSync(PROJECTS_FILE, 'utf-8');
-  return JSON.parse(data);
-};
-
-// Helper to write projects
-const writeProjects = (projects: any[]) => {
-  fs.writeFileSync(PROJECTS_FILE, JSON.stringify(projects, null, 2));
-};
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
-  const projects = readProjects();
-  return NextResponse.json(projects);
+  try {
+    const projects = await prisma.project.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+    return NextResponse.json(projects);
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const projects = readProjects();
-  const newProject = {
-    ...body,
-    id: `p-${Date.now()}`,
-    createdAt: new Date().toISOString(),
-  };
-  projects.unshift(newProject); // Add to top
-  writeProjects(projects);
-  return NextResponse.json(newProject, { status: 201 });
+  try {
+    const body = await request.json();
+    const newProject = await prisma.project.create({
+      data: {
+        name: body.name,
+        description: body.description,
+        coverImage: body.coverImage,
+        repositoryUrl: body.repositoryUrl,
+      }
+    });
+    return NextResponse.json(newProject, { status: 201 });
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json({ error: "Failed to create project" }, { status: 500 });
+  }
 }

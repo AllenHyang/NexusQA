@@ -1,76 +1,91 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const DATA_DIR = path.join(process.cwd(), 'data');
-const TESTCASES_FILE = path.join(DATA_DIR, 'testcases.json');
-
-// Helper to read test cases
-const readTestCases = () => {
-  if (!fs.existsSync(TESTCASES_FILE)) {
-    return [];
-  }
-  const data = fs.readFileSync(TESTCASES_FILE, 'utf-8');
-  return JSON.parse(data);
-};
-
-// Helper to write test cases
-const writeTestCases = (testCases: any[]) => {
-  fs.writeFileSync(TESTCASES_FILE, JSON.stringify(testCases, null, 2));
-};
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const projectId = searchParams.get('projectId');
   
-  let testCases = readTestCases();
-  
-  if (projectId) {
-    testCases = testCases.filter((tc: any) => tc.projectId === projectId);
+  try {
+      const where = projectId ? { projectId } : {};
+      const testCases = await prisma.testCase.findMany({
+          where,
+          orderBy: { createdAt: 'desc' }
+      });
+      
+      // Parse JSON fields for frontend
+      const parsedCases = testCases.map(tc => ({
+          ...tc,
+          steps: JSON.parse(tc.steps as string),
+          history: JSON.parse(tc.history as string)
+      }));
+      
+      return NextResponse.json(parsedCases);
+  } catch (e) {
+      return NextResponse.json({ error: "Failed to fetch test cases" }, { status: 500 });
   }
-  
-  return NextResponse.json(testCases);
 }
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const testCases = readTestCases();
-  
-  // Check if update or create
-  if (body.id) {
-      const index = testCases.findIndex((tc: any) => tc.id === body.id);
-      if (index !== -1) {
-          testCases[index] = { ...testCases[index], ...body };
-          writeTestCases(testCases);
-          return NextResponse.json(testCases[index]);
-      }
-  }
+  try {
+      const body = await request.json();
+      
+      const payload = {
+          title: body.title,
+          description: body.description,
+          status: body.status || "UNTESTED",
+          priority: body.priority || "P2",
+          projectId: body.projectId,
+          suiteId: body.suiteId,
+          visualReference: body.visualReference,
+          // Ensure JSON string
+          steps: JSON.stringify(body.steps || []),
+          history: JSON.stringify(body.history || [])
+      };
 
-  const newTestCase = {
-    ...body,
-    id: `tc-${Date.now()}`,
-    history: []
-  };
-  testCases.unshift(newTestCase);
-  writeTestCases(testCases);
-  return NextResponse.json(newTestCase, { status: 201 });
+      if (body.id) {
+          // Update
+          const updated = await prisma.testCase.update({
+              where: { id: body.id },
+              data: payload
+          });
+          return NextResponse.json({
+              ...updated,
+              steps: JSON.parse(updated.steps as string),
+              history: JSON.parse(updated.history as string)
+          });
+      } else {
+          // Create
+          const created = await prisma.testCase.create({
+              data: payload
+          });
+          return NextResponse.json({
+              ...created,
+              steps: JSON.parse(created.steps as string),
+              history: JSON.parse(created.history as string)
+          }, { status: 201 });
+      }
+  } catch (e) {
+      console.error(e);
+      return NextResponse.json({ error: "Failed to save test case" }, { status: 500 });
+  }
 }
 
 export async function PUT(request: Request) {
     // Bulk Update Handler
-    const body = await request.json();
-    const { ids, updates } = body;
-    
-    let testCases = readTestCases();
-    testCases = testCases.map((tc: any) => {
-        if (ids.includes(tc.id)) {
-            return { ...tc, ...updates };
-        }
-        return tc;
-    });
-    
-    writeTestCases(testCases);
-    return NextResponse.json({ success: true });
+    try {
+        const body = await request.json();
+        const { ids, updates } = body;
+        
+        // Prisma updateMany
+        await prisma.testCase.updateMany({
+            where: { id: { in: ids } },
+            data: updates
+        });
+        
+        return NextResponse.json({ success: true });
+    } catch (e) {
+        return NextResponse.json({ error: "Failed to bulk update" }, { status: 500 });
+    }
 }
 
 export async function DELETE(request: Request) {
@@ -78,15 +93,15 @@ export async function DELETE(request: Request) {
     const id = searchParams.get('id');
     const ids = searchParams.get('ids'); // Comma separated
 
-    let testCases = readTestCases();
-    
-    if (id) {
-        testCases = testCases.filter((tc: any) => tc.id !== id);
-    } else if (ids) {
-        const idList = ids.split(',');
-        testCases = testCases.filter((tc: any) => !idList.includes(tc.id));
+    try {
+        if (id) {
+            await prisma.testCase.delete({ where: { id } });
+        } else if (ids) {
+            const idList = ids.split(',');
+            await prisma.testCase.deleteMany({ where: { id: { in: idList } } });
+        }
+        return NextResponse.json({ success: true });
+    } catch (e) {
+        return NextResponse.json({ error: "Failed to delete test case" }, { status: 500 });
     }
-    
-    writeTestCases(testCases);
-    return NextResponse.json({ success: true });
 }

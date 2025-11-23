@@ -23,8 +23,13 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     generateStepsForCase, generateMockupForCase
   } = useAppStore();
 
+  const initialized = React.useRef(false);
+
   useEffect(() => {
-    refreshData();
+    if (!initialized.current) {
+      refreshData();
+      initialized.current = true;
+    }
   }, []);
 
   // UI Context

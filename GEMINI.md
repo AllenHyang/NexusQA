@@ -92,6 +92,13 @@ node check_logs.js
 *   `src/app/actions.ts`：所有 Gemini API 调用的集中逻辑（服务器端 Server Actions）。
 *   `src/types.ts`：所有领域实体的 TypeScript 接口。
 *   `src/components/`：可重用的 UI 组件（模态框、列表）。
+
+## 数据持久化
+
+*   **Database:** `dev.db` (SQLite) 是唯一的数据源。
+*   **ORM:** Prisma 用于管理数据库架构和访问。
+*   **初始化:** 数据库已通过一次性脚本 `seed-db.ts` (已删除) 初始化，包含项目和测试用例的演示数据。
+
 *   `src/views/`：页面级组件（仪表板、登录、项目详细信息）。
 *   `src/vite.config.ts`：Vite 配置，包括环境变量处理。
 
@@ -102,11 +109,21 @@ node check_logs.js
 *   **状态管理：** 
     *   **`Zustand` (`store/useAppStore.ts`):** 核心应用状态管理，替代了之前的 `UserContext` 和 `DataContext`。管理用户会话、项目数据、测试用例数据以及 API 交互。
     *   **`UIContext`:** 仅管理全局 UI 状态（模态框可见性、加载指示器、搜索查询）。
-    *   **`LanguageContext`:** 管理国际化翻译。
+    *   **`LanguageContext`**: 管理国际化翻译。
+
+### 数据持久化 (SQLite + Prisma)
+
+项目已从文件系统 JSON 迁移到 **SQLite** 数据库，使用 **Prisma ORM** 进行管理。
+
+*   **Database:** `dev.db` (本地 SQLite 文件)。
+*   **ORM:** Prisma (`lib/prisma.ts`, `prisma/schema.prisma`)。
+*   **API:** 后端路由 (`app/api/`) 现在通过 Prisma Client 读写数据库。
+*   **扩展性:** 要切换到 **PostgreSQL** 或 **MySQL**，只需修改 `prisma/schema.prisma` 中的 `provider` 并更新 `.env` 中的 `DATABASE_URL`，然后运行 `prisma migrate deploy`。
 
 ### 路由架构 (Next.js App Router)
 
 项目已完全迁移至 Next.js App Router。
+
 
 *   `app/layout.tsx`: 根布局，包含 `LanguageProvider` 和 `UIProvider`。
 *   `app/ClientLayout.tsx`: 客户端逻辑包装器，处理 Zustand 状态初始化、用户认证检查、全局模态框渲染和侧边栏导航。
