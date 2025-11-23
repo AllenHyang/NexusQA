@@ -18,7 +18,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const { 
     currentUser, users, login, logout,
     projects, suites, refreshData,
-    createProject, updateProject, deleteProject,
+    createProject, updateProject,
     saveTestCase, 
     generateStepsForCase, generateMockupForCase
   } = useAppStore();
@@ -30,7 +30,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       refreshData();
       initialized.current = true;
     }
-  }, []);
+  }, [refreshData]);
 
   // UI Context
   const {
@@ -65,9 +65,15 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   const handleGenerateSteps = async () => {
     setLoadingAI(true);
-    const steps = await generateStepsForCase(editCase.title || "", editCase.description || "");
-    setEditCase({ ...editCase, steps });
-    setLoadingAI(false);
+    setEditCase({ steps: [] }); // Clear steps before starting generation
+    try {
+      await generateStepsForCase(editCase.title || "", editCase.description || "", setEditCase);
+    } catch (error) {
+      console.error("Error in handleGenerateSteps:", error);
+      // Optional: Add a user-friendly toast notification here for error handling
+    } finally {
+      setLoadingAI(false);
+    }
   };
   
   const handleGenerateMockup = async () => {

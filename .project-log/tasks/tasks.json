@@ -4,7 +4,7 @@
       "id": 1,
       "title": "Implement Streaming UI for AI Test Step Generation",
       "description": "Replace the current 'all-or-nothing' loading state with a streaming response for `generateTestSteps` to improve perceived latency and user experience.",
-      "status": "todo",
+      "status": "in_progress",
       "priority": "high",
       "tags": [
         "ux",
@@ -37,7 +37,84 @@
         "dx"
       ],
       "createdAt": "2025-11-23T00:00:02.000Z"
+    },
+    {
+      "id": 4,
+      "title": "Implement recommendations from Technical Review",
+      "description": "Address the following points from the technical review:\n1. Add input validation using a library like Zod for API request bodies in `app/api/*` routes to prevent bad data.\n2. Strengthen AI parsing in `app/actions.ts` by adding a fallback mechanism to strip Markdown code blocks before parsing.\n3. Initialize testing by adding a basic test script (e.g., Vitest) to unit test utility functions and Store logic.",
+      "status": "todo",
+      "priority": "medium",
+      "tags": [
+        "tech-review",
+        "improvements"
+      ],
+      "createdAt": "2025-11-23T08:35:10.000Z"
+    },
+    {
+      "id": 5,
+      "title": "Implement TestPlan and TestRun Core Entities",
+      "description": "Introduce `TestPlan` and `TestRun` entities to the Prisma schema to support test cycles and versioning.\n- Schema changes: `TestPlan` (1) -> (n) `TestRun` (1) -> (n) `ExecutionRecord`.\n- UI changes: Add 'Create Test Plan' page, allowing users to select multiple test cases to form a 'package' for execution.\n- Why: To enable professional testing workflows (e.g., 'v1.2 Regression', 'v2.0 Smoke Test') and tracking.",
+      "status": "todo",
+      "priority": "high",
+      "tags": [
+        "core",
+        "schema",
+        "feature"
+      ],
+      "createdAt": "2025-11-23T08:45:00.000Z"
+    },
+    {
+      "id": 6,
+      "title": "Implement CSV/Excel Import and Export",
+      "description": "Add functionality to import and export test cases using CSV or Excel formats.\n- Why: To solve the 'slow start' problem and allow users to migrate existing assets.\n- Scope: Basic import/export logic and UI.",
+      "status": "todo",
+      "priority": "medium",
+      "tags": [
+        "feature",
+        "data",
+        "productivity"
+      ],
+      "createdAt": "2025-11-23T08:45:01.000Z"
+    },
+    {
+      "id": 7,
+      "title": "Implement Test Case Versioning",
+      "description": "Add version control for test cases to prevent data loss and ensure auditability.\n- Current behavior: Updates overwrite existing data.\n- New behavior: Create new versions on update, preserving history.\n- Why: Critical for regulated industries (Finance/Medical) to prove 'tested against requirements at time X'.",
+      "status": "todo",
+      "priority": "medium",
+      "tags": [
+        "feature",
+        "core",
+        "compliance"
+      ],
+      "createdAt": "2025-11-23T08:45:02.000Z"
+    },
+    {
+      "id": 8,
+      "title": "Implement Bulk Operations for Test Cases",
+      "description": "Add ability to perform bulk actions on test cases (e.g., change priority, move to different suite, delete).\n- Why: To improve operational efficiency when managing large numbers of test cases (>50).",
+      "status": "todo",
+      "priority": "medium",
+      "tags": [
+        "feature",
+        "ux",
+        "productivity"
+      ],
+      "createdAt": "2025-11-23T08:45:03.000Z"
+    },
+    {
+      "id": 9,
+      "title": "Enhance Collaboration and User Management",
+      "description": "Improve the user model and collaboration features.\n- Current: `authorId` and `assignedToId` are simple strings.\n- Change: Introduce a proper `User` model (or integrate with auth provider) and create relationships.\n- Features: Enable 'My Tasks' panel, assignment notifications.",
+      "status": "todo",
+      "priority": "medium",
+      "tags": [
+        "feature",
+        "collaboration",
+        "user"
+      ],
+      "createdAt": "2025-11-23T08:45:04.000Z"
     }
   ],
-  "nextId": 4
+  "nextId": 10
 }

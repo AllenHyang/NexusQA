@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { TestStatus, Priority, Project, TestCase } from "../types";
-import { CheckSquare, ImageIcon, Check, XCircle, Pencil, Trash2, Activity, ArrowRight } from "lucide-react";
+import { CheckSquare, ImageIcon, Check, XCircle, Pencil, Trash2 } from "lucide-react";
 
 export const StatusBadge = ({ status }: { status: TestStatus }) => {
   const colors: Record<string, string> = {
@@ -65,7 +65,7 @@ export const AILoader = () => (
 );
 
 interface AnimatedEmptyStateProps {
-    icon: any;
+    icon: React.ElementType;
     title: string;
     description: string;
     action?: React.ReactNode;
@@ -272,7 +272,15 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, testCases, on
             </div>
           );
         };
-export function SidebarItem({ icon, label, active, collapsed, onClick }: any) {
+interface SidebarItemProps {
+    icon: React.ReactNode;
+    label: string;
+    active: boolean;
+    collapsed: boolean;
+    onClick: () => void;
+}
+
+export function SidebarItem({ icon, label, active, collapsed, onClick }: SidebarItemProps) {
     return (
         <button 
             onClick={onClick}
@@ -317,14 +325,20 @@ export function SidebarItem({ icon, label, active, collapsed, onClick }: any) {
     );
 }
 
-export function StatCard({ title, value, icon, color }: any) {
+interface StatCardProps {
+  title: string;
+  value: string | number;
+  icon: React.ReactElement;
+}
+
+export function StatCard({ title, value, icon }: StatCardProps) {
     // Using simplified coloring for light mode clean look
     return (
         <div className="bento-card p-6 rounded-[2rem] flex flex-col justify-between h-full min-h-[140px] bg-white">
             <div className="flex justify-between items-start">
                 <p className="text-xs text-zinc-400 font-bold uppercase tracking-widest">{title}</p>
                 <div className={`p-2 rounded-xl bg-zinc-50 text-zinc-400 group-hover:text-zinc-800 transition-colors`}>
-                    {React.cloneElement(icon, { className: "w-5 h-5" })}
+                    {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: "w-5 h-5" })}
                 </div>
             </div>
             <div>
@@ -334,7 +348,7 @@ export function StatCard({ title, value, icon, color }: any) {
     );
 }
 
-export function Modal({ onClose, title, children }: any) {
+export function Modal({ onClose, title, children }: { onClose: () => void; title: string; children: React.ReactNode; }) {
     return (
         <div className="fixed inset-0 modal-overlay flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
             <div className="bg-white border border-zinc-100 rounded-[2rem] w-full max-w-md overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-400 shadow-2xl">

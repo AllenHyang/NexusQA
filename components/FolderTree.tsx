@@ -12,6 +12,16 @@ interface FolderTreeProps {
     onDelete: (id: string) => void;
 }
 
+interface FolderItemProps {
+    suite: TestSuite;
+    level?: number;
+    isSelected: boolean;
+    onSelect: (id: string | null) => void;
+    children?: React.ReactNode;
+    onRename: (id: string, name: string) => void;
+    onDelete: (id: string) => void;
+}
+
 const FolderItem = ({ 
     suite, 
     level = 0, 
@@ -20,7 +30,7 @@ const FolderItem = ({
     children,
     onRename,
     onDelete
-}: any) => {
+}: FolderItemProps) => {
     const [isExpanded, setIsExpanded] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(suite.name);
@@ -48,7 +58,7 @@ const FolderItem = ({
                     onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
                     className="p-0.5 hover:bg-zinc-200 rounded text-zinc-400 hover:text-zinc-600 transition-colors"
                 >
-                    {children && children.length > 0 ? (
+                    {children && React.Children.count(children) > 0 ? (
                         isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />
                     ) : <div className="w-3.5 h-3.5" />}
                 </div>

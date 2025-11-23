@@ -9,7 +9,8 @@ export async function GET(request: Request) {
         const where = projectId ? { projectId } : {};
         const suites = await prisma.testSuite.findMany({ where });
         return NextResponse.json(suites);
-    } catch (e) {
+    } catch (error: unknown) {
+        console.error("Suite API GET Error:", String(error));
         return NextResponse.json({ error: "Failed to fetch suites" }, { status: 500 });
     }
 }
@@ -25,7 +26,8 @@ export async function POST(request: Request) {
             }
         });
         return NextResponse.json(newSuite);
-    } catch (e) {
+    } catch (error: unknown) {
+        console.error("Suite API POST Error:", String(error));
         return NextResponse.json({ error: "Failed to create suite" }, { status: 500 });
     }
 }
@@ -38,7 +40,8 @@ export async function PUT(request: Request) {
             data: { name: body.name }
         });
         return NextResponse.json(updatedSuite);
-    } catch (e) {
+    } catch (error: unknown) {
+        console.error("Suite API PUT Error:", String(error));
         return NextResponse.json({ error: "Failed to update suite" }, { status: 500 });
     }
 }
@@ -51,7 +54,8 @@ export async function DELETE(request: Request) {
     try {
         await prisma.testSuite.delete({ where: { id } });
         return NextResponse.json({ success: true });
-    } catch (e) {
+    } catch (error: unknown) {
+        console.error("Suite API DELETE Error:", String(error));
         return NextResponse.json({ error: "Failed to delete suite" }, { status: 500 });
     }
 }

@@ -63,13 +63,13 @@ export function DashboardView({ testCases, projects, currentUser, searchQuery, o
         
         {/* 1. Key Stats (Top Row) */}
         <div className="lg:col-span-1 h-full">
-            <StatCard title="Total Cases" value={testCases.length} icon={<CheckSquare />} color="zinc" />
+            <StatCard title="Total Cases" value={testCases.length} icon={<CheckSquare />} />
         </div>
         <div className="lg:col-span-1 h-full">
-            <StatCard title="Pass Rate" value={`${testCases.length > 0 ? Math.round((passedCount / testCases.length) * 100) : 0}%`} icon={<CheckCircle2 />} color="zinc" />
+            <StatCard title="Pass Rate" value={`${testCases.length > 0 ? Math.round((passedCount / testCases.length) * 100) : 0}%`} icon={<CheckCircle2 />} />
         </div>
         <div className="lg:col-span-1 h-full">
-            <StatCard title="Active Projects" value={projects.length} icon={<Briefcase />} color="zinc" />
+            <StatCard title="Active Projects" value={projects.length} icon={<Briefcase />} />
         </div>
         
         {/* 2. Donut Chart (Square) */}

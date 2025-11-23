@@ -1,6 +1,6 @@
 'use server';
 
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { TestStep } from "@/types";
 
 // Ensure API key is available
@@ -13,7 +13,7 @@ const getGeminiClient = () => {
   return new GoogleGenAI({ apiKey });
 };
 
-export const generateTestSteps = async (title: string, description: string): Promise<TestStep[]> => {
+export async function* generateTestSteps(title: string, description: string): AsyncGenerator<TestStep, void, void> {
   try {
     const ai = getGeminiClient();
     const prompt = `
@@ -26,42 +26,51 @@ export const generateTestSteps = async (title: string, description: string): Pro
       3. Keep the steps concise but detailed enough to be reproducible.
       4. If no specific description is provided, infer the most likely positive path scenarios based on the title.
       5. Generate between 3 to 8 steps.
+      6. IMPORTANT: Output each test step as a single JSON object on a new line. Do NOT wrap the steps in a JSON array or markdown code block.
+         Example:
+         {"action": "Perform X", "expected": "See Y"}
+         {"action": "Perform A", "expected": "See B"}
     `;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: { 
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              action: { type: Type.STRING, description: "The action the tester performs" },
-              expected: { type: Type.STRING, description: "The expected result of the action" }
-            },
-            required: ["action", "expected"]
+    const response = await ai.models.generateContentStream({
+      model: "gemini-pro", // Changed to gemini-pro for better structured text output
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      // Removed responseMimeType and responseSchema to get raw text stream
+    });
+
+    let accumulatedText = '';
+    let stepCounter = 0;
+
+    for await (const chunk of response) {
+      accumulatedText += chunk.text;
+      
+      const lines = accumulatedText.split('\n');
+      accumulatedText = lines.pop() || ''; // Keep last potentially incomplete line
+
+      for (const line of lines) {
+        if (line.trim().startsWith('{') && line.trim().endsWith('}')) {
+          try {
+            const parsedStep = JSON.parse(line.trim()) as { action: string; expected: string };
+            if (parsedStep.action && parsedStep.expected) {
+              const newStep: TestStep = {
+                id: `step-${Date.now()}-${stepCounter++}`, // Unique ID
+                action: parsedStep.action,
+                expected: parsedStep.expected,
+              };
+              yield newStep; // Yield each complete step
+            }
+          } catch {
+            // Ignore parsing errors for incomplete lines
           }
         }
       }
-    });
-    
-    const text = response.text;
-    if (!text) return [];
-    
-    const rawSteps = JSON.parse(text);
-    
-    return rawSteps.map((s: any, i: number) => ({
-      id: `step-${Date.now()}-${i}`,
-      action: s.action,
-      expected: s.expected
-    }));
-  } catch (e) {
-    console.error("AI Gen Error", e);
-    return [];
+    } // This closes the 'for await' loop (line 43)
+  } catch (error: unknown) { // This catch block now correctly follows the 'try' block (line 18)
+    console.error("AI Streaming Gen Error", String(error));
+    // Rethrow or handle error appropriately in the stream consumer
+    throw error;
   }
-};
+}
 
 export const generateImage = async (prompt: string, type: "project" | "reference"): Promise<string | null> => {
   try {
@@ -84,8 +93,8 @@ export const generateImage = async (prompt: string, type: "project" | "reference
         }
     }
     return null;
-  } catch (e: any) {
-    console.error("Image Gen Error", JSON.stringify(e, Object.getOwnPropertyNames(e), 2));
+  } catch (error: unknown) {
+    console.error("Image Gen Error", JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
     return null;
   }
 };
@@ -109,8 +118,8 @@ export const generateAvatar = async (name: string, role: string): Promise<string
       }
     }
     return null;
-  } catch (e: any) {
-    console.error("Avatar Gen Error", JSON.stringify(e, Object.getOwnPropertyNames(e), 2));
+  } catch (error: unknown) {
+    console.error("Avatar Gen Error", JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
     return null;
   }
 };

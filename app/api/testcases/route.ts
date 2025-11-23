@@ -1,5 +1,22 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { TestStatus } from '@/types'; // Import TestStatus
+
+// Define interfaces for payload types
+interface StepPayload {
+    action: string;
+    expected: string;
+}
+
+interface HistoryPayload {
+    date?: string;
+    status: TestStatus;
+    executedBy: string;
+    notes?: string;
+    bugId?: string;
+    environment?: string;
+    evidence?: string;
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -27,8 +44,8 @@ export async function GET(request: Request) {
       }));
       
       return NextResponse.json(parsedCases);
-  } catch (e) {
-      console.error("GET Error:", e);
+  } catch (error: unknown) {
+      console.error("GET Error:", String(error));
       return NextResponse.json({ error: "Failed to fetch test cases" }, { status: 500 });
   }
 }
@@ -67,7 +84,7 @@ export async function POST(request: Request) {
               if (body.steps) {
                   await tx.testStep.deleteMany({ where: { testCaseId: body.id } });
                   if (body.steps.length > 0) {
-                      await Promise.all(body.steps.map((s: any, i: number) => 
+                      await Promise.all(body.steps.map((s: StepPayload, i: number) => 
                           tx.testStep.create({
                               data: {
                                   testCaseId: body.id,
@@ -84,7 +101,7 @@ export async function POST(request: Request) {
               if (body.history) {
                    await tx.executionRecord.deleteMany({ where: { testCaseId: body.id } });
                    if (body.history.length > 0) {
-                       await Promise.all(body.history.map((h: any) => 
+                       await Promise.all(body.history.map((h: HistoryPayload) => 
                            tx.executionRecord.create({
                                data: {
                                    testCaseId: body.id,
@@ -120,14 +137,14 @@ export async function POST(request: Request) {
               data: {
                   ...basicPayload,
                   steps: {
-                      create: body.steps?.map((s: any, i: number) => ({
+                      create: body.steps?.map((s: StepPayload, i: number) => ({
                           action: s.action,
                           expected: s.expected,
                           order: i
                       })) || []
                   },
                   history: {
-                      create: body.history?.map((h: any) => ({
+                      create: body.history?.map((h: HistoryPayload) => ({
                           date: h.date ? new Date(h.date) : new Date(),
                           status: h.status,
                           executedBy: h.executedBy,
@@ -146,8 +163,8 @@ export async function POST(request: Request) {
               history: created.history.map(h => ({ ...h, environment: h.env }))
           }, { status: 201 });
       }
-  } catch (e) {
-      console.error("POST Error:", e);
+  } catch (error: unknown) {
+      console.error("POST Error:", String(error));
       return NextResponse.json({ error: "Failed to save test case" }, { status: 500 });
   }
 }
@@ -165,7 +182,8 @@ export async function PUT(request: Request) {
         });
         
         return NextResponse.json({ success: true });
-    } catch (e) {
+    } catch (error: unknown) {
+        console.error("PUT Error:", String(error));
         return NextResponse.json({ error: "Failed to bulk update" }, { status: 500 });
     }
 }
@@ -183,7 +201,8 @@ export async function DELETE(request: Request) {
             await prisma.testCase.deleteMany({ where: { id: { in: idList } } });
         }
         return NextResponse.json({ success: true });
-    } catch (e) {
+    } catch (error: unknown) {
+        console.error("DELETE Error:", String(error));
         return NextResponse.json({ error: "Failed to delete test case" }, { status: 500 });
     }
 }

@@ -1,5 +1,5 @@
 import { StateCreator } from 'zustand';
-import { TestCase, TestSuite, TestStatus } from '@/types';
+import { TestCase, TestSuite, TestStatus, TestStep } from '@/types'; // Added TestStep
 import { generateTestSteps, generateImage } from '@/app/actions';
 
 export interface TestCaseSlice {
@@ -16,7 +16,7 @@ export interface TestCaseSlice {
   renameSuite: (id: string, name: string) => Promise<void>;
   deleteSuite: (id: string) => Promise<void>;
 
-  generateStepsForCase: (title: string, description: string) => Promise<any[]>;
+  generateStepsForCase: (title: string, description: string, setEditCase: (c: Partial<TestCase>) => void) => Promise<void>; // Updated signature
   generateMockupForCase: (prompt: string) => Promise<string | null>;
 }
 
@@ -97,8 +97,17 @@ export const createTestCaseSlice: StateCreator<TestCaseSlice> = (set) => ({
       set(state => ({ suites: state.suites.filter(s => s.id !== id) }));
   },
 
-  generateStepsForCase: async (title, description) => {
-      return await generateTestSteps(title, description);
+  generateStepsForCase: async (title, description, setEditCase) => { // Updated implementation
+      const currentSteps: TestStep[] = [];
+      try {
+          for await (const step of generateTestSteps(title, description)) {
+              currentSteps.push(step);
+              setEditCase({ steps: [...currentSteps] }); // Update state with each new step
+          }
+      } catch (error) {
+          console.error("Error streaming steps:", error);
+          setEditCase({ steps: [] }); // Clear steps on error or partial steps
+      }
   },
 
   generateMockupForCase: async (prompt) => {
