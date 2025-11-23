@@ -55,8 +55,8 @@ export function ExecutionPanel({
           <div className="relative group">
               <input 
                 type="text"
-                className="w-full pl-10 pr-4 py-2.5 border border-zinc-200 rounded-xl text-sm bg-zinc-50 focus:bg-white outline-none focus:ring-2 focus:ring-red-100 transition-all font-medium placeholder-zinc-400 text-zinc-800"
-                placeholder="Bug ID / Jira Ticket (Required if Failed)"
+                className={`w-full pl-10 pr-4 py-2.5 border rounded-xl text-sm bg-zinc-50 focus:bg-white outline-none focus:ring-2 transition-all font-medium placeholder-zinc-400 text-zinc-800 ${!bugId ? 'border-red-200 focus:ring-red-100' : 'border-zinc-200 focus:ring-zinc-900/5'}`}
+                placeholder="Bug ID / Jira Ticket (Mandatory for FAILED)"
                 value={bugId}
                 onChange={e => setBugId(e.target.value)}
               />
@@ -71,13 +71,7 @@ export function ExecutionPanel({
             Pass
           </button>
           <button 
-            onClick={() => {
-              if (!bugId) {
-                alert("Please enter a Bug ID / Ticket # for failed tests to track defects.");
-                return;
-              }
-              onExecute("FAILED");
-            }}
+            onClick={() => onExecute("FAILED")}
             className="py-3.5 rounded-2xl font-bold text-sm border transition-all flex flex-col items-center justify-center gap-1 bg-red-50 text-red-600 border-red-100 hover:bg-red-100 hover:border-red-200 hover:-translate-y-1 hover:shadow-md">
             <XCircle className="w-5 h-5" />
             Fail

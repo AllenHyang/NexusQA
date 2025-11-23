@@ -128,7 +128,7 @@ export function TestCaseForm({ editCase, setEditCase, suites }: TestCaseFormProp
             value={editCase.acceptanceCriteria || ""}
             onChange={e => setEditCase({...editCase, acceptanceCriteria: e.target.value})}
           />
-          <p className="text-[10px] text-emerald-400 mt-2 font-bold">Defines the 'Done' conditions for this test case.</p>
+          <p className="text-[10px] text-emerald-400 mt-2 font-bold">Defines the &apos;Done&apos; conditions for this test case.</p>
         </div>
 
         {/* Preconditions */}

@@ -143,6 +143,12 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const handleExecute = async (status: TestStatus) => {
     if (!editCase.id) return;
     
+    // Validation: Enforce Bug ID for FAILED status
+    if (status === "FAILED" && !executionBugId.trim()) {
+      showToast("Bug ID is required when marking a test as FAILED.", 'error');
+      return;
+    }
+
     const newRecord: ExecutionRecord = {
         id: `ex-${Date.now()}`,
         date: new Date().toISOString(),

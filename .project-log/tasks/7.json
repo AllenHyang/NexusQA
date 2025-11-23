@@ -2,7 +2,7 @@
   "id": "7",
   "title": "Enforce Bug ID for FAILED Test Cases",
   "description": "## Context\nThe SOP mandates that \"Fail must associate Bug ID\". Currently, NexusQA allows saving a FAILED test execution without a Bug ID, relying on tester discipline. This needs to be enforced at the code level.\n\n## Functional Requirements\n1.  **Validation Logic**: In `ClientLayout.tsx`'s `handleExecute` function, add a check: if `status` is `FAILED` and `executionBugId` is empty, prevent saving and show an error toast.\n2.  **UI Feedback**: Optionally, if `executionBugId` is empty when `FAILED` is selected, highlight the Bug ID input field in `ExecutionPanel.tsx` to guide the user.\n\n## Test Design (TDD)\n1.  **Unit Test (ClientLayout)**: Mock `showToast` and `saveTestCase`. Call `handleExecute` with `status: FAILED` and empty `executionBugId`. Assert `showToast` is called with an error message and `saveTestCase` is NOT called.\n2.  **E2E Test**: Perform a test execution, mark it as FAILED, and try to save without a Bug ID. Verify that an error message appears and the test case is not saved.",
-  "status": "todo",
+  "status": "done",
   "priority": "high",
   "tags": [
     "bug-fix",
@@ -11,5 +11,6 @@
     "ux"
   ],
   "created_at": "2025-11-23T00:00:00.000Z",
-  "updated_at": "2025-11-23T00:00:00.000Z"
+  "updated_at": "2025-11-23T00:00:00.000Z",
+  "completed_at": "2025-11-23T00:00:00.000Z"
 }
