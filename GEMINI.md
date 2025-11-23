@@ -22,9 +22,9 @@
 *   **样式：** Tailwind CSS（根据使用模式推断，尽管未明确读取配置，但此技术栈的标准配置）/标准 CSS
 *   **图标：** Lucide React
 
-## AI 集成 (`api.ts`)
+## AI 集成 (`src/app/actions.ts`)
 
-应用程序使用 `@google/genai` SDK 与 Gemini 模型进行交互。
+应用程序使用 `@google/genai` SDK 与 Gemini 模型进行交互。所有调用均通过 Next.js Server Actions 处理以确保 API 密钥安全。
 
 *   **文本生成 (`gemini-2.5-flash`)：** 用于生成结构化的 JSON 测试步骤。
 *   **图像生成 (`gemini-2.5-flash-image`)：** 用于生成：
@@ -89,7 +89,7 @@ node check_logs.js
 
 ## 目录结构
 
-*   `src/api.ts`：所有 Gemini API 调用的集中逻辑。
+*   `src/app/actions.ts`：所有 Gemini API 调用的集中逻辑（服务器端 Server Actions）。
 *   `src/types.ts`：所有领域实体的 TypeScript 接口。
 *   `src/components/`：可重用的 UI 组件（模态框、列表）。
 *   `src/views/`：页面级组件（仪表板、登录、项目详细信息）。
@@ -99,4 +99,23 @@ node check_logs.js
 
 *   **路径别名：** `@` 符号配置为解析到项目根目录 (`.`)。
 *   **环境变量：** 通过 `process.env.GEMINI_API_KEY` 访问（在 `vite.config.ts` 中填充）。
-*   **状态管理：** 可能使用本地 React 状态 (`useState`、`useEffect`) 或 Context，考虑到 `package.json` 中没有 Redux/Zustand（通过缺少依赖项验证），这表明其简单性。
+*   **状态管理：** 
+    *   **`Zustand` (`store/useAppStore.ts`):** 核心应用状态管理，替代了之前的 `UserContext` 和 `DataContext`。管理用户会话、项目数据、测试用例数据以及 API 交互。
+    *   **`UIContext`:** 仅管理全局 UI 状态（模态框可见性、加载指示器、搜索查询）。
+    *   **`LanguageContext`:** 管理国际化翻译。
+
+### 路由架构 (Next.js App Router)
+
+项目已完全迁移至 Next.js App Router。
+
+*   `app/layout.tsx`: 根布局，包含 `LanguageProvider` 和 `UIProvider`。
+*   `app/ClientLayout.tsx`: 客户端逻辑包装器，处理 Zustand 状态初始化、用户认证检查、全局模态框渲染和侧边栏导航。
+*   `app/error.tsx` & `app/global-error.tsx`: 错误边界，优雅处理运行时错误。
+*   `app/not-found.tsx`: 自定义 404 页面。
+*   `app/api/`: 后端 API 路由，处理基于文件系统的数据持久化（JSON 文件）。
+
+*   `app/page.tsx`: 仪表板页面。
+*   `app/login/page.tsx`: 登录页面。
+*   `app/projects/page.tsx`: 项目列表页面。
+*   `app/project/[projectId]/page.tsx`: 项目详情页面。
+*   `app/project/[projectId]/case/[testCaseId]/page.tsx`: 测试用例详情页面。

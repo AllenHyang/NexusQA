@@ -1,22 +1,25 @@
+"use client";
+
 import React, { useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom"; 
+import { usePathname, useRouter } from "next/navigation";
 import { SidebarItem } from "@/components/ui";
-import { LayoutDashboard, Briefcase, Menu, LogOut, Search, Settings, Command, Sparkles } from "lucide-react";
+import { LayoutDashboard, Briefcase, Menu, LogOut, Search, Settings } from "lucide-react";
 import { User, Project } from "@/types";
+import { useUI } from "@/contexts/UIContext";
 
 interface MainLayoutProps {
     currentUser: User;
     projects: Project[];
     onLogout: () => void;
     t: (key: string) => string;
-    searchQuery: string;
-    setSearchQuery: (q: string) => void;
+    children: React.ReactNode;
 }
 
-export function MainLayout({ currentUser, projects, onLogout, t, searchQuery, setSearchQuery }: MainLayoutProps) {
+export function MainLayout({ currentUser, projects, onLogout, t, children }: MainLayoutProps) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    const location = useLocation();
-    const navigate = useNavigate();
+    const pathname = usePathname();
+    const router = useRouter();
+    const { searchQuery, setSearchQuery } = useUI();
 
     return (
         <div className="flex h-screen overflow-hidden bg-[#F2F0E9] text-[#18181B]">
@@ -46,16 +49,16 @@ export function MainLayout({ currentUser, projects, onLogout, t, searchQuery, se
                     <SidebarItem 
                         icon={<LayoutDashboard className="w-5 h-5" />} 
                         label={t("app.dashboard")} 
-                        active={location.pathname === "/"} 
+                        active={pathname === "/"} 
                         collapsed={!isSidebarOpen}
-                        onClick={() => navigate("/")}
+                        onClick={() => router.push("/")}
                     />
                     <SidebarItem 
                         icon={<Briefcase className="w-5 h-5" />} 
                         label={t("app.projects")} 
-                        active={location.pathname.startsWith("/projects") || location.pathname.startsWith("/project/")} 
+                        active={pathname?.startsWith("/projects") || pathname?.startsWith("/project/")} 
                         collapsed={!isSidebarOpen}
-                        onClick={() => navigate("/projects")}
+                        onClick={() => router.push("/projects")}
                     />
                     
                     <div className="my-4 border-t border-zinc-100"></div>
@@ -68,8 +71,8 @@ export function MainLayout({ currentUser, projects, onLogout, t, searchQuery, se
                             icon={<div className="w-2 h-2 rounded-full bg-yellow-400"></div>}
                             label={p.name}
                             collapsed={!isSidebarOpen}
-                            active={location.pathname === `/project/${p.id}`}
-                            onClick={() => navigate(`/project/${p.id}`)}
+                            active={pathname === `/project/${p.id}`}
+                            onClick={() => router.push(`/project/${p.id}`)}
                         />
                     ))}
                 </div>
@@ -77,7 +80,7 @@ export function MainLayout({ currentUser, projects, onLogout, t, searchQuery, se
                 {/* User Profile */}
                 <div className="p-4 border-t border-zinc-100">
                     <div 
-                        onClick={() => navigate("/settings")}
+                        onClick={() => router.push("/settings")}
                         className={`flex items-center gap-3 p-2 rounded-xl hover:bg-zinc-50 transition-colors cursor-pointer group ${!isSidebarOpen && "justify-center"}`}
                     >
                         <img src={currentUser.avatar} className="w-9 h-9 rounded-full border border-zinc-200 shadow-sm" alt="User" />
@@ -139,7 +142,7 @@ export function MainLayout({ currentUser, projects, onLogout, t, searchQuery, se
 
                  {/* View Content */}
                  <main className="flex-1 overflow-y-auto relative custom-scrollbar">
-                    <Outlet />
+                    {children}
                  </main>
             </div>
         </div>

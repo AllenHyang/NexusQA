@@ -15,12 +15,11 @@ rm -f server.log
 echo "🚀 Starting Next.js Development Server..."
 echo "📝 Server logs will be written to server.log"
 
-# Start Next.js dev server in background, redirecting output to server.log
-# We use unbuffer (if available) or just pipe to tee/file to keep colors if possible, 
-# but standard redirection `> server.log 2>&1` is safest for file logging.
-# To see output in console AND file, we use `tee`.
-
-npm run dev 2>&1 | tee server.log &
+# Start Next.js dev server in background, redirecting all output (stdout and stderr) to server.log
+# We use direct redirection `>` which is more reliable than `tee` for non-interactive shells
+# and prevents buffering issues.
+touch server.log
+npm run dev > server.log 2>&1 &
 
 SERVER_PID=$!
 
@@ -28,11 +27,16 @@ echo "✅ Server started with PID $SERVER_PID"
 echo "🌐 Open http://localhost:3000 to view the app"
 echo "👉 Press Ctrl+C to stop the server"
 
+# Tail the log file in the background to show output in the console
+tail -f server.log &
+TAIL_PID=$!
+
 # Function to handle script exit
 cleanup() {
     echo ""
     echo "🛑 Stopping server..."
     kill $SERVER_PID
+    kill $TAIL_PID
     exit
 }
 

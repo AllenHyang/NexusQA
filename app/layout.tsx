@@ -1,6 +1,9 @@
 import React from "react";
 import type { Metadata } from "next";
 import "./globals.css";
+import { LanguageProvider } from "@/contexts/LanguageContext";
+import { UIProvider } from "@/contexts/UIContext";
+import ClientLayout from "./ClientLayout";
 
 export const metadata: Metadata = {
   title: "Nexus QA",
@@ -14,7 +17,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <LanguageProvider>
+          <UIProvider>
+            <ClientLayout>
+              {children}
+            </ClientLayout>
+          </UIProvider>
+        </LanguageProvider>
+      </body>
     </html>
   );
 }

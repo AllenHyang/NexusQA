@@ -24,3 +24,13 @@ dist-ssr
 *.sw?
 
 .next/
+
+# Gemini AI temp files
+.gemini-clipboard/
+
+# Next.js build output (static export)
+out/
+
+# Environment keys
+.env
+.vercel
