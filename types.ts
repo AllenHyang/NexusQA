@@ -11,6 +11,7 @@ export interface TestStep {
   id: string;
   action: string;
   expected: string;
+  order: number; // Added order
   feedback?: 'up' | 'down'; // Added for AI generation feedback
 }
 

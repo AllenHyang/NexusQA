@@ -15,8 +15,29 @@ interface HistoryPayload {
     notes?: string;
     bugId?: string;
     environment?: string;
+    env?: string;
     evidence?: string;
 }
+
+const normalizePriority = (p: string) => {
+    switch(p) {
+        case 'P0': return 'CRITICAL';
+        case 'P1': return 'HIGH';
+        case 'P2': return 'MEDIUM';
+        case 'P3': return 'LOW';
+        default: return p;
+    }
+};
+
+const safeParseTags = (tags: string | null) => {
+    if (!tags) return [];
+    try {
+        const parsed = JSON.parse(tags);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return [];
+    }
+};
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -33,10 +54,11 @@ export async function GET(request: Request) {
           orderBy: { createdAt: 'desc' }
       });
       
-      // Parse JSON tags
+      // Parse JSON tags and normalize priority
       const parsedCases = testCases.map(tc => ({
           ...tc,
-          tags: tc.tags ? JSON.parse(tc.tags as string) : [],
+          tags: safeParseTags(tc.tags),
+          priority: normalizePriority(tc.priority),
           history: tc.history.map(h => ({
               ...h,
               environment: h.env
@@ -112,7 +134,7 @@ export async function POST(request: Request) {
                                    executedBy: h.executedBy,
                                    notes: h.notes,
                                    bugId: h.bugId,
-                                   env: h.environment, 
+                                   env: h.environment || h.env, 
                                    evidence: h.evidence
                                }
                            })
@@ -130,10 +152,13 @@ export async function POST(request: Request) {
 
           return NextResponse.json({
               ...result,
-              tags: result.tags ? JSON.parse(result.tags as string) : [],
+              tags: safeParseTags(result.tags),
               history: result.history.map(h => ({ ...h, environment: h.env }))
           });
       } else {
+          if (!body.title || !body.projectId) {
+              return NextResponse.json({ error: "Title and Project ID are required" }, { status: 400 });
+          }
           // Create
           const created = await prisma.testCase.create({
               data: {
@@ -152,7 +177,7 @@ export async function POST(request: Request) {
                           executedBy: h.executedBy,
                           notes: h.notes,
                           bugId: h.bugId,
-                          env: h.environment,
+                          env: h.environment || h.env,
                           evidence: h.evidence
                       })) || []
                   }
@@ -161,7 +186,7 @@ export async function POST(request: Request) {
           });
           return NextResponse.json({
               ...created,
-              tags: created.tags ? JSON.parse(created.tags as string) : [],
+              tags: safeParseTags(created.tags),
               history: created.history.map(h => ({ ...h, environment: h.env }))
           }, { status: 201 });
       }

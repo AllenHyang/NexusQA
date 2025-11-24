@@ -22,16 +22,25 @@ LOG_FILES.forEach(file => {
       
       const lines = content.split('\n');
       let fileErrors = 0;
+      const errorLines = [];
       
       lines.forEach((line, index) => {
         const lowerLine = line.toLowerCase();
         if (ERROR_KEYWORDS.some(keyword => lowerLine.includes(keyword.toLowerCase()))) {
-          console.log(`[Line ${index + 1}] ${line.trim()}`);
+          errorLines.push(`[Line ${index + 1}] ${line.trim()}`);
           fileErrors++;
         }
       });
       
       if (fileErrors > 0) {
+        const MAX_ERRORS = 50;
+        const displayErrors = errorLines.slice(-MAX_ERRORS);
+        displayErrors.forEach(errLine => console.log(errLine));
+        
+        if (fileErrors > MAX_ERRORS) {
+            console.log(`... and ${fileErrors - MAX_ERRORS} more errors (output truncated).`);
+        }
+
         console.log(`Found ${fileErrors} potential errors in ${file}.`);
         hasErrors = true;
       } else {

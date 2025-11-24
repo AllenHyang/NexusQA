@@ -1,4 +1,4 @@
-import { ReviewStatus } from "../types";
+import { ReviewStatus } from "@/types";
 
 describe('ReviewStatus Type', () => {
   it('should define PENDING, APPROVED, and CHANGES_REQUESTED', () => {

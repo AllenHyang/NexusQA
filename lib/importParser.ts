@@ -1,5 +1,4 @@
 import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
 import { Priority } from '@/types';
 
 export interface ImportedTestCase {
@@ -13,11 +12,11 @@ export interface ImportedTestCase {
   steps?: Array<{ action: string; expected: string }>;
 }
 
-export const parseFile = (file: File): Promise<ImportedTestCase[]> => {
+export const parseFile = async (file: File): Promise<ImportedTestCase[]> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const data = event.target?.result;
       if (!data) {
         return reject(new Error("File reading failed."));
@@ -36,12 +35,17 @@ export const parseFile = (file: File): Promise<ImportedTestCase[]> => {
           error: (err: any) => reject(err),
         });
       } else if (file.name.endsWith('.xlsx')) {
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        resolve(mapParsedDataToTestCases(json as any[], false)); // Pass false for isCsv
+        try {
+          const XLSX = await import('xlsx');
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          resolve(mapParsedDataToTestCases(json as any[], false)); // Pass false for isCsv
+        } catch (error) {
+          reject(error);
+        }
       } else {
         reject(new Error("Unsupported file type. Only CSV and XLSX are supported.")); // Corrected error message
       }

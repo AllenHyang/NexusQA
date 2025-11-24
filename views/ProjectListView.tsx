@@ -23,18 +23,18 @@ export function ProjectListView({ projects, testCases, currentUser, searchQuery,
   );
 
   return (
-    <div className="p-8 max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
+    <div className="p-4 md:p-8 max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
       
       {/* Modern Header Section */}
-      <div className="flex items-end justify-between mb-10">
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 md:mb-10 gap-4">
         <div>
           <div className="flex items-center gap-4 mb-3">
-             <div className="w-12 h-12 rounded-2xl bg-yellow-400 text-black flex items-center justify-center shadow-lg shadow-yellow-400/20 rotate-3">
-                <Layers className="w-7 h-7" />
+             <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-yellow-400 text-black flex items-center justify-center shadow-lg shadow-yellow-400/20 rotate-3">
+                <Layers className="w-6 h-6 md:w-7 md:h-7" />
              </div>
-             <h2 className="text-5xl font-black text-zinc-900 tracking-tighter">All Projects</h2>
+             <h2 className="text-3xl md:text-5xl font-black text-zinc-900 tracking-tighter">All Projects</h2>
           </div>
-          <p className="text-zinc-500 font-medium text-lg max-w-2xl ml-1">
+          <p className="text-zinc-500 font-medium text-sm md:text-lg max-w-2xl ml-1">
             Manage your test suites, track progress, and organize workflows across all active projects.
           </p>
         </div>
@@ -42,7 +42,7 @@ export function ProjectListView({ projects, testCases, currentUser, searchQuery,
         {(currentUser.role === "ADMIN" || currentUser.role === "QA_LEAD") && (
           <button 
             onClick={onNewProject}
-            className="group relative overflow-hidden bg-zinc-900 text-white px-7 py-3.5 rounded-2xl shadow-xl shadow-zinc-900/20 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex items-center text-sm font-bold uppercase tracking-wider"
+            className="group relative overflow-hidden bg-zinc-900 text-white px-7 py-3.5 rounded-2xl shadow-xl shadow-zinc-900/20 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex items-center justify-center text-sm font-bold uppercase tracking-wider w-full md:w-auto"
           >
             <span className="absolute inset-0 bg-gradient-to-r from-zinc-800 to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
             <span className="relative flex items-center">

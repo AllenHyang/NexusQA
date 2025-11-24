@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Project, TestCase, User, Priority, TestStatus, TestSuite } from "../types";
 import { StatusBadge, PriorityBadge, AnimatedEmptyState, TagBadge, ProgressBar, Tooltip } from "../components/ui";
 import { FolderTree as FolderTreeSidebar } from "../components/FolderTree";
+import { safeParseTags } from "../lib/formatters";
 import { Download, Plus, Filter, ChevronDown, Check, Trash2, CheckSquare, History, Copy, SearchX, X, Maximize2, CheckCircle2, XCircle, AlertCircle, BookOpen, Tag, Sparkles, Bug, PlayCircle, ArrowRight, Layout, Info, User as UserIcon, Github, Calendar, BarChart3, Activity, Users, Pencil, FolderInput } from "lucide-react";
 
 interface ProjectDetailViewProps {
@@ -12,7 +13,7 @@ interface ProjectDetailViewProps {
   users: User[];
   searchQuery: string;
   onExport: () => void;
-  onCreateCase: () => void;
+  onCreateCase: (suiteId?: string | null) => void;
   onEditCase: (tc: TestCase) => void;
   onDeleteCase: (id: string) => void;
   onDuplicateCase: (tc: TestCase) => void;
@@ -92,6 +93,8 @@ export function ProjectDetailView({
   // Bulk Move State
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [moveTargetId, setMoveTargetId] = useState<string | null>(null);
+  
+  const [showMobileFolders, setShowMobileFolders] = useState(false);
 
   const togglePriorityFilter = (p: Priority) => {
     if (priorityFilter.includes(p)) {
@@ -131,10 +134,9 @@ export function ProjectDetailView({
   });
 
   const selectedPreviewCase = testCases.find(tc => tc.id === selectedPreviewId);
-  const getAssignee = (id?: string) => users.find(u => u.id === id);
-
-  const handleSelectAll = () => {
-    if (selectedIds.length === filteredCases.length && filteredCases.length > 0) {
+      const getAssignee = (id?: string) => users.find(u => u.id === id);
+      
+      const handleSelectAll = () => {    if (selectedIds.length === filteredCases.length && filteredCases.length > 0) {
         setSelectedIds([]);
     } else {
         setSelectedIds(filteredCases.map(tc => tc.id));
@@ -169,8 +171,14 @@ export function ProjectDetailView({
   const uniqueBugIds = new Set(testCases.flatMap(tc => tc.history?.filter(h => h.bugId).map(h => h.bugId) || []));
 
   // Timeline
-  const start = project.startDate ? new Date(project.startDate) : new Date();
-  const end = project.dueDate ? new Date(project.dueDate) : new Date(new Date().setDate(new Date().getDate() + 14));
+  const getValidDate = (dateStr?: string, fallback: Date = new Date()) => {
+      if (!dateStr) return fallback;
+      const d = new Date(dateStr);
+      return isNaN(d.getTime()) ? fallback : d;
+  };
+
+  const start = getValidDate(project.startDate);
+  const end = getValidDate(project.dueDate, new Date(new Date().setDate(new Date().getDate() + 14)));
   const today = new Date();
   const totalDuration = end.getTime() - start.getTime();
   const elapsed = today.getTime() - start.getTime();
@@ -196,10 +204,10 @@ export function ProjectDetailView({
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Header - Non-scrolling */}
-      <div className="flex-shrink-0 pt-6 px-6 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-zinc-200 bg-[#F2F0E9]">
+      <div className="flex-shrink-0 pt-4 px-4 md:pt-6 md:px-6 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-zinc-200 bg-[#F2F0E9]">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-3xl font-black text-zinc-900 tracking-tight">{project.name}</h1>
+            <h1 className="text-2xl md:text-3xl font-black text-zinc-900 tracking-tight">{project.name}</h1>
             {project.repositoryUrl && (
                 <a 
                     href={project.repositoryUrl} 
@@ -212,65 +220,79 @@ export function ProjectDetailView({
                 </a>
             )}
           </div>
-          <p className="text-zinc-500 max-w-2xl line-clamp-1 font-medium">{project.description}</p>
+          <p className="text-zinc-500 max-w-2xl line-clamp-1 font-medium text-sm md:text-base">{project.description}</p>
         </div>
-        <div className="flex space-x-3">
+        <div className="flex flex-wrap gap-2 md:space-x-3">
           <div className="flex bg-white rounded-xl p-1 border border-zinc-200 shadow-sm">
               <button 
                 onClick={() => setActiveTab("ANALYTICS")}
-                className={`px-4 py-2 rounded-lg text-xs font-bold flex items-center transition-all ${activeTab === "ANALYTICS" ? 'bg-zinc-900 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'}`}
+                className={`px-3 md:px-4 py-2 rounded-lg text-xs font-bold flex items-center transition-all ${activeTab === "ANALYTICS" ? 'bg-zinc-900 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'}`}
               >
-                <BarChart3 className="w-3.5 h-3.5 mr-1.5" /> Progress
+                <BarChart3 className="w-3.5 h-3.5 mr-1.5" /> <span className="hidden sm:inline">Progress</span>
               </button>
               <button 
                 onClick={() => setActiveTab("WORKFLOW")}
-                className={`px-4 py-2 rounded-lg text-xs font-bold flex items-center transition-all ${activeTab === "WORKFLOW" ? 'bg-zinc-900 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'}`}
+                className={`px-3 md:px-4 py-2 rounded-lg text-xs font-bold flex items-center transition-all ${activeTab === "WORKFLOW" ? 'bg-zinc-900 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'}`}
               >
-                <Layout className="w-3.5 h-3.5 mr-1.5" /> Workflow
+                <Layout className="w-3.5 h-3.5 mr-1.5" /> <span className="hidden sm:inline">Workflow</span>
               </button>
           </div>
           <button
             onClick={onExport}
             className="glass-button px-4 py-2.5 rounded-xl text-sm font-bold flex items-center"
           >
-            <Download className="w-4 h-4 mr-2" /> Export
+            <Download className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">Export</span>
           </button>
           {(currentUser.role === "ADMIN" || currentUser.role === "QA_LEAD") && (
             <button
               onClick={onImportCases}
               className="glass-button px-4 py-2.5 rounded-xl text-sm font-bold flex items-center"
             >
-              <FolderInput className="w-4 h-4 mr-2" /> Import
+              <FolderInput className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">Import</span>
             </button>
           )}
           {(currentUser.role !== "TESTER") && (
             <button 
-              onClick={onCreateCase}
-              className="bg-zinc-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center hover:bg-black shadow-lg hover:-translate-y-0.5 transition-all">
-              <Plus className="w-4 h-4 mr-2" /> Create Case
+              onClick={() => onCreateCase(selectedSuiteId)}
+              className="bg-zinc-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center hover:bg-black shadow-lg hover:-translate-y-0.5 transition-all ml-auto md:ml-0">
+              <Plus className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">Create Case</span><span className="md:hidden">New</span>
             </button>
           )}
         </div>
+        
+        {/* Mobile Folder Toggle */}
+        <button 
+            onClick={() => setShowMobileFolders(!showMobileFolders)}
+            className="md:hidden w-full mt-4 flex items-center justify-between px-4 py-3 bg-white border border-zinc-200 rounded-xl font-bold text-zinc-700 shadow-sm"
+        >
+            <span className="flex items-center gap-2">
+                <FolderInput className="w-4 h-4 text-zinc-400" />
+                {selectedSuiteId ? suites.find(s => s.id === selectedSuiteId)?.name : "All Cases"}
+            </span>
+            <ChevronDown className={`w-4 h-4 transition-transform ${showMobileFolders ? "rotate-180" : ""}`} />
+        </button>
       </div>
 
       {/* Main Content Area with Sidebar */}
-      <div className="flex-1 flex min-h-0">
+      <div className="flex-1 flex flex-col md:flex-row min-h-0">
         {/* Left Sidebar: Folder Tree */}
-        <FolderTreeSidebar 
-            suites={suites} 
-            selectedSuiteId={selectedSuiteId}
-            onSelect={setSelectedSuiteId}
-            onCreate={onCreateSuite}
-            onRename={onRenameSuite}
-            onDelete={onDeleteSuite}
-        />
+        <div className={`${showMobileFolders ? "block" : "hidden"} md:block border-b md:border-b-0 md:border-r border-zinc-200`}>
+            <FolderTreeSidebar 
+                suites={suites} 
+                selectedSuiteId={selectedSuiteId}
+                onSelect={(id) => { setSelectedSuiteId(id); setShowMobileFolders(false); }}
+                onCreate={onCreateSuite}
+                onRename={onRenameSuite}
+                onDelete={onDeleteSuite}
+            />
+        </div>
 
         {/* Right Content: Scrollable */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto p-6">
+        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto p-4 md:p-6">
             {/* Intelligence Section */}
             <div className="animate-in slide-in-from-top-2 fade-in duration-300 mb-6">
                 {activeTab === "WORKFLOW" && (
-                    <div className="glass-panel rounded-[2rem] p-8 bg-white">
+                    <div className="glass-panel rounded-[2rem] p-4 md:p-8 bg-white">
                         <div className="flex items-center mb-6">
                             <Info className="w-4 h-4 text-yellow-500 mr-2" />
                             <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Use Case Driven Workflow</h3>
@@ -287,7 +309,7 @@ export function ProjectDetailView({
                 {activeTab === "ANALYTICS" && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Timeline Card */}
-                        <div className="glass-panel rounded-[2rem] p-8 lg:col-span-2 bg-white">
+                        <div className="glass-panel rounded-[2rem] p-6 md:p-8 lg:col-span-2 bg-white">
                             <div className="flex justify-between items-start mb-8">
                                 <div>
                                     <h4 className="font-bold text-zinc-800 flex items-center">
@@ -372,16 +394,17 @@ export function ProjectDetailView({
             </div>
 
             {/* Filters Bar */}
-            <div className="flex space-x-3 mb-4 sticky top-0 z-20 py-2 px-1 items-center bg-[#F2F0E9]/95 backdrop-blur-sm">
+            <div className="flex flex-wrap gap-2 md:space-x-3 mb-4 sticky top-0 z-20 py-2 px-1 items-center bg-[#F2F0E9]/95 backdrop-blur-sm">
                 <button 
                     onClick={() => setOnlyMyTasks(!onlyMyTasks)}
                     className={`px-4 py-2 rounded-xl text-sm font-bold shadow-sm flex items-center transition-all backdrop-blur-md border ${onlyMyTasks ? 'bg-zinc-900 text-white border-zinc-900 shadow-md' : 'bg-white text-zinc-600 hover:bg-zinc-50 border-zinc-200'}`}
                 >
                     <UserIcon className="w-4 h-4 mr-2" /> 
-                    {onlyMyTasks ? "My Assignments" : "All Assignments"}
+                    <span className="hidden sm:inline">{onlyMyTasks ? "My Assignments" : "All Assignments"}</span>
+                    <span className="sm:hidden">{onlyMyTasks ? "Mine" : "All"}</span>
                 </button>
                 
-                <div className="w-px h-6 bg-zinc-300 mx-2"></div>
+                <div className="hidden md:block w-px h-6 bg-zinc-300 mx-2"></div>
 
                 {/* Priority Filter */}
                 <div className="relative">
@@ -390,7 +413,8 @@ export function ProjectDetailView({
                     className={`px-4 py-2 rounded-xl text-sm font-bold shadow-sm flex items-center transition-all backdrop-blur-md border ${priorityFilter.length > 0 ? "bg-zinc-900 text-white border-zinc-900" : "bg-white text-zinc-600 hover:bg-zinc-50 border-zinc-200"}`}
                 >
                     <Filter className={`w-4 h-4 mr-2 ${priorityFilter.length > 0 ? "text-yellow-400" : "text-zinc-400"}`} />
-                    Priority: {priorityFilter.length === 0 ? "All" : `${priorityFilter.length} selected`}
+                    <span className="hidden sm:inline">Priority: {priorityFilter.length === 0 ? "All" : `${priorityFilter.length} selected`}</span>
+                    <span className="sm:hidden">Priority</span>
                     <ChevronDown className="w-4 h-4 ml-2 opacity-50" />
                 </button>
 
@@ -427,7 +451,8 @@ export function ProjectDetailView({
                     className={`px-4 py-2 rounded-xl text-sm font-bold shadow-sm flex items-center transition-all backdrop-blur-md border disabled:opacity-50 disabled:cursor-not-allowed ${assigneeFilter.length > 0 ? "bg-zinc-900 text-white border-zinc-900" : "bg-white text-zinc-600 hover:bg-zinc-50 border-zinc-200"}`}
                 >
                     <Users className={`w-4 h-4 mr-2 ${assigneeFilter.length > 0 ? "text-yellow-400" : "text-zinc-400"}`} />
-                    Assignee: {assigneeFilter.length === 0 ? "All" : `${assigneeFilter.length} selected`}
+                    <span className="hidden sm:inline">Assignee: {assigneeFilter.length === 0 ? "All" : `${assigneeFilter.length} selected`}</span>
+                    <span className="sm:hidden">Users</span>
                     <ChevronDown className="w-4 h-4 ml-2 opacity-50" />
                 </button>
 
@@ -516,7 +541,7 @@ export function ProjectDetailView({
                                                 {tc.requirementId}
                                             </div>
                                         )}
-                                        {tc.tags?.slice(0, 2).map(tag => (
+                                        {safeParseTags(tc.tags).slice(0, 2).map((tag: string) => (
                                             <span key={tag} className="text-[10px] font-medium text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded border border-zinc-200/50">
                                                 {tag}
                                             </span>
@@ -581,7 +606,7 @@ export function ProjectDetailView({
                                         title={searchQuery ? "No Matches" : "Empty Project"}
                                         description={searchQuery ? "Try adjusting your filters." : "Get started by creating a test case."}
                                         action={(!searchQuery && currentUser.role !== "TESTER") && (
-                                            <button onClick={onCreateCase} className="text-zinc-900 font-bold hover:underline">Create Case</button>
+                                            <button onClick={() => onCreateCase(selectedSuiteId)} className="text-zinc-900 font-bold hover:underline">Create Case</button>
                                         )}
                                     />
                                 </td>

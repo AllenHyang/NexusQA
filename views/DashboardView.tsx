@@ -41,18 +41,18 @@ export function DashboardView({ testCases, projects, currentUser, searchQuery, o
     .slice(0, 5);
 
   return (
-    <div className="p-8 max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
+    <div className="p-4 md:p-8 max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
       
       {/* Header Section */}
-      <div className="flex items-end justify-between mb-10">
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 md:mb-10 gap-4">
         <div>
-          <h2 className="text-5xl font-black text-zinc-900 tracking-tighter mb-2">Overview</h2>
-          <p className="text-zinc-500 text-lg font-medium">Welcome back, {currentUser.name.split(' ')[0]}.</p>
+          <h2 className="text-3xl md:text-5xl font-black text-zinc-900 tracking-tighter mb-2">Overview</h2>
+          <p className="text-zinc-500 text-sm md:text-lg font-medium">Welcome back, {currentUser.name.split(' ')[0]}.</p>
         </div>
         {(currentUser.role === "ADMIN" || currentUser.role === "QA_LEAD") && (
           <button 
             onClick={onNewProject}
-            className="bg-zinc-900 text-white px-6 py-3 rounded-xl hover:bg-black transition-transform shadow-lg hover:-translate-y-0.5 flex items-center text-sm font-bold uppercase tracking-wider">
+            className="bg-zinc-900 text-white px-6 py-3 rounded-xl hover:bg-black transition-transform shadow-lg hover:-translate-y-0.5 flex items-center justify-center text-sm font-bold uppercase tracking-wider w-full md:w-auto">
             <Plus className="w-4 h-4 mr-2" /> New Project
           </button>
         )}

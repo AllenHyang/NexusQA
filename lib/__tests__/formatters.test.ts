@@ -11,6 +11,7 @@ describe('formatBugReportMarkdown', () => {
       preconditions: 'User has valid credentials.',
       userStory: 'As a user, I want to log in, so I can access the application.',
       requirementId: 'REQ-001',
+      acceptanceCriteria: 'User sees dashboard',
       tags: JSON.stringify(['login', 'regression']),
       status: 'UNTESTED',
       priority: 'P1',
@@ -19,6 +20,7 @@ describe('formatBugReportMarkdown', () => {
       assignedToId: null,
       projectId: 'project-1',
       suiteId: null,
+      reviewStatus: 'PENDING',
       createdAt: new Date(),
       updatedAt: new Date(),
       steps: [
@@ -34,9 +36,9 @@ describe('formatBugReportMarkdown', () => {
       status: 'FAILED',
       executedBy: 'QA Tester',
       notes: 'Login button did nothing. No error message shown.',
-      bugId: null,
+      bugId: undefined,
       environment: 'Staging - Chrome',
-      evidence: null,
+      evidence: undefined,
     };
 
     const expectedMarkdown = `### Defect Report: User Login Failure
@@ -67,6 +69,7 @@ Login button did nothing. No error message shown.
       preconditions: null,
       userStory: null,
       requirementId: null,
+      acceptanceCriteria: null,
       tags: JSON.stringify([]),
       status: 'UNTESTED',
       priority: 'P2',
@@ -75,6 +78,7 @@ Login button did nothing. No error message shown.
       assignedToId: null,
       projectId: 'project-2',
       suiteId: null,
+      reviewStatus: 'PENDING',
       createdAt: new Date(),
       updatedAt: new Date(),
       steps: [],
@@ -85,10 +89,10 @@ Login button did nothing. No error message shown.
       date: new Date().toISOString(),
       status: 'BLOCKED',
       executedBy: 'Another QA',
-      notes: null,
-      bugId: null,
-      environment: null,
-      evidence: null,
+      notes: undefined,
+      bugId: undefined,
+      environment: undefined,
+      evidence: undefined,
     };
 
     const expectedMarkdown = `### Defect Report: Empty Preconditions and Steps

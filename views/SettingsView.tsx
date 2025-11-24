@@ -13,7 +13,7 @@ export function SettingsView({ currentUser, jiraUrl, setJiraUrl }: SettingsViewP
   const { t, language, setLanguage } = useLanguage();
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="p-4 md:p-8 max-w-3xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-end justify-between">
         <div>
           <h2 className="text-3xl font-bold text-gray-900 tracking-tight">{t("settings.title")}</h2>

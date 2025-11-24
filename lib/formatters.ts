@@ -32,3 +32,15 @@ ${stepsToReproduce}
 ${actualResultNotes}
 `;
 };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const safeParseTags = (tags: any): string[] => {
+    if (Array.isArray(tags)) return tags;
+    if (typeof tags === 'string') {
+        try {
+            const parsed = JSON.parse(tags);
+            if (Array.isArray(parsed)) return parsed;
+        } catch { return []; }
+    }
+    return [];
+};

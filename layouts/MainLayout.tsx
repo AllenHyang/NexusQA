@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { SidebarItem } from "@/components/ui";
-import { LayoutDashboard, Briefcase, Menu, LogOut, Search, Settings } from "lucide-react";
+import { LayoutDashboard, Briefcase, Menu, LogOut, Search, Settings, X } from "lucide-react";
 import { User, Project } from "@/types";
 import { useUI } from "@/contexts/UIContext";
 
@@ -16,21 +16,47 @@ interface MainLayoutProps {
 }
 
 export function MainLayout({ currentUser, projects, onLogout, t, children }: MainLayoutProps) {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Desktop collapse state
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Mobile drawer state
     const pathname = usePathname();
     const router = useRouter();
     const { searchQuery, setSearchQuery } = useUI();
 
+    // Auto-close mobile menu on navigation
+    useEffect(() => {
+        setIsMobileMenuOpen(false);
+    }, [pathname]);
+
+    // Handle Toggle Logic
+    const toggleSidebar = () => {
+        if (window.innerWidth >= 768) {
+            setIsSidebarOpen(!isSidebarOpen);
+        } else {
+            setIsMobileMenuOpen(!isMobileMenuOpen);
+        }
+    };
+
     return (
         <div className="flex h-screen overflow-hidden bg-[#F2F0E9] text-[#18181B]">
-            {/* Sidebar */}
+            
+            {/* Mobile Backdrop */}
+            {isMobileMenuOpen && (
+                <div 
+                    className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm transition-opacity"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                />
+            )}
+
+            {/* Sidebar Navigation */}
             <div className={`
-                ${isSidebarOpen ? "w-64" : "w-20"} 
-                bg-[#FFFFFF] border-r border-zinc-200 flex flex-col transition-all duration-300 z-20 shadow-sm
+                fixed md:static inset-y-0 left-0 z-50 
+                bg-[#FFFFFF] border-r border-zinc-200 flex flex-col transition-all duration-300 shadow-xl md:shadow-sm
+                ${isMobileMenuOpen ? "translate-x-0 w-72" : "-translate-x-full md:translate-x-0"}
+                ${isSidebarOpen ? "md:w-64" : "md:w-20"}
             `}>
                 {/* Logo Area */}
-                <div className="p-6 flex items-center justify-center">
-                    {isSidebarOpen ? (
+                <div className="p-6 flex items-center justify-between md:justify-center relative">
+                    {(isSidebarOpen || isMobileMenuOpen) ? (
                         <h1 className="text-2xl font-black tracking-tighter text-zinc-900 flex items-center gap-2">
                             <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center text-white">
                                 <Briefcase className="w-4 h-4" />
@@ -42,6 +68,14 @@ export function MainLayout({ currentUser, projects, onLogout, t, children }: Mai
                             <Briefcase className="w-5 h-5" />
                         </div>
                     )}
+                    
+                    {/* Mobile Close Button */}
+                    <button 
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="md:hidden p-2 text-zinc-400 hover:text-zinc-900"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
                 </div>
 
                 {/* Nav Items */}
@@ -50,27 +84,27 @@ export function MainLayout({ currentUser, projects, onLogout, t, children }: Mai
                         icon={<LayoutDashboard className="w-5 h-5" />} 
                         label={t("app.dashboard")} 
                         active={pathname === "/"} 
-                        collapsed={!isSidebarOpen}
+                        collapsed={!isSidebarOpen && !isMobileMenuOpen}
                         onClick={() => router.push("/")}
                     />
                     <SidebarItem 
                         icon={<Briefcase className="w-5 h-5" />} 
                         label={t("app.projects")} 
                         active={pathname?.startsWith("/projects") || pathname?.startsWith("/project/")} 
-                        collapsed={!isSidebarOpen}
+                        collapsed={!isSidebarOpen && !isMobileMenuOpen}
                         onClick={() => router.push("/projects")}
                     />
                     
                     <div className="my-4 border-t border-zinc-100"></div>
                     
                     {/* Quick Project Access */}
-                    {isSidebarOpen && <p className="px-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">{t("app.recent")}</p>}
+                    {(isSidebarOpen || isMobileMenuOpen) && <p className="px-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">{t("app.recent")}</p>}
                     {projects.slice(0, 5).map(p => (
                         <SidebarItem 
                             key={p.id}
                             icon={<div className="w-2 h-2 rounded-full bg-yellow-400"></div>}
                             label={p.name}
-                            collapsed={!isSidebarOpen}
+                            collapsed={!isSidebarOpen && !isMobileMenuOpen}
                             active={pathname === `/project/${p.id}`}
                             onClick={() => router.push(`/project/${p.id}`)}
                         />
@@ -81,16 +115,16 @@ export function MainLayout({ currentUser, projects, onLogout, t, children }: Mai
                 <div className="p-4 border-t border-zinc-100">
                     <div 
                         onClick={() => router.push("/settings")}
-                        className={`flex items-center gap-3 p-2 rounded-xl hover:bg-zinc-50 transition-colors cursor-pointer group ${!isSidebarOpen && "justify-center"}`}
+                        className={`flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-50 transition-colors cursor-pointer group ${(!isSidebarOpen && !isMobileMenuOpen) && "justify-center"}`}
                     >
                         <img src={currentUser.avatar} className="w-9 h-9 rounded-full border border-zinc-200 shadow-sm" alt="User" />
-                        {isSidebarOpen && (
+                        {(isSidebarOpen || isMobileMenuOpen) && (
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-bold text-zinc-900 truncate">{currentUser.name}</p>
                                 <p className="text-xs text-zinc-500 truncate capitalize">{currentUser.role.replace('_', ' ').toLowerCase()}</p>
                             </div>
                         )}
-                        {isSidebarOpen && (
+                        {(isSidebarOpen || isMobileMenuOpen) && (
                             <div className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 hover:bg-zinc-200 transition-colors">
                                 <Settings className="w-4 h-4" />
                             </div>
@@ -98,26 +132,26 @@ export function MainLayout({ currentUser, projects, onLogout, t, children }: Mai
                     </div>
                     <button 
                         onClick={onLogout}
-                        className={`mt-2 w-full flex items-center ${isSidebarOpen ? "px-3" : "justify-center"} py-2 rounded-lg text-xs font-bold text-red-500 hover:bg-red-50 transition-colors`}
+                        className={`mt-2 w-full flex items-center ${(isSidebarOpen || isMobileMenuOpen) ? "px-3" : "justify-center"} py-3 md:py-2 rounded-lg text-xs font-bold text-red-500 hover:bg-red-50 transition-colors`}
                     >
-                        <LogOut className={`w-4 h-4 ${isSidebarOpen && "mr-2"}`} />
-                        {isSidebarOpen && "Sign Out"}
+                        <LogOut className={`w-4 h-4 ${(isSidebarOpen || isMobileMenuOpen) && "mr-2"}`} />
+                        {(isSidebarOpen || isMobileMenuOpen) && "Sign Out"}
                     </button>
                 </div>
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col min-w-0 bg-[#F2F0E9] relative">
+            <div className="flex-1 flex flex-col min-w-0 bg-[#F2F0E9] relative transition-all duration-300">
                  {/* Top Header */}
-                 <header className="h-16 px-8 flex items-center justify-between bg-white/80 backdrop-blur-md border-b border-zinc-200 sticky top-0 z-10">
-                     <div className="flex items-center gap-4">
+                 <header className="h-16 px-4 md:px-8 flex items-center justify-between bg-white/80 backdrop-blur-md border-b border-zinc-200 sticky top-0 z-10 gap-4">
+                     <div className="flex items-center gap-4 flex-1">
                          <button 
-                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                            className="p-2 -ml-2 rounded-xl hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900 transition-colors"
+                            onClick={toggleSidebar}
+                            className="p-2 -ml-2 rounded-xl hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900 transition-colors shrink-0 active:scale-95"
                          >
-                             <Menu className="w-5 h-5" />
+                             <Menu className="w-6 h-6 md:w-5 md:h-5" />
                          </button>
-                         <div className="relative group w-96">
+                         <div className="relative group flex-1 max-w-96">
                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-zinc-800 transition-colors" />
                              <input 
                                 type="text" 
@@ -126,16 +160,17 @@ export function MainLayout({ currentUser, projects, onLogout, t, children }: Mai
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                              />
-                             <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
+                             <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1 hidden sm:flex">
                                 <span className="text-[10px] font-bold text-zinc-300 border border-zinc-200 rounded px-1">⌘ K</span>
                              </div>
                          </div>
                      </div>
                      
-                     <div className="flex items-center gap-3">
+                     <div className="flex items-center gap-3 shrink-0">
                          <div className="h-8 px-3 rounded-full bg-white border border-zinc-200 flex items-center gap-2 shadow-sm">
                              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                             <span className="text-xs font-bold text-zinc-600">{t("app.system_online")}</span>
+                             <span className="hidden sm:inline text-xs font-bold text-zinc-600">{t("app.system_online")}</span>
+                             <span className="sm:hidden text-xs font-bold text-zinc-600">Online</span>
                          </div>
                      </div>
                  </header>

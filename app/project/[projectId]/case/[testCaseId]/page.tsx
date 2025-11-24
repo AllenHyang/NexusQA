@@ -15,6 +15,8 @@ export default function TestCaseDetailPage() {
   const { projects, testCases, deleteTestCase, currentUser, users } = useAppStore();
   const { openTestCaseModal } = useUI();
 
+  if (!currentUser) return null;
+
   return (
     <TestCaseDetailView
         projectId={projectId}
@@ -24,10 +26,9 @@ export default function TestCaseDetailPage() {
         projects={projects}
         currentUser={currentUser}
         onBack={() => router.push(`/project/${projectId}`)}
+        onEdit={(tc) => openTestCaseModal(tc, 'EDIT')}
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        onEdit={openTestCaseModal as any}
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        onRunTest={openTestCaseModal as any}
+        onRunTest={(tc) => openTestCaseModal(tc as any, 'RUN')}
         onDelete={(id) => { 
              deleteTestCase(id); 
              router.push(`/project/${projectId}`);

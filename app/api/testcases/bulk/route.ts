@@ -11,6 +11,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
 
+    if (cases.length > 100) {
+      return NextResponse.json({ error: "Batch size limit exceeded (max 100)" }, { status: 400 });
+    }
+
     // Process cases in a transaction
     const results = await prisma.$transaction(
       cases.map((testCase: ImportedTestCase) => 

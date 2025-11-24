@@ -18,6 +18,11 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
+        
+        if (!body.name || !body.projectId) {
+            return NextResponse.json({ error: "Name and Project ID are required" }, { status: 400 });
+        }
+
         const newSuite = await prisma.testSuite.create({
             data: {
                 name: body.name,
@@ -35,6 +40,11 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
     try {
         const body = await request.json();
+        
+        if (!body.id || !body.name) {
+            return NextResponse.json({ error: "ID and Name are required" }, { status: 400 });
+        }
+
         const updatedSuite = await prisma.testSuite.update({
             where: { id: body.id },
             data: { name: body.name }

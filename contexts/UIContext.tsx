@@ -14,8 +14,9 @@ interface UIContextType {
 
   // Test Case Modal
   showCaseModal: boolean;
+  modalMode: 'EDIT' | 'RUN'; // Added mode
   editCase: Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }>;
-  openTestCaseModal: (testCase?: Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }>) => void;
+  openTestCaseModal: (testCase?: Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }>, mode?: 'EDIT' | 'RUN') => void; // Updated signature
   closeTestCaseModal: () => void;
   setEditCase: (testCase: Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }>) => void;
 
@@ -58,6 +59,7 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
 
   // Test Case Modal
   const [showCaseModal, setShowCaseModal] = useState(false);
+  const [modalMode, setModalMode] = useState<'EDIT' | 'RUN'>('EDIT');
   const [editCase, setEditCase] = useState<Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }>>({});
 
   // History Modal
@@ -96,8 +98,9 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
     setEditingProject(null);
   };
 
-  const openTestCaseModal = (testCase: Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }> = {}) => {
+  const openTestCaseModal = (testCase: Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }> = {}, mode: 'EDIT' | 'RUN' = 'EDIT') => {
     setEditCase(testCase);
+    setModalMode(mode);
     // Reset execution form when opening standard modal? 
     // Maybe not, but for now let's keep simple.
     setExecutionNote("");
@@ -110,6 +113,7 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
   const closeTestCaseModal = () => {
     setShowCaseModal(false);
     setEditCase({});
+    setModalMode('EDIT'); // Reset to default
   };
 
   const openHistoryModal = (testCase: PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }) => {
@@ -133,7 +137,7 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
   return (
     <UIContext.Provider value={{
       showNewProjectModal, editingProject, openNewProjectModal, openEditProjectModal, closeNewProjectModal,
-      showCaseModal, editCase, openTestCaseModal, closeTestCaseModal, setEditCase,
+      showCaseModal, modalMode, editCase, openTestCaseModal, closeTestCaseModal, setEditCase,
       historyViewCase, openHistoryModal, closeHistoryModal,
       showImportCasesModal, importTargetProjectId, openImportCasesModal, closeImportCasesModal,
       loadingAI, setLoadingAI,

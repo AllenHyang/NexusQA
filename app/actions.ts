@@ -1,7 +1,6 @@
 'use server';
 
 import { GoogleGenAI } from "@google/genai";
-import { TestStep } from "@/types";
 
 // Ensure API key is available
 const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
@@ -12,64 +11,6 @@ const getGeminiClient = () => {
   }
   return new GoogleGenAI({ apiKey });
 };
-
-export async function* generateTestSteps(title: string, description: string): AsyncGenerator<TestStep | { error: string }, void, void> {
-  try {
-    const ai = getGeminiClient();
-    const prompt = `
-      You are a QA Expert. Create a comprehensive list of test steps for a test case titled: "${title}".
-      Description: "${description}".
-      
-      Rules:
-      1. Break down the test into logical, sequential steps.
-      2. Each step must have a clear Action and an Expected Result.
-      3. Keep the steps concise but detailed enough to be reproducible.
-      4. If no specific description is provided, infer the most likely positive path scenarios based on the title.
-      5. Generate between 3 to 8 steps.
-      6. IMPORTANT: Output each test step as a single JSON object on a new line. Do NOT wrap the steps in a JSON array or markdown code block.
-         Example:
-         {"action": "Perform X", "expected": "See Y"}
-         {"action": "Perform A", "expected": "See B"}
-    `;
-
-    const response = await ai.models.generateContentStream({
-      model: "gemini-pro", // Changed to gemini-pro for better structured text output
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      // Removed responseMimeType and responseSchema to get raw text stream
-    });
-
-    let accumulatedText = '';
-    let stepCounter = 0;
-
-    for await (const chunk of response) {
-      accumulatedText += chunk.text;
-      
-      const lines = accumulatedText.split('\n');
-      accumulatedText = lines.pop() || ''; // Keep last potentially incomplete line
-
-      for (const line of lines) {
-        if (line.trim().startsWith('{') && line.trim().endsWith('}')) {
-          try {
-            const parsedStep = JSON.parse(line.trim()) as { action: string; expected: string };
-            if (parsedStep.action && parsedStep.expected) {
-              const newStep: TestStep = {
-                id: `step-${Date.now()}-${stepCounter++}`, // Unique ID
-                action: parsedStep.action,
-                expected: parsedStep.expected,
-              };
-              yield newStep; // Yield each complete step
-            }
-          } catch {
-            // Ignore parsing errors for incomplete lines
-          }
-        }
-      }
-    } // This closes the 'for await' loop (line 43)
-  } catch (error: unknown) { // This catch block now correctly follows the 'try' block (line 18)
-    console.error("AI Streaming Gen Error", String(error));
-    yield { error: "Failed to generate test steps. Please try again." }; // Yield error object
-  }
-}
 
 export const generateImage = async (prompt: string, type: "project" | "reference"): Promise<{ data?: string; error?: string }> => {
   try {

@@ -57,9 +57,19 @@ export const createProjectSlice: StateCreator<ProjectSlice> = (set, get) => ({
       }
   },
   deleteProject: async (id) => {
-      // Placeholder
-      set(state => ({
-          projects: state.projects.filter(p => p.id !== id)
-      }));
+      try {
+          const res = await fetch(`/api/projects?id=${id}`, {
+              method: 'DELETE',
+          });
+          if (res.ok) {
+              set(state => ({
+                  projects: state.projects.filter(p => p.id !== id)
+              }));
+          } else {
+              console.error("Failed to delete project API");
+          }
+      } catch (error) {
+          console.error("Failed to delete project:", error);
+      }
   },
 });

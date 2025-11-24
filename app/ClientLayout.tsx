@@ -12,6 +12,7 @@ import { HistoryModal } from "@/components/HistoryModal";
 import { ImportCasesModal } from "@/components/ImportCasesModal";
 import { ExecutionRecord, Project, TestCase, TestStatus, Priority, TestStep } from "@/types";
 import { XCircle } from "lucide-react"; // Added XCircle for toast component
+import { safeParseTags } from "@/lib/formatters";
 
 interface Toast {
   id: string;
@@ -38,7 +39,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     projects, suites, refreshData,
     createProject, updateProject,
     saveTestCase, 
-    generateStepsForCase, generateMockupForCase
+    generateStepsForCase, generateMockupForCase, generateFieldForCase
   } = useAppStore();
 
   const initialized = React.useRef(false);
@@ -53,7 +54,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   // UI Context
   const {
     showNewProjectModal, editingProject, closeNewProjectModal,
-    showCaseModal, editCase, closeTestCaseModal, setEditCase,
+    showCaseModal, modalMode, editCase, closeTestCaseModal, setEditCase,
     historyViewCase, closeHistoryModal,
     showImportCasesModal, importTargetProjectId, closeImportCasesModal,
     loadingAI, setLoadingAI,
@@ -82,18 +83,18 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     const frontendTestCase: Partial<TestCase> = {
       id: editCase.id,
       projectId: editCase.projectId,
-      suiteId: editCase.suiteId,
+      suiteId: editCase.suiteId || undefined,
       title: editCase.title,
-      description: editCase.description,
-      userStory: editCase.userStory,
-      requirementId: editCase.requirementId,
-      acceptanceCriteria: editCase.acceptanceCriteria,
-      preconditions: editCase.preconditions,
+      description: editCase.description || undefined,
+      userStory: editCase.userStory || undefined,
+      requirementId: editCase.requirementId || undefined,
+      acceptanceCriteria: editCase.acceptanceCriteria || undefined,
+      preconditions: editCase.preconditions || "",
       status: editCase.status as TestStatus,
       priority: editCase.priority as Priority,
-      authorId: editCase.authorId,
-      assignedToId: editCase.assignedToId,
-      visualReference: editCase.visualReference,
+      authorId: editCase.authorId || "",
+      assignedToId: editCase.assignedToId || undefined,
+      visualReference: editCase.visualReference || undefined,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ...((editCase as any).imageFeedback !== undefined && { imageFeedback: (editCase as any).imageFeedback }),
       history: editCase.history,
@@ -104,15 +105,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     };
 
     // Handle tags conversion
-    if (typeof editCase.tags === 'string') {
-      try {
-        frontendTestCase.tags = JSON.parse(editCase.tags);
-      } catch (e) {
-        console.error("Failed to parse tags string:", editCase.tags, e);
-        frontendTestCase.tags = [];
-      }
-    } else if (editCase.tags) {
-      frontendTestCase.tags = editCase.tags;
+    if (editCase.tags) {
+      frontendTestCase.tags = safeParseTags(editCase.tags);
     }
 
     await saveTestCase(frontendTestCase);
@@ -121,13 +115,38 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   const handleGenerateSteps = async () => {
     setLoadingAI(true);
-    setEditCase({ steps: [] }); // Clear steps before starting generation
+    setEditCase(prev => ({ ...prev, steps: [] })); // Clear steps but preserve other fields
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await generateStepsForCase(editCase.title || "", editCase.description || "", setEditCase as any, showToast);
+      await generateStepsForCase(
+        editCase.title || "", 
+        editCase.description || "", 
+        (partial) => setEditCase(prev => ({ ...prev, ...partial })), 
+        showToast
+      );
     } catch (error) {
       console.error("Error in handleGenerateSteps:", error);
       showToast("An unexpected error occurred during step generation.", 'error');
+    } finally {
+      setLoadingAI(false);
+    }
+  };
+
+  const handleGenerateField = async (field: 'userStory' | 'acceptanceCriteria' | 'preconditions') => {
+    if (!editCase.title) return;
+    setLoadingAI(true);
+    setEditCase(prev => ({ ...prev, [field]: "" }));
+    try {
+      await generateFieldForCase(
+        editCase.title,
+        field,
+        editCase.description || "",
+        (val) => setEditCase(prev => ({ ...prev, [field]: val })),
+        showToast
+      );
+    } catch (error) {
+      console.error("Error generating field:", error);
+      showToast("Failed to generate text.", 'error');
     } finally {
       setLoadingAI(false);
     }
@@ -208,7 +227,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         currentUser={currentUser} 
         projects={projects} 
         onLogout={logout} 
-        t={t}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        t={t as any}
       >
         {children}
       </MainLayout>
@@ -247,6 +267,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             suites={suites}
             onStepFeedback={handleStepFeedback}
             onVisualFeedback={handleVisualFeedback}
+            onGenerateField={handleGenerateField}
+            mode={modalMode}
           />
       )}
       

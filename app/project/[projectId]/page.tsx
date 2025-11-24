@@ -28,6 +28,7 @@ export default function ProjectDetailPage() {
   const projectSuites = suites.filter(s => s.projectId === projectId);
 
   if (!project) return <div className="p-8">Project not found</div>;
+  if (!currentUser) return null;
 
   return (
     <ProjectDetailView 

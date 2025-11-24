@@ -202,10 +202,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, testCases, on
                 </div>
                 {showActions && (
                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 translate-y-2 group-hover:translate-y-0">
-                         <button onClick={(e) => { e.stopPropagation(); onEdit?.(project); }} className="p-2 bg-zinc-50 hover:bg-white border border-zinc-100 hover:border-zinc-200 text-zinc-600 rounded-xl transition-all shadow-sm">
+                         <button onClick={(e) => { e.stopPropagation(); onEdit?.(project); }} aria-label="Edit Project" className="p-2 bg-zinc-50 hover:bg-white border border-zinc-100 hover:border-zinc-200 text-zinc-600 rounded-xl transition-all shadow-sm">
                             <Pencil className="w-3.5 h-3.5" />
                          </button>
-                         <button onClick={(e) => { e.stopPropagation(); onDelete(project.id); }} className="p-2 bg-red-50 hover:bg-red-100 border border-red-100 text-red-500 rounded-xl transition-all shadow-sm">
+                         <button onClick={(e) => { e.stopPropagation(); onDelete(project.id); }} aria-label="Delete Project" className="p-2 bg-red-50 hover:bg-red-100 border border-red-100 text-red-500 rounded-xl transition-all shadow-sm">
                             <Trash2 className="w-3.5 h-3.5" />
                          </button>
                     </div>
@@ -303,7 +303,7 @@ export function SidebarItem({ icon, label, active, collapsed, onClick }: Sidebar
         <button 
             onClick={onClick}
             className={`
-                w-full flex items-center px-3 py-3 rounded-xl transition-all duration-300 mb-1 group relative overflow-hidden outline-none
+                w-full flex items-center px-3 py-3.5 rounded-xl transition-all duration-300 mb-2 group relative overflow-hidden outline-none
                 ${active 
                     ? "bg-zinc-900 text-white shadow-lg shadow-zinc-900/20 scale-[1.02]" 
                     : "text-zinc-500 hover:bg-white hover:shadow-sm hover:shadow-zinc-200/50 hover:text-zinc-900"

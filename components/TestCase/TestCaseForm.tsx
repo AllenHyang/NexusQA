@@ -1,28 +1,33 @@
 import React from "react";
 import { TestCase, Priority, TestSuite, ReviewStatus, User } from "@/types";
-import { Folder, Link2, Tag, BookOpen, CheckCircle2, Clock } from "lucide-react";
+import { Folder, Link2, Tag, BookOpen, CheckCircle2, Clock, Sparkles } from "lucide-react";
 import { TagBadge } from "../ui";
+import { safeParseTags } from "@/lib/formatters";
 
 interface TestCaseFormProps {
   editCase: Partial<TestCase>;
   setEditCase: (c: Partial<TestCase>) => void;
   suites: TestSuite[];
   currentUser: User;
+  onGenerateField: (field: 'userStory' | 'acceptanceCriteria' | 'preconditions') => void;
+  loadingAI: boolean;
 }
 
-export function TestCaseForm({ editCase, setEditCase, suites, currentUser }: TestCaseFormProps) {
+export function TestCaseForm({ editCase, setEditCase, suites, currentUser, onGenerateField, loadingAI }: TestCaseFormProps) {
   const [tagInput, setTagInput] = React.useState("");
 
   const handleAddTag = (e: React.KeyboardEvent) => {
       if (e.key === "Enter" && tagInput.trim()) {
-          const newTags = [...(editCase.tags || []), tagInput.trim()];
+          const currentTags = safeParseTags(editCase.tags);
+          const newTags = [...currentTags, tagInput.trim()];
           setEditCase({ ...editCase, tags: Array.from(new Set(newTags)) });
           setTagInput("");
       }
   };
 
   const removeTag = (t: string) => {
-      setEditCase({ ...editCase, tags: editCase.tags?.filter(tag => tag !== t) });
+      const currentTags = safeParseTags(editCase.tags);
+      setEditCase({ ...editCase, tags: currentTags.filter(tag => tag !== t) });
   };
 
   return (
@@ -72,7 +77,6 @@ export function TestCaseForm({ editCase, setEditCase, suites, currentUser }: Tes
                 value={editCase.priority || "MEDIUM"}
                 onChange={e => setEditCase({...editCase, priority: e.target.value as Priority})}
                 className="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white text-sm font-bold focus:ring-2 focus:ring-zinc-900/5 outline-none transition-shadow text-zinc-800"
-                defaultValue="MEDIUM"
                 >
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
@@ -111,7 +115,7 @@ export function TestCaseForm({ editCase, setEditCase, suites, currentUser }: Tes
                 <Tag className="w-3.5 h-3.5 mr-1.5" /> Tags
             </label>
             <div className="flex flex-wrap items-center gap-2 mb-3">
-                {editCase.tags?.map(tag => (
+                {safeParseTags(editCase.tags).map(tag => (
                     <TagBadge key={tag} label={tag} onRemove={() => removeTag(tag)} />
                 ))}
             </div>
@@ -126,11 +130,21 @@ export function TestCaseForm({ editCase, setEditCase, suites, currentUser }: Tes
         </div>
 
         {/* User Story Section */}
-        <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 shadow-sm">
-          <label className="block text-xs font-bold text-blue-600 uppercase tracking-wider mb-3 flex items-center">
-             <BookOpen className="w-3.5 h-3.5 mr-1.5" />
-             User Story
-          </label>
+        <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 shadow-sm group">
+          <div className="flex items-center justify-between mb-3">
+            <label className="block text-xs font-bold text-blue-600 uppercase tracking-wider flex items-center">
+               <BookOpen className="w-3.5 h-3.5 mr-1.5" />
+               User Story
+            </label>
+            <button 
+                onClick={() => onGenerateField('userStory')}
+                disabled={loadingAI || !editCase.title}
+                className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Generate with AI"
+            >
+                <Sparkles className="w-3.5 h-3.5" /> AI Auto-Fill
+            </button>
+          </div>
           <textarea 
             className="w-full px-4 py-3 border border-blue-100 rounded-xl text-sm bg-white focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition-colors min-h-[80px] font-medium text-zinc-800 placeholder-zinc-400"
             placeholder="As a [User], I want to [Action], so that [Benefit]..."
@@ -141,11 +155,21 @@ export function TestCaseForm({ editCase, setEditCase, suites, currentUser }: Tes
         </div>
 
         {/* Acceptance Criteria Section */}
-        <div className="bg-emerald-50/50 p-6 rounded-2xl border border-emerald-100 shadow-sm">
-          <label className="block text-xs font-bold text-emerald-600 uppercase tracking-wider mb-3 flex items-center">
-             <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-             Acceptance Criteria (AC)
-          </label>
+        <div className="bg-emerald-50/50 p-6 rounded-2xl border border-emerald-100 shadow-sm group">
+          <div className="flex items-center justify-between mb-3">
+            <label className="block text-xs font-bold text-emerald-600 uppercase tracking-wider flex items-center">
+               <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+               Acceptance Criteria (AC)
+            </label>
+            <button 
+                onClick={() => onGenerateField('acceptanceCriteria')}
+                disabled={loadingAI || !editCase.title}
+                className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold text-emerald-600 hover:text-emerald-800 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Generate with AI"
+            >
+                <Sparkles className="w-3.5 h-3.5" /> AI Auto-Fill
+            </button>
+          </div>
           <textarea 
             className="w-full px-4 py-3 border border-emerald-100 rounded-xl text-sm bg-white focus:bg-white focus:ring-2 focus:ring-emerald-100 outline-none transition-colors min-h-[80px] font-medium text-zinc-800 placeholder-zinc-400"
             placeholder="Given [context], When [event], Then [outcome]..."
@@ -156,8 +180,18 @@ export function TestCaseForm({ editCase, setEditCase, suites, currentUser }: Tes
         </div>
 
         {/* Preconditions */}
-        <div className="glass-input p-6 rounded-2xl border border-zinc-200 shadow-sm">
-          <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-3">Preconditions & Setup</label>
+        <div className="glass-input p-6 rounded-2xl border border-zinc-200 shadow-sm group">
+          <div className="flex items-center justify-between mb-3">
+            <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider">Preconditions & Setup</label>
+            <button 
+                onClick={() => onGenerateField('preconditions')}
+                disabled={loadingAI || !editCase.title}
+                className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold text-zinc-500 hover:text-zinc-700 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Generate with AI"
+            >
+                <Sparkles className="w-3.5 h-3.5" /> AI Auto-Fill
+            </button>
+          </div>
           <textarea 
             className="w-full px-4 py-3 border border-zinc-200 rounded-xl text-sm bg-white focus:bg-white transition-colors outline-none focus:ring-2 focus:ring-zinc-900/5 font-medium text-zinc-800 placeholder-zinc-400"
             placeholder="e.g. User is on the login page, Database is reset..."

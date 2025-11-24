@@ -1,6 +1,6 @@
 import { StateCreator } from 'zustand';
 import { TestCase, TestSuite, TestStatus, TestStep } from '@/types'; // Added TestStep
-import { generateTestSteps, generateImage } from '@/app/actions';
+import { generateImage } from '@/app/actions';
 
 export interface TestCaseSlice {
   testCases: TestCase[];
@@ -17,6 +17,7 @@ export interface TestCaseSlice {
   deleteSuite: (id: string) => Promise<void>;
 
   generateStepsForCase: (title: string, description: string, setEditCase: (c: Partial<TestCase>) => void, onAIError: (message: string) => void) => Promise<void>; // Updated signature
+  generateFieldForCase: (title: string, fieldType: string, context: string, setField: (val: string) => void, onAIError: (message: string) => void) => Promise<void>;
   generateMockupForCase: (prompt: string, onAIError: (message: string) => void) => Promise<string | null>; // Updated signature
 }
 
@@ -25,10 +26,8 @@ export const createTestCaseSlice: StateCreator<TestCaseSlice> = (set) => ({
   suites: [],
 
   saveTestCase: async (testCase) => {
-      let dataToSave: Partial<TestCase> = { ...testCase };
-      if (Array.isArray(dataToSave.tags)) {
-          dataToSave.tags = JSON.stringify(dataToSave.tags) as any; // Cast to any to bypass type checking
-      }
+      const dataToSave: Partial<TestCase> = { ...testCase };
+      // Tags are handled automatically by JSON.stringify of the body
 
       const res = await fetch('/api/testcases', {
           method: 'POST',
@@ -102,23 +101,93 @@ export const createTestCaseSlice: StateCreator<TestCaseSlice> = (set) => ({
       set(state => ({ suites: state.suites.filter(s => s.id !== id) }));
   },
 
-  generateStepsForCase: async (title, description, setEditCase, onAIError) => { // Updated implementation
+  generateStepsForCase: async (title, description, setEditCase, onAIError) => { 
       const currentSteps: TestStep[] = [];
+      let stepCounter = 0;
+
       try {
-          for await (const result of generateTestSteps(title, description)) {
-              if ('error' in result) {
-                  onAIError(result.error); // Show toast
-                  setEditCase({ steps: [] }); // Clear any partial steps
-                  return; // Stop processing
-              } else {
-                  currentSteps.push(result);
-                  setEditCase({ steps: [...currentSteps] }); // Update state with each new step
+          const response = await fetch('/api/ai/generate-steps', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ title, description }),
+          });
+
+          if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || 'Failed to generate steps');
+          }
+
+          const reader = response.body?.getReader();
+          if (!reader) throw new Error("Response body is null");
+
+          const decoder = new TextDecoder();
+          let accumulatedText = "";
+
+          while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              accumulatedText += decoder.decode(value, { stream: true });
+              const lines = accumulatedText.split('\n');
+              accumulatedText = lines.pop() || ""; // Keep incomplete line
+
+              for (const line of lines) {
+                  if (line.trim().startsWith('{') && line.trim().endsWith('}')) {
+                      try {
+                          const parsedStep = JSON.parse(line.trim());
+                          if (parsedStep.action && parsedStep.expected) {
+                              const newStep: TestStep = {
+                                  id: `step-${Date.now()}-${stepCounter++}`,
+                                  action: parsedStep.action,
+                                  expected: parsedStep.expected,
+                              };
+                              currentSteps.push(newStep);
+                              setEditCase({ steps: [...currentSteps] });
+                          }
+                      } catch (e) {
+                          // Ignore parse errors for now
+                      }
+                  }
               }
           }
+
       } catch (error) {
           console.error("Error streaming steps:", error);
-          onAIError("An unexpected error occurred during step generation.");
-          setEditCase({ steps: [] }); // Clear steps on error or partial steps
+          onAIError(error instanceof Error ? error.message : "An unexpected error occurred during step generation.");
+          // Optionally keep partial steps or clear them:
+          // setEditCase({ steps: [] }); 
+      }
+  },
+
+  generateFieldForCase: async (title, fieldType, context, setField, onAIError) => {
+      try {
+          const response = await fetch('/api/ai/generate-field', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ title, fieldType, context }),
+          });
+
+          if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || 'Failed to generate text');
+          }
+
+          const reader = response.body?.getReader();
+          if (!reader) throw new Error("Response body is null");
+
+          const decoder = new TextDecoder();
+          let accumulatedText = "";
+
+          while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              const chunk = decoder.decode(value, { stream: true });
+              accumulatedText += chunk;
+              setField(accumulatedText);
+          }
+      } catch (error) {
+          console.error("Error streaming field:", error);
+          onAIError(error instanceof Error ? error.message : "An unexpected error occurred.");
       }
   },
 

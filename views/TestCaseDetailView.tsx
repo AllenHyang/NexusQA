@@ -1,6 +1,7 @@
 import React from "react";
 import { TestCase, User, Project, ExecutionRecord, TestStep } from "../types";
 import { StatusBadge, PriorityBadge, TagBadge } from "../components/ui";
+import { safeParseTags } from "../lib/formatters";
 import { 
   ArrowLeft, 
   BookOpen, 
@@ -79,9 +80,9 @@ export function TestCaseDetailView({
     : null;
 
   return (
-    <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
       {/* Top Navigation Bar */}
-      <div className="flex items-center justify-between mb-8 sticky top-0 bg-zinc-50/90 backdrop-blur-md py-4 z-30 border-b border-zinc-200/50 -mx-8 px-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 md:mb-8 sticky top-0 bg-zinc-50/90 backdrop-blur-md py-4 z-30 border-b border-zinc-200/50 -mx-4 md:-mx-8 px-4 md:px-8 gap-4">
           <button 
             onClick={onBack} 
             className="group flex items-center text-zinc-500 hover:text-zinc-900 transition-colors font-bold text-sm"
@@ -90,11 +91,11 @@ export function TestCaseDetailView({
                 <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
             </div>
             <span className="mr-1">Back to</span>
-            <span className="underline decoration-zinc-300 group-hover:decoration-zinc-900 underline-offset-2">{project.name}</span>
+            <span className="underline decoration-zinc-300 group-hover:decoration-zinc-900 underline-offset-2 truncate max-w-[200px] md:max-w-xs">{project.name}</span>
           </button>
 
-          <div className="flex items-center gap-3 relative">
-             <div className="text-right mr-2">
+          <div className="flex items-center gap-2 md:gap-3 relative justify-end">
+             <div className="text-right mr-2 hidden sm:block">
                  <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Last Updated</div>
                  <div className="text-xs font-bold text-zinc-700">Just now</div>
              </div>
@@ -134,7 +135,7 @@ export function TestCaseDetailView({
                 onClick={() => onRunTest(testCase)}
                 className="px-5 py-2.5 bg-zinc-900 text-white font-bold rounded-xl hover:bg-black shadow-lg hover:shadow-xl transition-all flex items-center"
              >
-                 <PlayCircle className="w-4 h-4 mr-2" /> Run Test
+                 <PlayCircle className="w-4 h-4 mr-2" /> <span className="whitespace-nowrap">Run Test</span>
              </button>
           </div>
       </div>
@@ -157,11 +158,11 @@ export function TestCaseDetailView({
                         </span>
                     )}
                 </div>
-                <h1 className="text-4xl font-black text-zinc-900 leading-tight tracking-tight mb-4">
+                <h1 className="text-2xl md:text-4xl font-black text-zinc-900 leading-tight tracking-tight mb-4 break-words">
                     {testCase.title}
                 </h1>
                 <div className="flex flex-wrap gap-2">
-                    {testCase.tags?.map(tag => (
+                    {safeParseTags(testCase.tags).map(tag => (
                         <TagBadge key={tag} label={tag} />
                     ))}
                 </div>

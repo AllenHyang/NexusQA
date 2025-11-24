@@ -141,8 +141,8 @@ export function FolderTree({ suites, selectedSuiteId, onSelect, onCreate, onRena
     };
 
     return (
-        <div className="w-64 flex flex-col border-r border-zinc-200 bg-zinc-50/50 h-full">
-            <div className="p-4 border-b border-zinc-200 flex items-center justify-between bg-white">
+        <div className="w-full md:w-64 flex flex-col bg-zinc-50/50 h-auto max-h-[50vh] md:max-h-full md:h-full">
+            <div className="p-4 border-b border-zinc-200 flex items-center justify-between bg-white shrink-0">
                 <span className="text-xs font-black text-zinc-400 uppercase tracking-wider">Test Suites</span>
                 <Tooltip content="New Folder">
                     <button 
