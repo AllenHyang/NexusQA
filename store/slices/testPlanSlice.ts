@@ -9,6 +9,7 @@ export interface TestPlanSlice {
   fetchPlan: (planId: string) => Promise<void>;
   createPlan: (projectId: string, data: Partial<TestPlan>) => Promise<void>;
   addCasesToPlan: (planId: string, caseIds: string[]) => Promise<void>;
+  removeCaseFromPlan: (planId: string, caseId: string) => Promise<void>;
   updateRunStatus: (runId: string, status: string, notes?: string) => Promise<void>;
 }
 
@@ -57,6 +58,19 @@ export const createTestPlanSlice: StateCreator<TestPlanSlice, [], [], TestPlanSl
       if (res.ok) {
           // Refresh current plan to show new runs
           await get().fetchPlan(planId);
+      }
+  },
+
+  removeCaseFromPlan: async (planId, caseId) => {
+      const res = await fetch(`/api/plans/${planId}/cases?caseId=${caseId}`, {
+          method: 'DELETE',
+      });
+      if (res.ok) {
+          const currentPlan = get().currentPlan;
+          if (currentPlan && currentPlan.runs) {
+             const newRuns = currentPlan.runs.filter(r => r.testCaseId !== caseId);
+             set({ currentPlan: { ...currentPlan, runs: newRuns } });
+          }
       }
   },
 

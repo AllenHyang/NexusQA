@@ -20,13 +20,14 @@
 
 ## 🛠️ Tech Stack
 
-- **Frontend Framework**: React 19
-- **Build Tool**: Vite
+- **Framework**: Next.js 15 (App Router) + React 19
 - **Language**: TypeScript
-- **Styling**: Tailwind CSS (inferred)
+- **Styling**: Tailwind CSS
+- **State Management**: Zustand
+- **Database**: Prisma + SQLite
 - **Icons**: Lucide React
 - **AI Integration**: Google GenAI SDK (`@google/genai`)
-- **Browser Automation**: Puppeteer (for logs/debugging)
+- **Testing & E2E**: Jest + Playwright (plus Puppeteer for log/debug helpers)
 
 ## 🏁 Getting Started
 
@@ -107,27 +108,40 @@ We use **Husky** and **lint-staged** to automatically validate your code when yo
 
 | Command | Description |
 | :--- | :--- |
-| `npm run dev` | Starts the local development server using Vite. |
-| `npm run build` | Builds the application for production. |
-| `npm run preview` | Previews the production build locally. |
+| `npm run dev` | Starts the Next.js development server at `http://localhost:3000`. |
+| `npm run build` | Builds the Next.js application for production. |
+| `npm start` | Starts the production server (after `npm run build`). |
+| `npm run lint` | Runs ESLint checks. |
+| `npm test` | Runs Jest unit/integration tests. |
 | `./start_debug.sh` | **Recommended for Dev:** Starts the server and a visible Chrome instance for detailed logging (`server.log` & `browser.log`). |
 
 ## 📂 Project Structure
 
 ```
 /
-├── src/
-│   ├── api.ts              # Gemini API integration logic
-│   ├── components/         # Reusable UI components (Modals, History, etc.)
-│   ├── contexts/           # React Contexts (e.g., LanguageContext)
-│   ├── views/              # Page views (Dashboard, Login, ProjectDetail, etc.)
-│   ├── types.ts            # TypeScript interfaces
-│   ├── translations.ts     # i18n resources
-│   └── ...
-├── check_logs.js           # Log monitoring utility
-├── console_watcher.js      # Browser console log capturer
-└── vite.config.ts          # Vite configuration
+├── app/                    # Next.js app router pages & API routes (app/api/*)
+├── components/             # Reusable UI components (modals, history, lists, etc.)
+├── contexts/               # React Contexts (language, UI state)
+├── views/                  # Page-level views (Dashboard, Login, ProjectDetail, etc.)
+├── store/                  # Zustand store and feature slices
+├── prisma/                 # Prisma schema, migrations, and local SQLite DB
+├── tests/                  # Playwright E2E specs under tests/e2e
+├── lib/                    # Shared helpers (formatters, import/export, Prisma client)
+├── scripts/                # Utility scripts (validation, data cleanup)
+├── public/                 # Static assets
+└── ...
 ```
+
+## 📐 SOP Alignment
+
+This repository ships with a detailed testing SOP in `NexusQA_SOP.md`, which defines BDD-style requirements, review gates, and execution rules.
+
+- **User Story & AC** – Mapped to `userStory`, `preconditions`, and `acceptanceCriteria` fields on each Test Case.
+- **Review Gate** – `reviewStatus` (`PENDING`/`APPROVED`/`CHANGES_REQUESTED`) is stored per case; the UI warns when executing non-approved cases, but hard blocking may still require additional implementation.
+- **Execution History** – Every run records status, executor, env, evidence, and `bugId`, and is surfaced in dashboards and history panels.
+- **Test Plans** – Test Plans and Runs model test cycles; E2E tests under `tests/e2e` cover the main SOP flows.
+
+When extending features, keep SOP red lines in mind (e.g., fail must have bug ID, unreviewed cases should not enter formal execution).
 
 ## 🤝 Contributing
 

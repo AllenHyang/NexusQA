@@ -110,6 +110,7 @@ model TestRun {
   executedBy  String?
   notes       String?
   executedAt  DateTime?
+  snapshot    String?   // JSON string of the test case at the time of add
 
   testPlan    TestPlan  @relation(fields: [testPlanId], references: [id], onDelete: Cascade)
   testPlanId  String

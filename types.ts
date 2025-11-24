@@ -104,5 +104,6 @@ export interface TestRun {
   executedBy?: string;
   notes?: string;
   executedAt?: string;
+  snapshot?: string; // JSON string of Test Case state
   testCase?: TestCase; // for UI convenience
 }
