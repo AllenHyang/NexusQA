@@ -57,9 +57,9 @@
 
 *   必须包含 **业务价值 (Why)**。
 *   必须包含 **用户路径 (What)**。
-*   必须包含清晰的 **验收标准 (Acceptance Criteria, AC)**。
+*   必须包含使用 **GIVEN/WHEN/THEN (BDD)** 格式编写的清晰 **验收标准 (Acceptance Criteria, AC)**。
 
-**🔴 红线**: 验收标准模糊（如“体验良好”、“界面美观”）的故事，QA 有权拒绝进入测试流程。
+**🔴 红线**: 验收标准模糊（如“体验良好”、“界面美观”）或未使用 BDD 格式的故事，QA 有权拒绝进入测试流程。
 
 ### 3.2 场景定义 (Test Scenario)
 
@@ -69,6 +69,7 @@
 
 **标准**:
 
+*   场景必须使用 **GIVEN/WHEN/THEN (BDD)** 格式描述。
 *   覆盖 **Happy Path (正向流程)**。
 *   覆盖 **Exception Path (异常流程**，如网络断开、数据错误)。
 *   覆盖 **Edge Case (边界条件**，如最大值、空值)。
@@ -79,7 +80,7 @@
 
 ### 4.1 用例设计 (Test Case Design)
 
-**原则**: 每一个 Test Case 必须是一个可独立执行的原子单元。
+**原则**: 每一个 Test Case 必须是一个可独立执行的原子单元。用例描述建议映射 BDD 场景 (GIVEN/WHEN/THEN)。
 
 **必须包含字段**:
 
@@ -161,6 +162,7 @@
 | 术语 | 全称                | 定义                     |
 | :--- | :------------------ | :----------------------- |
 | AC   | Acceptance Criteria | 验收标准，需求的完成定义。 |
+| BDD  | Behavior-Driven Development | 行为驱动开发，使用 GIVEN/WHEN/THEN 格式定义需求和测试。 |
 | DoR  | Definition of Ready | 准入标准，开始测试前必须满足的条件。 |
 | DoD  | Definition of Done  | 准出标准，结束测试必须满足的条件。 |
 | S0   | Severity 0          | 阻断级缺陷，系统崩溃或主流程不通。 |

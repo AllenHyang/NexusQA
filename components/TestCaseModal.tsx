@@ -123,6 +123,7 @@ export function TestCaseModal({
 
             {isRunMode && editCase.visualReference && (
                  <div className="rounded-xl overflow-hidden border border-zinc-200">
+                     {/* eslint-disable-next-line @next/next/no-img-element */}
                      <img src={editCase.visualReference} alt="Visual Ref" className="w-full h-48 object-cover" />
                  </div>
             )}

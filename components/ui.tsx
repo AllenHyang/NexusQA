@@ -218,6 +218,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, testCases, on
                 <div className="mb-5 relative">
                     <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-sm border border-zinc-100 bg-zinc-50 flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
                         {project.coverImage ? (
+                            // eslint-disable-next-line @next/next/no-img-element
                             <img src={project.coverImage} className="w-full h-full object-cover" alt="Cover" />
                         ) : (
                             <ImageIcon className="w-8 h-8 text-zinc-300" />

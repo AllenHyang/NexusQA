@@ -63,6 +63,46 @@ Follow these steps to set up the project locally.
    ```
    The app will be available at `http://localhost:3000`.
 
+## 🛡️ Testing & Quality Gates
+
+We enforce strict quality standards using automated tools and workflows.
+
+### 🧪 Running Tests
+
+We use **Jest** for Unit and Integration testing.
+
+*   **Run all tests**:
+    ```bash
+    npm test
+    ```
+*   **Run tests with coverage report**:
+    ```bash
+    npm test -- --coverage
+    ```
+
+### 🧹 Linting
+
+We use **ESLint** to ensure code quality and consistency.
+
+*   **Check for issues**:
+    ```bash
+    npm run lint
+    ```
+
+### ✅ Automated Validation
+
+Before pushing code, you can run the all-in-one validation script:
+
+```bash
+./scripts/validate.sh
+```
+This script runs both **Linting** and **Tests**, ensuring your code is ready for review.
+
+### 🔒 Git Hooks (Husky)
+
+We use **Husky** and **lint-staged** to automatically validate your code when you commit.
+*   **Pre-commit Hook**: Automatically runs `eslint --fix` and related unit tests on staged files. If checks fail, the commit is blocked.
+
 ## 📜 Scripts
 
 | Command | Description |

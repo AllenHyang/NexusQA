@@ -30,6 +30,7 @@ export function VisualReference({ imageUrl, onGenerate, loadingAI, hasTitle, onF
       <div className="aspect-video bg-zinc-50 rounded-2xl border border-zinc-100 flex items-center justify-center overflow-hidden relative group transition-all shadow-inner">
         {imageUrl ? (
           <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={imageUrl} className="w-full h-full object-cover animate-in fade-in duration-700" alt="Ref" />
             <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-end justify-between p-4"> {/* Changed to justify-between for buttons */}
               {/* Feedback Buttons */}

@@ -94,6 +94,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       preconditions: editCase.preconditions || "",
       status: editCase.status as TestStatus,
       priority: editCase.priority as Priority,
+      reviewStatus: editCase.reviewStatus || undefined, // Add reviewStatus
       authorId: editCase.authorId || "",
       assignedToId: editCase.assignedToId || undefined,
       visualReference: editCase.visualReference || undefined,

@@ -1,13 +1,11 @@
 import { GoogleGenAI } from "@google/genai";
 
-// Ensure API key is available
-const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
-
 export async function POST(req: Request) {
-  if (!apiKey) {
-    return new Response(JSON.stringify({ error: "GEMINI_API_KEY is not set" }), { status: 500 });
-  }
+  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
 
+  if (!apiKey) {
+        return new Response(JSON.stringify({ error: "GEMINI_API_KEY is not set" }), { status: 500 });
+      }
   try {
     const { title, description } = await req.json();
     
@@ -33,34 +31,23 @@ export async function POST(req: Request) {
          {"action": "Perform A", "expected": "See B"}
     `;
 
-    const geminiStream = await ai.models.generateContentStream({
+    // Use non-streaming content generation for better stability in test environments
+    // Streaming can sometimes cause buffering issues or truncated JSON which fails parsing
+    const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
 
-    // Create a ReadableStream to pipe the AI response to the client
-    const stream = new ReadableStream({
-      async start(controller) {
-        const encoder = new TextEncoder();
-        try {
-          for await (const chunk of geminiStream) {
-            const text = chunk.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (text) {
-              controller.enqueue(encoder.encode(text));
-            }
-          }
-          controller.close();
-        } catch (error) {
-          controller.error(error);
-        }
-      },
-    });
+    const text = response.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    return new Response(stream, {
+    if (!text) {
+        throw new Error("No content generated from AI");
+    }
+
+    // Return the full text at once
+    return new Response(text, {
       headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
+        "Content-Type": "text/plain",
       },
     });
 

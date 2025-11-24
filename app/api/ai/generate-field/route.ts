@@ -1,9 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 
-// Ensure API key is available
-const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
-
 export async function POST(req: Request) {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+
   if (!apiKey) {
     return new Response(JSON.stringify({ error: "GEMINI_API_KEY is not set" }), { status: 500 });
   }

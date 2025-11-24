@@ -117,45 +117,36 @@ export const createTestCaseSlice: StateCreator<TestCaseSlice> = (set) => ({
               throw new Error(errorData.error || 'Failed to generate steps');
           }
 
-          const reader = response.body?.getReader();
-          if (!reader) throw new Error("Response body is null");
+          const text = await response.text();
+          const lines = text.split('\n');
 
-          const decoder = new TextDecoder();
-          let accumulatedText = "";
-
-          while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-
-              accumulatedText += decoder.decode(value, { stream: true });
-              const lines = accumulatedText.split('\n');
-              accumulatedText = lines.pop() || ""; // Keep incomplete line
-
-              for (const line of lines) {
-                  if (line.trim().startsWith('{') && line.trim().endsWith('}')) {
-                      try {
-                          const parsedStep = JSON.parse(line.trim());
-                          if (parsedStep.action && parsedStep.expected) {
-                              const newStep: TestStep = {
-                                  id: `step-${Date.now()}-${stepCounter++}`,
-                                  action: parsedStep.action,
-                                  expected: parsedStep.expected,
-                              };
-                              currentSteps.push(newStep);
-                              setEditCase({ steps: [...currentSteps] });
-                          }
-                      } catch (e) {
-                          // Ignore parse errors for now
+          for (const line of lines) {
+              if (line.trim().startsWith('{') && line.trim().endsWith('}')) {
+                  try {
+                      const parsedStep = JSON.parse(line.trim());
+                      if (parsedStep.action && parsedStep.expected) {
+                          const newStep: TestStep = {
+                              id: `step-${Date.now()}-${stepCounter++}`,
+                              action: parsedStep.action,
+                              expected: parsedStep.expected,
+                          };
+                          currentSteps.push(newStep);
                       }
+                  } catch {
+                      // Ignore parse errors for now
                   }
               }
           }
+          
+          if (currentSteps.length > 0) {
+              setEditCase({ steps: currentSteps });
+          } else {
+              onAIError("AI generated content but no valid steps were found.");
+          }
 
       } catch (error) {
-          console.error("Error streaming steps:", error);
+          console.error("Error generating steps:", error);
           onAIError(error instanceof Error ? error.message : "An unexpected error occurred during step generation.");
-          // Optionally keep partial steps or clear them:
-          // setEditCase({ steps: [] }); 
       }
   },
 
