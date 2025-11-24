@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { ProjectDetailView } from "@/views/ProjectDetailView";
 import { useAppStore } from "@/store/useAppStore";
 import { useUI } from "@/contexts/UIContext";
@@ -18,12 +18,19 @@ export default function ProjectDetailPage() {
     deleteTestCase, bulkDeleteTestCases, bulkUpdateStatus, bulkMoveTestCases,
     createSuite, renameSuite, deleteSuite,
     deleteProject, // Added
+    fetchPlans, plans, createPlan, addCasesToPlan, // Added
     currentUser, users
   } = useAppStore();
   
   const { 
     openTestCaseModal, openHistoryModal, searchQuery, openImportCasesModal, openEditProjectModal // Added
   } = useUI();
+
+  useEffect(() => {
+      if (projectId) {
+          fetchPlans(projectId);
+      }
+  }, [projectId, fetchPlans]);
 
   const project = projects.find(p => p.id === projectId);
   const projectCases = testCases.filter(tc => tc.projectId === projectId);
@@ -87,6 +94,9 @@ export default function ProjectDetailPage() {
                 router.push('/projects');
             }
         }}
+        plans={plans}
+        onCreatePlan={(data) => createPlan(projectId, data)}
+        onAddToPlan={addCasesToPlan}
     />
   );
 }

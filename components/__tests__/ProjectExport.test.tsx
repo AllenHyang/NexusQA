@@ -53,6 +53,7 @@ describe('ProjectDetailPage - Export Functionality', () => {
       projects: [mockProject],
       testCases: mockTestCases,
       suites: mockSuites,
+      plans: [],
       currentUser: mockCurrentUser,
       users: [],
       // Mock other store functions to prevent errors
@@ -63,6 +64,10 @@ describe('ProjectDetailPage - Export Functionality', () => {
       createSuite: jest.fn(),
       renameSuite: jest.fn(),
       deleteSuite: jest.fn(),
+      fetchPlans: jest.fn(),
+      createPlan: jest.fn(),
+      addCasesToPlan: jest.fn(),
+      deleteProject: jest.fn(),
     });
     (useUI as unknown as jest.Mock).mockReturnValue({
       openTestCaseModal: jest.fn(),

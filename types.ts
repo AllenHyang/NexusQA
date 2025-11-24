@@ -80,3 +80,29 @@ export interface Project {
   startDate?: string;
   dueDate?: string;
 }
+
+export interface TestPlan {
+  id: string;
+  name: string;
+  description?: string;
+  projectId: string;
+  startDate?: string;
+  endDate?: string;
+  status: "PLANNED" | "ACTIVE" | "COMPLETED" | "ARCHIVED";
+  runs?: TestRun[];
+  _count?: {
+      runs: number;
+  };
+  createdAt: string;
+}
+
+export interface TestRun {
+  id: string;
+  testPlanId: string;
+  testCaseId: string;
+  status: TestStatus;
+  executedBy?: string;
+  notes?: string;
+  executedAt?: string;
+  testCase?: TestCase; // for UI convenience
+}

@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { Project, TestCase, User, Priority, TestStatus, TestSuite } from "../types";
+import { Project, TestCase, User, Priority, TestStatus, TestSuite, TestPlan } from "../types";
 import { StatusBadge, PriorityBadge, AnimatedEmptyState, ProgressBar, Tooltip } from "../components/ui";
 import { FolderTree as FolderTreeSidebar } from "../components/FolderTree";
+import { PlanList } from "../components/PlanList";
 import { safeParseTags } from "../lib/formatters";
-import { Download, Plus, Filter, ChevronDown, Check, Trash2, CheckSquare, Copy, SearchX, Maximize2, CheckCircle2, XCircle, AlertCircle, BookOpen, Sparkles, Bug, PlayCircle, ArrowRight, Layout, Info, User as UserIcon, Github, Calendar, BarChart3, Activity, Users, Pencil, FolderInput } from "lucide-react";
+import { Download, Plus, Filter, ChevronDown, Check, Trash2, CheckSquare, Copy, SearchX, Maximize2, CheckCircle2, XCircle, AlertCircle, BookOpen, Sparkles, Bug, PlayCircle, ArrowRight, Layout, Info, User as UserIcon, Github, Calendar, BarChart3, Activity, Users, Pencil, FolderInput, ClipboardList } from "lucide-react";
 import Image from "next/image";
 
 interface ProjectDetailViewProps {
@@ -32,6 +33,10 @@ interface ProjectDetailViewProps {
   // Project Handlers
   onEditProject: () => void;
   onDeleteProject: (id: string) => void;
+  
+  plans: TestPlan[];
+  onCreatePlan: (data: Partial<TestPlan>) => void;
+  onAddToPlan: (planId: string, caseIds: string[]) => void; // New
 }
 
 interface WorkflowStepProps {
@@ -87,7 +92,10 @@ export function ProjectDetailView({
   onDeleteSuite,
   onEditProject,
   onDeleteProject,
-  onImportCases
+  onImportCases,
+  plans,
+  onCreatePlan,
+  onAddToPlan
 }: ProjectDetailViewProps) {
   const [priorityFilter, setPriorityFilter] = useState<Priority[]>([]);
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
@@ -99,12 +107,15 @@ export function ProjectDetailView({
   const [selectedSuiteId, setSelectedSuiteId] = useState<string | null>(null);
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<"WORKFLOW" | "ANALYTICS">("ANALYTICS");
+  const [activeTab, setActiveTab] = useState<"WORKFLOW" | "ANALYTICS" | "PLANS">("ANALYTICS");
   const [onlyMyTasks, setOnlyMyTasks] = useState(false);
 
   // Bulk Move State
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [moveTargetId, setMoveTargetId] = useState<string | null>(null);
+
+  const [showAddToPlanModal, setShowAddToPlanModal] = useState(false); // New
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null); // New
   
   const [showMobileFolders, setShowMobileFolders] = useState(false);
 
@@ -247,6 +258,12 @@ export function ProjectDetailView({
               >
                 <Layout className="w-3.5 h-3.5 mr-1.5" /> <span className="hidden sm:inline">Workflow</span>
               </button>
+              <button 
+                onClick={() => setActiveTab("PLANS")}
+                className={`px-3 md:px-4 py-2 rounded-lg text-xs font-bold flex items-center transition-all ${activeTab === "PLANS" ? 'bg-zinc-900 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'}`}
+              >
+                <ClipboardList className="w-3.5 h-3.5 mr-1.5" /> <span className="hidden sm:inline">Test Plans</span>
+              </button>
           </div>
           
           {(currentUser.role === "ADMIN" || currentUser.role === "QA_LEAD") && (
@@ -326,7 +343,7 @@ export function ProjectDetailView({
       {/* Main Content Area with Sidebar */}
       <div className="flex-1 flex flex-col md:flex-row min-h-0">
         {/* Left Sidebar: Folder Tree */}
-        <div className={`${showMobileFolders ? "block" : "hidden"} md:block border-b md:border-b-0 md:border-r border-zinc-200`}>
+        <div className={`${showMobileFolders ? "block" : "hidden"} md:${activeTab === "PLANS" ? "hidden" : "block"} border-b md:border-b-0 md:border-r border-zinc-200`}>
             <FolderTreeSidebar 
                 suites={suites} 
                 selectedSuiteId={selectedSuiteId}
@@ -339,6 +356,12 @@ export function ProjectDetailView({
 
         {/* Right Content: Scrollable */}
         <div className="flex-1 flex flex-col min-w-0 overflow-y-auto p-4 md:p-6">
+            {activeTab === "PLANS" ? (
+                <div className="animate-in slide-in-from-bottom-4 fade-in duration-500">
+                    <PlanList projectId={project.id} plans={plans} onCreatePlan={onCreatePlan} />
+                </div>
+            ) : (
+            <>
             {/* Intelligence Section */}
             <div className="animate-in slide-in-from-top-2 fade-in duration-300 mb-6">
                 {activeTab === "WORKFLOW" && (
@@ -665,6 +688,8 @@ export function ProjectDetailView({
                     </div>
                 </div>
             </div>
+            </>
+            )}
         </div>
         
         {/* Preview Panel Removed in favor of full page view */}
@@ -697,6 +722,13 @@ export function ProjectDetailView({
                 className="flex items-center px-3 py-2 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-100 border border-orange-200 text-xs font-bold transition-colors"
                >
                    <AlertCircle className="w-3.5 h-3.5 mr-1.5" /> Block
+               </button>
+
+               <button 
+                onClick={() => setShowAddToPlanModal(true)}
+                className="flex items-center px-3 py-2 rounded-xl bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-200 text-xs font-bold transition-colors"
+               >
+                   <ClipboardList className="w-3.5 h-3.5 mr-1.5" /> Add to Plan
                </button>
                
                <button 
@@ -755,6 +787,49 @@ export function ProjectDetailView({
                         className="px-4 py-2 text-sm font-bold bg-zinc-900 text-white rounded-lg hover:bg-black transition-colors"
                       >
                           Move
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
+
+      {/* Add to Plan Modal */}
+      {showAddToPlanModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay animate-in fade-in duration-200">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-in zoom-in-95 duration-200 border border-zinc-200">
+                  <h3 className="text-lg font-bold text-zinc-900 mb-4">Add {selectedIds.length} cases to Plan...</h3>
+                  <div className="space-y-2 mb-6 max-h-60 overflow-y-auto custom-scrollbar">
+                      {plans.filter(p => p.status !== 'ARCHIVED').map(plan => (
+                          <button
+                              key={plan.id}
+                              onClick={() => setSelectedPlanId(plan.id)}
+                              className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-colors flex items-center ${selectedPlanId === plan.id ? 'bg-zinc-900 text-white' : 'bg-zinc-50 text-zinc-600 hover:bg-zinc-100'}`}
+                          >
+                              <ClipboardList className="w-4 h-4 mr-2" /> {plan.name}
+                          </button>
+                      ))}
+                      {plans.filter(p => p.status !== 'ARCHIVED').length === 0 && <div className="text-center text-zinc-400 text-sm py-4">No active plans found.</div>}
+                  </div>
+                  <div className="flex justify-end gap-2">
+                      <button 
+                        onClick={() => { setShowAddToPlanModal(false); setSelectedPlanId(null); }}
+                        className="px-4 py-2 text-sm font-bold text-zinc-500 hover:bg-zinc-50 rounded-lg transition-colors"
+                      >
+                          Cancel
+                      </button>
+                      <button 
+                        onClick={() => {
+                            if (selectedPlanId) {
+                                onAddToPlan(selectedPlanId, selectedIds);
+                                setShowAddToPlanModal(false);
+                                setSelectedIds([]);
+                                setSelectedPlanId(null);
+                            }
+                        }}
+                        disabled={!selectedPlanId}
+                        className="px-4 py-2 text-sm font-bold bg-zinc-900 text-white rounded-lg hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                          Add
                       </button>
                   </div>
               </div>
