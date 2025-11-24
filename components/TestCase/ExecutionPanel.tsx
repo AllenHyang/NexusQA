@@ -12,18 +12,33 @@ interface ExecutionPanelProps {
   bugId: string;
   setBugId: (s: string) => void;
   onExecute: (status: TestStatus) => void;
+  reviewStatus?: string; // Added reviewStatus prop
 }
 
 export function ExecutionPanel({ 
-  env, setEnv, evidence, setEvidence, note, setNote, bugId, setBugId, onExecute 
+  env, setEnv, evidence, setEvidence, note, setNote, bugId, setBugId, onExecute, reviewStatus 
 }: ExecutionPanelProps) {
+  const isApproved = reviewStatus === 'APPROVED';
+
   return (
       <div className="glass-panel rounded-3xl p-6 border-l-4 border-l-yellow-500 bg-white shadow-xl">
-        <h4 className="font-bold text-zinc-800 mb-5 flex items-center text-lg">
-          <CheckCircle2 className="w-5 h-5 mr-2 text-yellow-500"/>
-          Execute Test
-        </h4>
+        <div className="flex items-center justify-between mb-5">
+            <h4 className="font-bold text-zinc-800 flex items-center text-lg">
+            <CheckCircle2 className="w-5 h-5 mr-2 text-yellow-500"/>
+            Execute Test
+            </h4>
+            {!isApproved && (
+                <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg border border-orange-100 flex items-center">
+                    <AlertCircle className="w-3 h-3 mr-1" /> Not Approved
+                </span>
+            )}
+        </div>
         <div className="mb-5 space-y-4">
+           {!isApproved && (
+               <div className="bg-orange-50 border border-orange-100 rounded-xl p-3 text-xs text-orange-800 font-medium mb-2">
+                   ⚠️ This test case has not been approved yet. Execution is discouraged.
+               </div>
+           )}
            <div className="flex gap-4">
                <div className="flex-1 relative group">
                   <Monitor className="w-4 h-4 text-zinc-400 absolute left-3 top-3 group-focus-within:text-zinc-800 transition-colors" />

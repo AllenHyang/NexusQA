@@ -139,6 +139,7 @@ export function TestCaseModal({
                 bugId={executionBugId}
                 setBugId={setExecutionBugId}
                 onExecute={onExecute}
+                reviewStatus={editCase.reviewStatus}
               />
             )}
 

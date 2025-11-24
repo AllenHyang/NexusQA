@@ -121,7 +121,7 @@ test.describe('Core Project Flows', () => {
     // 3. Create Suite (Folder)
     // Locate the button with FolderPlus icon
     await page.locator('button:has(svg.lucide-folder-plus)').click();
-    const suiteNameInput = page.getByPlaceholder('Suite Name...');
+    const suiteNameInput = page.locator('input:focus');
     await suiteNameInput.fill(suiteName);
     await suiteNameInput.press('Enter');
     await expect(page.locator('div.select-none').getByText(suiteName)).toBeVisible();
@@ -149,13 +149,13 @@ test.describe('Core Project Flows', () => {
 
     // --- Fill SOP Mandatory Fields ---
     // Preconditions (Using regex for robustness against minor text changes)
-    await page.getByPlaceholder(/e\.g\. User is on the login page/i).fill('User must be logged in');
+    await page.getByPlaceholder(/e.g. User is on the login page/i).fill('User must be logged in');
     
     // User Story
-    await page.getByPlaceholder(/As a \[User\], I want to \[Action\]/i).fill('As a user, I want to access the API.');
+    await page.getByPlaceholder(/As a [User], I want to [Action]/i).fill('As a user, I want to access the API.');
     
     // Acceptance Criteria
-    await page.getByPlaceholder(/Given \[context\], When \[event\]/i).fill('1. Response is 200 OK');
+    await page.getByPlaceholder(/Given [context], When [event]/i).fill('1. Response is 200 OK');
     
     // Requirement ID
     await page.getByPlaceholder(/Requirement ID/i).fill('REQ-001');
@@ -242,8 +242,6 @@ test.describe('Core Project Flows', () => {
     await page.getByRole('heading', { name: projectName }).click();
     await expect(page.getByRole('heading', { name: projectName })).toBeVisible();
 
-    // 6. Delete Suite (should fail if not empty, or confirm deletion)
-    
     // 6. Delete Suite (should fail if not empty, or confirm deletion)
     // The current UI might not support deleting non-empty suites easily, so we'll test deleting an empty one.
     // For now, let's just delete the project to clean up. This confirms the main happy path.
