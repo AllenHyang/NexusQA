@@ -171,4 +171,108 @@ test.describe('Test Plan Management', () => {
     await expect(page.locator('.glass-panel', { hasText: '1 Fail' })).toBeVisible();
   });
 
+  test('should show snapshot badge and preserve run title after editing source test case', async ({ page }) => {
+    test.setTimeout(60000);
+    const timestamp = Date.now();
+    const projectName = `Snapshot Project ${timestamp}`;
+    createdProjectName = projectName;
+    const planName = `Snapshot Plan ${timestamp}`;
+    const originalCaseTitle = `Snapshot Case ${timestamp}`;
+    const updatedCaseTitle = `Snapshot Case Updated ${timestamp}`;
+
+    // 1. Create Project
+    await page.getByRole('button', { name: 'New Project' }).click();
+    await page.getByPlaceholder('e.g. Mobile App V2').fill(projectName);
+    const createProjectPromise = page.waitForResponse(
+      resp => resp.url().includes('/api/projects') && resp.status() === 201,
+      { timeout: 60000 }
+    );
+    await page.getByRole('button', { name: 'Create Project' }).click();
+    await createProjectPromise;
+
+    // 2. Enter Project
+    await page.getByRole('heading', { name: projectName }).click();
+
+    // 3. Create a Test Case in the library
+    await page.getByRole('button', { name: 'Create Case' }).first().click();
+    await expect(page.getByText('New Test Case')).toBeVisible();
+    await page.getByPlaceholder('e.g. Verify successful login with valid credentials').fill(originalCaseTitle);
+    await page.getByRole('button', { name: 'Save Changes' }).click();
+    await expect(page.getByText('New Test Case')).not.toBeVisible();
+    await expect(page.getByRole('cell', { name: originalCaseTitle })).toBeVisible();
+
+    // 4. Create a Test Plan
+    await page.getByRole('button', { name: 'Test Plans' }).click();
+
+    await page.getByRole('button', { name: 'New Plan' }).click();
+    const nameInput = page.getByPlaceholder('e.g. Release 1.0 Regression');
+    await expect(nameInput).toBeVisible();
+    await nameInput.fill(planName);
+    await page.getByRole('button', { name: 'Create', exact: true }).click();
+
+    await expect(page.getByText(planName)).toBeVisible();
+
+    // 5. Open the Test Plan and use "Add Cases" to attach the case
+    await page.getByText(planName).click();
+    await expect(page.getByRole('heading', { name: planName })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Add Cases' }).click();
+    await expect(page.getByText('Add Cases to Plan')).toBeVisible();
+
+    // Select the case inside the Add Cases modal
+    const modalCaseRow = page.locator('tr', { hasText: originalCaseTitle }).first();
+    await modalCaseRow.click();
+    await expect(page.getByRole('button', { name: 'Add Selected (1)' })).toBeEnabled();
+
+    const addCasesResponsePromise = page.waitForResponse(resp => resp.url().includes('/api/plans/') && resp.url().endsWith('/cases') && resp.request().method() === 'POST');
+    await page.getByRole('button', { name: 'Add Selected (1)' }).click();
+    await addCasesResponsePromise;
+
+    await expect(page.getByText('Add Cases to Plan')).not.toBeVisible();
+
+    // Verify run row shows the original title and SNAPSHOT badge
+    const snapshotRow = page.locator('tr', { hasText: originalCaseTitle }).first();
+    await expect(snapshotRow).toBeVisible();
+    await expect(snapshotRow.locator('span', { hasText: 'SNAPSHOT' })).toBeVisible();
+
+    // 6. Go back to Test Cases library and edit the source test case title
+    await page.getByRole('button', { name: 'Projects', exact: true }).click();
+    await expect(page.getByText('All Projects')).toBeVisible();
+
+    await page.getByRole('heading', { name: projectName }).click();
+    await expect(page.getByRole('heading', { name: projectName })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Test Cases' }).click();
+    await expect(page.getByRole('cell', { name: originalCaseTitle })).toBeVisible();
+
+    const caseRow = page.locator('tr', { hasText: originalCaseTitle }).first();
+    await caseRow.hover();
+    await caseRow.locator('button:has(svg.lucide-maximize-2)').click({ force: true });
+    await expect(page.getByText('Test Case Details')).toBeVisible({ timeout: 15000 });
+
+    const titleInput = page.getByPlaceholder('e.g. Verify successful login with valid credentials');
+    await titleInput.fill(updatedCaseTitle);
+
+    const saveCaseResponsePromise = page.waitForResponse(resp => resp.url().includes('/api/testcases') && resp.request().method() === 'POST');
+    await page.getByRole('button', { name: 'Save Changes' }).click();
+    await saveCaseResponsePromise;
+
+    await expect(page.getByText('Test Case Details')).not.toBeVisible();
+    await expect(page.getByRole('cell', { name: updatedCaseTitle })).toBeVisible();
+
+    // 7. Return to the Test Plan and verify the run still shows the original title with SNAPSHOT
+    await page.getByRole('button', { name: 'Test Plans' }).click();
+    await expect(page.getByText(planName)).toBeVisible();
+
+    await page.getByText(planName).click();
+    await expect(page.getByRole('heading', { name: planName })).toBeVisible();
+
+    const finalSnapshotRow = page.locator('tr', { hasText: originalCaseTitle }).first();
+    await expect(finalSnapshotRow).toBeVisible();
+    await expect(finalSnapshotRow.locator('span', { hasText: 'SNAPSHOT' })).toBeVisible();
+
+    // The updated title should NOT appear in the plan run list
+    await expect(page.getByText(updatedCaseTitle)).not.toBeVisible();
+  });
+
 });

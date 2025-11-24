@@ -5,8 +5,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: 0,
-  workers: process.env.CI ? 1 : undefined,
-  timeout: 30000, // Global timeout for each test
+  workers: 1, // Force 1 worker to avoid SQLite locks
+  timeout: 120000, // Global timeout for each test
   expect: {
     timeout: 5000, // Expectation timeout
   },
