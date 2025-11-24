@@ -22,7 +22,7 @@ You are a strict Quality Assurance gatekeeper. Your job is to evaluate if a task
 
 5.  **Project Rules & TDD (10 pts)**:
     - Does it follow project conventions?
-    - **TDD Requirement**: Does the description include a "Test Design" or "Regression Test" section? (Required for high score)
+    - **Test Pyramid**: Does the description include a "Test Design" section that specifies Unit/Integration tests? (Aligns with SOP Pyramid)
 
 6.  **Latest Focus (10 pts)**:
     - Does it align with current project goals?

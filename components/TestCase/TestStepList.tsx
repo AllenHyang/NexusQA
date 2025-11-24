@@ -28,9 +28,29 @@ export function TestStepList({ steps, onUpdateSteps, onGenerate, loadingAI, hasT
         {steps?.map((step, idx) => (
           <div key={step.id || idx} className="flex items-start p-5 bg-white rounded-2xl border border-zinc-100 shadow-sm group hover:border-zinc-300 transition-colors animate-in fade-in slide-in-from-bottom-2 duration-300" style={{animationDelay: `${idx * 50}ms`}}>
             <span className="w-7 h-7 rounded-full bg-zinc-100 text-zinc-500 flex items-center justify-center text-xs font-bold mr-4 flex-shrink-0 mt-0.5 group-hover:bg-zinc-900 group-hover:text-white transition-all">{idx + 1}</span>
-            <div className="flex-1">
-              <p className="font-bold text-zinc-800 text-sm leading-relaxed">{step.action}</p>
-              <p className="text-zinc-500 mt-1.5 text-xs font-medium bg-zinc-50 p-2 rounded-lg inline-block border border-zinc-100">Expect: {step.expected}</p>
+            <div className="flex-1 grid grid-cols-1 gap-2">
+              <input 
+                type="text"
+                value={step.action}
+                onChange={(e) => {
+                    const newSteps = [...steps];
+                    newSteps[idx] = { ...step, action: e.target.value };
+                    onUpdateSteps(newSteps);
+                }}
+                className="w-full font-bold text-zinc-800 text-sm leading-relaxed bg-transparent border-b border-transparent hover:border-zinc-200 focus:border-zinc-400 outline-none transition-all placeholder-zinc-300"
+                placeholder="e.g. Click login button"
+              />
+              <input 
+                type="text"
+                value={step.expected}
+                onChange={(e) => {
+                    const newSteps = [...steps];
+                    newSteps[idx] = { ...step, expected: e.target.value };
+                    onUpdateSteps(newSteps);
+                }}
+                className="w-full text-zinc-500 text-xs font-medium bg-zinc-50 p-2 rounded-lg border border-zinc-100 focus:bg-white focus:ring-2 focus:ring-zinc-100 outline-none transition-all placeholder-zinc-300"
+                placeholder="e.g. User is redirected"
+              />
             </div>
             <div className="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-all">
               <button

@@ -31,6 +31,11 @@ interface UIContextType {
   openImportCasesModal: (projectId: string) => void;
   closeImportCasesModal: () => void;
 
+  // Import Project Modal
+  showImportProjectModal: boolean;
+  openImportProjectModal: () => void;
+  closeImportProjectModal: () => void;
+
   // Loading State (Global AI or Operations)
   loadingAI: boolean;
   setLoadingAI: (loading: boolean) => void;
@@ -68,6 +73,9 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
   // Import Cases Modal
   const [showImportCasesModal, setShowImportCasesModal] = useState(false);
   const [importTargetProjectId, setImportTargetProjectId] = useState<string | null>(null);
+
+  // Import Project Modal
+  const [showImportProjectModal, setShowImportProjectModal] = useState(false);
 
   // Loading
   const [loadingAI, setLoadingAI] = useState(false);
@@ -134,12 +142,21 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
     setImportTargetProjectId(null);
   };
 
+  const openImportProjectModal = () => {
+    setShowImportProjectModal(true);
+  };
+
+  const closeImportProjectModal = () => {
+    setShowImportProjectModal(false);
+  };
+
   return (
     <UIContext.Provider value={{
       showNewProjectModal, editingProject, openNewProjectModal, openEditProjectModal, closeNewProjectModal,
       showCaseModal, modalMode, editCase, openTestCaseModal, closeTestCaseModal, setEditCase,
       historyViewCase, openHistoryModal, closeHistoryModal,
       showImportCasesModal, importTargetProjectId, openImportCasesModal, closeImportCasesModal,
+      showImportProjectModal, openImportProjectModal, closeImportProjectModal,
       loadingAI, setLoadingAI,
       executionNote, setExecutionNote,
       executionBugId, setExecutionBugId,

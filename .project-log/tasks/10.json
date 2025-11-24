@@ -2,7 +2,7 @@
   "id": 10,
   "title": "Implement Project Import Functionality",
   "description": "The system currently lacks the ability to import projects. This task involves implementing a feature to import a project, including its test cases and other rich content. This is critical for initializing the system with existing data.",
-  "status": "todo",
+  "status": "completed",
   "priority": "high",
   "tags": [
     "feature",
@@ -11,6 +11,7 @@
   ],
   "created_at": "2025-11-24T12:00:00.000Z",
   "updated_at": "2025-11-24T12:05:00.000Z",
+  "completed_at": "2025-11-24T13:00:00.000Z",
   "acceptance_criteria": [
     "UI provides an 'Import Project' button on the project list page.",
     "Supports importing a JSON file containing project metadata and test cases.",
