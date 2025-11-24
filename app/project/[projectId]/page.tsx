@@ -39,7 +39,23 @@ export default function ProjectDetailPage() {
         users={users}
         searchQuery={searchQuery}
         defectTrackerUrl="" // TODO
-        onExport={() => alert("Exporting feature coming soon!")}
+        onExport={() => {
+            const exportData = {
+                ...project,
+                suites: projectSuites,
+                testCases: projectCases
+            };
+            const jsonString = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([jsonString], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `${project.name}_export.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }}
         onCreateCase={(suiteId) => openTestCaseModal({ projectId: project.id, suiteId: suiteId || undefined })}
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onEditCase={openTestCaseModal as any}

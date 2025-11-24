@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Project, TestStatus, ExecutionRecord } from '@/types';
+import { Project } from "@/types";
 import { TestCase as PrismaTestCase, TestStep as PrismaTestStep } from '@prisma/client';
 
 interface UIContextType {
@@ -18,7 +18,7 @@ interface UIContextType {
   editCase: Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }>;
   openTestCaseModal: (testCase?: Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }>, mode?: 'EDIT' | 'RUN') => void; // Updated signature
   closeTestCaseModal: () => void;
-  setEditCase: (testCase: Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }>) => void;
+  setEditCase: React.Dispatch<React.SetStateAction<Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }>>>;
 
   // History Modal
   historyViewCase: (PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }) | null;

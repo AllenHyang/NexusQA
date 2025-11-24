@@ -129,6 +129,7 @@ export const createTestCaseSlice: StateCreator<TestCaseSlice> = (set) => ({
                               id: `step-${Date.now()}-${stepCounter++}`,
                               action: parsedStep.action,
                               expected: parsedStep.expected,
+                              order: stepCounter - 1,
                           };
                           currentSteps.push(newStep);
                       }

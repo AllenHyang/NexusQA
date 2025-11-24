@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Modal, PriorityBadge } from "./ui";
-import { FileInput, Upload, AlertCircle } from "lucide-react";
+import { FileInput, Upload, AlertCircle, Download } from "lucide-react";
 import { parseFile, ImportedTestCase } from "@/lib/importParser";
 
 interface ImportCasesModalProps {
@@ -49,11 +49,21 @@ export function ImportCasesModal({ onClose, projectId, onImport }: ImportCasesMo
             <div className="p-2 bg-white rounded-lg shadow-sm mr-3">
                 <Upload className="w-5 h-5 text-blue-600" />
             </div>
-            <div>
+            <div className="flex-1">
                 <h4 className="text-sm font-bold text-blue-900">Bulk Import from File</h4>
                 <p className="text-xs text-blue-700 mt-0.5">
                     Upload a CSV or Excel file to quickly import multiple test cases.
                 </p>
+                <div className="mt-2">
+                    <a 
+                        href="/templates/import_template.csv" 
+                        download
+                        className="inline-flex items-center text-xs px-2 py-1 rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 hover:text-blue-800 transition-colors"
+                    >
+                        <Download className="w-3 h-3 mr-1" />
+                        Download Template
+                    </a>
+                </div>
             </div>
         </div>
 

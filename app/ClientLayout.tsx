@@ -11,7 +11,7 @@ import { TestCaseModal } from "@/components/TestCaseModal";
 import { HistoryModal } from "@/components/HistoryModal";
 import { ImportCasesModal } from "@/components/ImportCasesModal";
 import { ImportProjectModal } from "@/components/ImportProjectModal";
-import { ExecutionRecord, Project, TestCase, TestStatus, Priority, TestStep } from "@/types";
+import { ExecutionRecord, Project, TestCase, TestStatus, Priority, TestStep, ReviewStatus } from "@/types";
 import { XCircle } from "lucide-react"; // Added XCircle for toast component
 import { safeParseTags } from "@/lib/formatters";
 
@@ -94,7 +94,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       preconditions: editCase.preconditions || "",
       status: editCase.status as TestStatus,
       priority: editCase.priority as Priority,
-      reviewStatus: editCase.reviewStatus || undefined, // Add reviewStatus
+      reviewStatus: (editCase.reviewStatus as ReviewStatus) || undefined, // Add reviewStatus
       authorId: editCase.authorId || "",
       assignedToId: editCase.assignedToId || undefined,
       visualReference: editCase.visualReference || undefined,
@@ -124,7 +124,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       await generateStepsForCase(
         editCase.title || "", 
         editCase.description || "", 
-        (partial) => setEditCase(prev => ({ ...prev, ...partial })), 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (partial: any) => setEditCase(prev => ({ ...prev, ...partial })), 
         showToast
       );
     } catch (error) {
@@ -144,6 +145,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         editCase.title,
         field,
         editCase.description || "",
+        {
+            userStory: editCase.userStory || "",
+            description: editCase.description || "",
+            acceptanceCriteria: editCase.acceptanceCriteria || ""
+        },
         (val) => setEditCase(prev => ({ ...prev, [field]: val })),
         showToast
       );
