@@ -6,6 +6,7 @@ import { useAppStore } from "@/store/useAppStore";
 import { useUI } from "@/contexts/UIContext";
 import { useRouter, useParams } from "next/navigation";
 import { TestCase, TestStatus } from "@/types";
+import { generateExcelExport } from "@/lib/exportGenerator";
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -16,11 +17,12 @@ export default function ProjectDetailPage() {
     projects, testCases, suites, 
     deleteTestCase, bulkDeleteTestCases, bulkUpdateStatus, bulkMoveTestCases,
     createSuite, renameSuite, deleteSuite,
+    deleteProject, // Added
     currentUser, users
   } = useAppStore();
   
   const { 
-    openTestCaseModal, openHistoryModal, searchQuery, openImportCasesModal
+    openTestCaseModal, openHistoryModal, searchQuery, openImportCasesModal, openEditProjectModal // Added
   } = useUI();
 
   const project = projects.find(p => p.id === projectId);
@@ -56,6 +58,7 @@ export default function ProjectDetailPage() {
             link.click();
             document.body.removeChild(link);
         }}
+        onExportExcel={() => generateExcelExport(project, projectCases, projectSuites)}
         onCreateCase={(suiteId) => openTestCaseModal({ projectId: project.id, suiteId: suiteId || undefined })}
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onEditCase={openTestCaseModal as any}
@@ -76,6 +79,14 @@ export default function ProjectDetailPage() {
         onCreateSuite={(parentId, name) => createSuite(projectId, parentId, name)}
         onRenameSuite={renameSuite}
         onDeleteSuite={deleteSuite}
+        
+        onEditProject={() => openEditProjectModal(project)}
+        onDeleteProject={async (id) => {
+            if (confirm("Are you sure you want to delete this project?")) {
+                await deleteProject(id);
+                router.push('/projects');
+            }
+        }}
     />
   );
 }

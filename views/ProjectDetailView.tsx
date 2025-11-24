@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { Project, TestCase, User, Priority, TestStatus, TestSuite } from "../types";
-import { StatusBadge, PriorityBadge, AnimatedEmptyState, TagBadge, ProgressBar, Tooltip } from "../components/ui";
+import { StatusBadge, PriorityBadge, AnimatedEmptyState, ProgressBar, Tooltip } from "../components/ui";
 import { FolderTree as FolderTreeSidebar } from "../components/FolderTree";
 import { safeParseTags } from "../lib/formatters";
-import { Download, Plus, Filter, ChevronDown, Check, Trash2, CheckSquare, History, Copy, SearchX, X, Maximize2, CheckCircle2, XCircle, AlertCircle, BookOpen, Tag, Sparkles, Bug, PlayCircle, ArrowRight, Layout, Info, User as UserIcon, Github, Calendar, BarChart3, Activity, Users, Pencil, FolderInput } from "lucide-react";
+import { Download, Plus, Filter, ChevronDown, Check, Trash2, CheckSquare, Copy, SearchX, Maximize2, CheckCircle2, XCircle, AlertCircle, BookOpen, Sparkles, Bug, PlayCircle, ArrowRight, Layout, Info, User as UserIcon, Github, Calendar, BarChart3, Activity, Users, Pencil, FolderInput } from "lucide-react";
+import Image from "next/image";
 
 interface ProjectDetailViewProps {
   project: Project;
@@ -13,11 +14,11 @@ interface ProjectDetailViewProps {
   users: User[];
   searchQuery: string;
   onExport: () => void;
+  onExportExcel: () => void;
   onCreateCase: (suiteId?: string | null) => void;
   onEditCase: (tc: TestCase) => void;
   onDeleteCase: (id: string) => void;
   onDuplicateCase: (tc: TestCase) => void;
-  onViewHistory: (tc: TestCase) => void;
   onBulkDelete: (ids: string[]) => void;
   onBulkStatusUpdate: (ids: string[], status: TestStatus) => void;
   onBulkMove: (ids: string[], targetSuiteId: string | null) => void; // New prop
@@ -28,11 +29,21 @@ interface ProjectDetailViewProps {
   onRenameSuite: (id: string, name: string) => void;
   onDeleteSuite: (id: string) => void;
   
-  defectTrackerUrl?: string;
+  // Project Handlers
+  onEditProject: () => void;
+  onDeleteProject: (id: string) => void;
 }
 
-const WorkflowStep = ({ icon: Icon, title, description, color, stepNumber }: any) => (
-    <div className="flex-1 relative group min-w-[200px]">
+interface WorkflowStepProps {
+    icon: React.ElementType;
+    title: string;
+    description: string;
+    color: string;
+    stepNumber: number;
+}
+
+const WorkflowStep = ({ icon: Icon, title, description, color, stepNumber }: WorkflowStepProps) => (
+    <div className="relative group">
         <div className={`p-6 rounded-2xl glass-panel h-full relative z-10 flex flex-col bg-white border border-zinc-100 shadow-sm`}>
             <div className="flex items-center justify-between mb-4">
                 <div className={`p-3 rounded-xl ${color.replace('text-', 'bg-').replace('500', '100')} ${color} shadow-sm group-hover:scale-110 transition-transform duration-300`}>
@@ -45,7 +56,7 @@ const WorkflowStep = ({ icon: Icon, title, description, color, stepNumber }: any
         </div>
         {/* Connector Line */}
         {stepNumber < 4 && (
-             <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-0.5 bg-zinc-200 -translate-y-1/2 z-0">
+             <div className="hidden xl:block absolute top-1/2 -right-4 w-8 h-0.5 bg-zinc-200 -translate-y-1/2 z-0">
                  <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 bg-white p-1.5 rounded-full shadow-sm border border-zinc-100">
                     <ArrowRight className="w-3 h-3 text-zinc-400" />
                  </div>
@@ -62,11 +73,11 @@ export function ProjectDetailView({
   users,
   searchQuery,
   onExport,
+  onExportExcel,
   onCreateCase,
   onEditCase,
   onDeleteCase,
   onDuplicateCase,
-  onViewHistory,
   onBulkDelete,
   onBulkStatusUpdate,
   onBulkMove,
@@ -74,18 +85,19 @@ export function ProjectDetailView({
   onCreateSuite,
   onRenameSuite,
   onDeleteSuite,
-  onImportCases,
-  defectTrackerUrl
+  onEditProject,
+  onDeleteProject,
+  onImportCases
 }: ProjectDetailViewProps) {
   const [priorityFilter, setPriorityFilter] = useState<Priority[]>([]);
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
   
   const [assigneeFilter, setAssigneeFilter] = useState<string[]>([]);
   const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
 
   const [selectedSuiteId, setSelectedSuiteId] = useState<string | null>(null);
 
-  const [selectedPreviewId, setSelectedPreviewId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<"WORKFLOW" | "ANALYTICS">("ANALYTICS");
   const [onlyMyTasks, setOnlyMyTasks] = useState(false);
@@ -133,7 +145,6 @@ export function ProjectDetailView({
     return matchesSuite && matchesPriority && matchesSearch && matchesAssignee;
   });
 
-  const selectedPreviewCase = testCases.find(tc => tc.id === selectedPreviewId);
       const getAssignee = (id?: string) => users.find(u => u.id === id);
       
       const handleSelectAll = () => {    if (selectedIds.length === filteredCases.length && filteredCases.length > 0) {
@@ -237,12 +248,51 @@ export function ProjectDetailView({
                 <Layout className="w-3.5 h-3.5 mr-1.5" /> <span className="hidden sm:inline">Workflow</span>
               </button>
           </div>
-          <button
-            onClick={onExport}
-            className="glass-button px-4 py-2.5 rounded-xl text-sm font-bold flex items-center"
-          >
-            <Download className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">Export</span>
-          </button>
+          
+          {(currentUser.role === "ADMIN" || currentUser.role === "QA_LEAD") && (
+            <>
+                <Tooltip content="Edit Project">
+                    <button onClick={onEditProject} className="p-2.5 rounded-xl hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900 transition-colors border border-zinc-200 bg-white shadow-sm">
+                        <Pencil className="w-4 h-4" />
+                    </button>
+                </Tooltip>
+                <Tooltip content="Delete Project">
+                    <button onClick={() => onDeleteProject(project.id)} className="p-2.5 rounded-xl hover:bg-red-50 text-zinc-500 hover:text-red-600 transition-colors border border-zinc-200 bg-white shadow-sm">
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                </Tooltip>
+                <div className="w-px h-6 bg-zinc-300 mx-1 hidden md:block"></div>
+            </>
+          )}
+
+          <div className="relative">
+            <button
+                onClick={() => setShowExportDropdown(!showExportDropdown)}
+                className="glass-button px-4 py-2.5 rounded-xl text-sm font-bold flex items-center"
+            >
+                <Download className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">Export</span>
+                <ChevronDown className="w-4 h-4 ml-2 opacity-50" />
+            </button>
+            {showExportDropdown && (
+                <>
+                    <div className="fixed inset-0 z-10" onClick={() => setShowExportDropdown(false)}></div>
+                    <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-zinc-100 shadow-xl rounded-2xl p-2 z-30 animate-in fade-in zoom-in-95 duration-100">
+                        <button
+                            onClick={() => { onExport(); setShowExportDropdown(false); }}
+                            className="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-zinc-50 flex items-center font-bold text-zinc-700"
+                        >
+                            JSON Export
+                        </button>
+                        <button
+                            onClick={() => { onExportExcel(); setShowExportDropdown(false); }}
+                            className="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-zinc-50 flex items-center font-bold text-zinc-700"
+                        >
+                            Excel Export
+                        </button>
+                    </div>
+                </>
+            )}
+          </div>
           {(currentUser.role === "ADMIN" || currentUser.role === "QA_LEAD") && (
             <button
               onClick={onImportCases}
@@ -297,7 +347,7 @@ export function ProjectDetailView({
                             <Info className="w-4 h-4 text-yellow-500 mr-2" />
                             <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Use Case Driven Workflow</h3>
                         </div>
-                        <div className="flex flex-col lg:flex-row gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                             <WorkflowStep stepNumber={1} icon={BookOpen} title="User Story" description="Define the 'Who', 'What', and 'Why' in the User Story field to set the context." color="text-blue-500" />
                             <WorkflowStep stepNumber={2} icon={Sparkles} title="AI Design" description="Gemini AI generates precise test steps and visual mockups based on your story." color="text-purple-500" />
                             <WorkflowStep stepNumber={3} icon={PlayCircle} title="Execution" description="Testers run scenarios. Results are logged with timestamps and executor details." color="text-emerald-500" />
@@ -471,7 +521,7 @@ export function ProjectDetailView({
                             <div className={`w-5 h-5 border rounded-lg mr-3 flex items-center justify-center transition-all ${assigneeFilter.includes(u.id) ? "bg-zinc-900 border-zinc-900 shadow-sm" : "border-zinc-200 bg-white"}`}>
                                 {assigneeFilter.includes(u.id) && <Check className="w-3.5 h-3.5 text-white" />}
                             </div>
-                            <img src={u.avatar} className="w-6 h-6 rounded-full mr-2" alt={u.name} />
+                            <Image src={u.avatar} alt={u.name} width={24} height={24} className="w-6 h-6 rounded-full mr-2" />
                             <span className={`font-bold truncate max-w-[120px] ${assigneeFilter.includes(u.id) ? "text-zinc-900" : "text-zinc-500"}`}>{u.name}</span>
                             </div>
                         </button>
@@ -507,18 +557,16 @@ export function ProjectDetailView({
                         </thead>
                         <tbody className="divide-y divide-zinc-50">
                             {filteredCases.map((tc, idx) => {
-                            const isActive = selectedPreviewId === tc.id;
                             return (
                             <tr 
                                 key={tc.id} 
                                 onClick={() => onViewCaseDetails(project.id, tc.id)}
                                 className={`
                                     group cursor-pointer transition-all duration-200
-                                    ${isActive ? "bg-blue-50/60" : "hover:bg-zinc-50/80 bg-white"}
+                                    hover:bg-zinc-50/80 bg-white
                                 `}
                             >
                                 <td className="px-6 py-4 relative">
-                                    {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 rounded-r-full"></div>}
                                     <input 
                                         type="checkbox" 
                                         className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-800 cursor-pointer relative z-10"
@@ -552,7 +600,7 @@ export function ProjectDetailView({
                                 <td className="px-6 py-4">
                                     {getAssignee(tc.assignedToId) ? (
                                         <div className="flex items-center gap-2" title={getAssignee(tc.assignedToId)?.name}>
-                                            <img src={getAssignee(tc.assignedToId)?.avatar} alt="avatar" className="w-6 h-6 rounded-full border border-white shadow-sm ring-1 ring-zinc-100" />
+                                            <Image src={getAssignee(tc.assignedToId)?.avatar || '/default-avatar.png'} alt="avatar" width={24} height={24} className="w-6 h-6 rounded-full border border-white shadow-sm ring-1 ring-zinc-100" />
                                         </div>
                                     ) : (
                                         <div className="w-6 h-6 rounded-full bg-zinc-50 border border-dashed border-zinc-300 flex items-center justify-center">
@@ -563,7 +611,7 @@ export function ProjectDetailView({
                                 <td className="px-6 py-4"><StatusBadge status={tc.status} /></td>
                                 <td className="px-6 py-4"><PriorityBadge priority={tc.priority} /></td>
                                 <td className={`px-6 py-4 text-right sticky right-0 z-10 transition-colors shadow-[-10px_0_20px_-10px_rgba(0,0,0,0.02)]
-                                    ${isActive ? "bg-blue-50/60" : "bg-white group-hover:bg-zinc-50/80"}
+                                    bg-white group-hover:bg-zinc-50/80
                                 `}>
                                 <div className="flex justify-end items-center gap-1 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
                                     <Tooltip content="Details" position="left">

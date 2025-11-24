@@ -98,8 +98,11 @@ describe('ProjectDetailPage - Export Functionality', () => {
   it('triggers file download with correct data on export', async () => {
     render(<ProjectDetailPage />);
 
-    const exportButton = screen.getByText('Export'); // Assuming the button has this text or accessibility label
-    fireEvent.click(exportButton);
+    const exportButton = screen.getByText('Export');
+    fireEvent.click(exportButton); // Open the dropdown
+
+    const jsonExportButton = screen.getByText('JSON Export');
+    fireEvent.click(jsonExportButton); // Click the JSON Export option
 
     await waitFor(() => {
       expect(global.URL.createObjectURL).toHaveBeenCalled();

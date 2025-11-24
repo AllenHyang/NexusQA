@@ -1,0 +1,15 @@
+{
+  "id": 13,
+  "title": "Implement Test Plan (Test Cycle) Management Architecture",
+  "description": "## Context\nThe current system lacks a time/version dimension for test execution. Users can create static Test Cases, but cannot manage executions across different cycles (e.g., Sprint 1, V1.0 Regression).\n\n## Objective\nImplement a `TestPlan` entity to group test executions, allowing for version control of test results and organized testing cycles.\n\n## Scope\n1.  **Database Schema (Prisma)**:\n    *   Add `TestPlan` model: `id`, `name`, `description`, `startDate`, `endDate`, `status` (PLANNED, ACTIVE, COMPLETED, ARCHIVED), `projectId`.\n    *   Add `TestRun` model: Links `TestPlan` and `TestCase`. Stores `status` (PASSED, FAILED, etc.), `executedBy`, `notes`.\n2.  **API**:\n    *   `GET /api/projects/[id]/plans`: List plans.\n    *   `POST /api/projects/[id]/plans`: Create plan.\n    *   `GET /api/plans/[id]`: Get plan details (stats).\n    *   `POST /api/plans/[id]/cases`: Add cases to plan (bulk selection).\n    *   `PATCH /api/runs/[id]`: Update execution status.\n3.  **UI**:\n    *   **Project View**: Add \"Test Plans\" tab.\n    *   **Plan List**: Table of plans with progress bars.\n    *   **Plan Detail**:\n        *   List of cases in the plan.\n        *   Filters (Status: Todo, Pass, Fail).\n        *   \"Execute\" button/mode.\n    *   **Selector**: \"Add to Plan\" modal in the main Case Repository view.\n\n## Test Design\n*   **Unit Tests**:\n    *   `TestPlanService.create`: Verify plan creation with valid dates.\n    *   `TestPlanService.addCases`: Verify cases are linked correctly.\n    *   `TestPlan.progress`: Test percentage calculation logic.\n*   **Integration Tests**:\n    *   API `POST /plans`: Verify full flow from HTTP request to DB.\n    *   API `POST /plans/:id/cases`: Verify bulk addition.\n*   **E2E Tests**:\n    *   Create a plan -> Add cases -> Execute one case -> Verify progress bar updates.\n\n## Acceptance Criteria\n*   User can create a Test Plan (e.g., \"Release 1.0\").\n*   User can select Test Cases from the repository and add them to the Plan.\n*   User can mark a case as PASSED in Plan A, while it remains UNTESTED in Plan B.\n*   Progress bar shows % completed for the plan.",
+  "status": "todo",
+  "priority": "high",
+  "tags": [
+    "feature",
+    "schema",
+    "backend",
+    "frontend"
+  ],
+  "created_at": "2025-11-24T00:00:00.000Z",
+  "updated_at": "2025-11-24T00:00:00.000Z"
+}
