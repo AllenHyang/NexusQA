@@ -40,7 +40,7 @@ export default function ProjectDetailPage() {
         searchQuery={searchQuery}
         defectTrackerUrl="" // TODO
         onExport={() => alert("Exporting feature coming soon!")}
-        onCreateCase={() => openTestCaseModal({ projectId: project.id })}
+        onCreateCase={(suiteId) => openTestCaseModal({ projectId: project.id, suiteId: suiteId || undefined })}
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onEditCase={openTestCaseModal as any}
         onDeleteCase={deleteTestCase}
