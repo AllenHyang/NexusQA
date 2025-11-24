@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 
 export default function ProjectsPage() {
   const { projects, testCases, deleteProject, currentUser } = useAppStore();
-  const { openNewProjectModal, openEditProjectModal, searchQuery } = useUI();
+  const { openNewProjectModal, openEditProjectModal, searchQuery, openImportProjectModal } = useUI();
   const router = useRouter();
 
   if (!currentUser) return null;
@@ -20,6 +20,7 @@ export default function ProjectsPage() {
         currentUser={currentUser}
         searchQuery={searchQuery}
         onNewProject={openNewProjectModal}
+        onImportProject={openImportProjectModal}
         onProjectClick={(id) => router.push(`/project/${id}`)}
         onDeleteProject={(id) => {
             if (confirm("Are you sure?")) deleteProject(id);

@@ -2,7 +2,7 @@
 import React from "react";
 import { Project, TestCase, User } from "../types";
 import { ProjectCard, AnimatedEmptyState } from "../components/ui";
-import { Plus, Briefcase, SearchX, Layers } from "lucide-react";
+import { Plus, Briefcase, SearchX, Layers, Upload } from "lucide-react";
 
 interface ProjectListViewProps {
   projects: Project[];
@@ -10,12 +10,13 @@ interface ProjectListViewProps {
   currentUser: User;
   searchQuery: string;
   onNewProject: () => void;
+  onImportProject: () => void;
   onProjectClick: (id: string) => void;
   onDeleteProject: (id: string) => void;
   onEditProject: (p: Project) => void;
 }
 
-export function ProjectListView({ projects, testCases, currentUser, searchQuery, onNewProject, onProjectClick, onDeleteProject, onEditProject }: ProjectListViewProps) {
+export function ProjectListView({ projects, testCases, currentUser, searchQuery, onNewProject, onImportProject, onProjectClick, onDeleteProject, onEditProject }: ProjectListViewProps) {
   
   const filteredProjects = projects.filter(p => 
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -40,16 +41,25 @@ export function ProjectListView({ projects, testCases, currentUser, searchQuery,
         </div>
         
         {(currentUser.role === "ADMIN" || currentUser.role === "QA_LEAD") && (
-          <button 
-            onClick={onNewProject}
-            className="group relative overflow-hidden bg-zinc-900 text-white px-7 py-3.5 rounded-2xl shadow-xl shadow-zinc-900/20 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex items-center justify-center text-sm font-bold uppercase tracking-wider w-full md:w-auto"
-          >
-            <span className="absolute inset-0 bg-gradient-to-r from-zinc-800 to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-            <span className="relative flex items-center">
-               <Plus className="w-4 h-4 mr-2 group-hover:rotate-90 transition-transform duration-300 text-yellow-400" /> 
-               New Project
-            </span>
-          </button>
+          <div className="flex gap-3 w-full md:w-auto">
+            <button 
+                onClick={onImportProject}
+                className="group relative overflow-hidden bg-zinc-100 text-zinc-900 px-6 py-3.5 rounded-2xl hover:bg-zinc-200 transition-all duration-300 flex items-center justify-center text-sm font-bold uppercase tracking-wider flex-1 md:flex-none"
+            >
+                 <Upload className="w-4 h-4 mr-2" />
+                 Import
+            </button>
+            <button 
+                onClick={onNewProject}
+                className="group relative overflow-hidden bg-zinc-900 text-white px-7 py-3.5 rounded-2xl shadow-xl shadow-zinc-900/20 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex items-center justify-center text-sm font-bold uppercase tracking-wider flex-1 md:flex-none"
+            >
+                <span className="absolute inset-0 bg-gradient-to-r from-zinc-800 to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                <span className="relative flex items-center">
+                <Plus className="w-4 h-4 mr-2 group-hover:rotate-90 transition-transform duration-300 text-yellow-400" /> 
+                New Project
+                </span>
+            </button>
+          </div>
         )}
       </div>
 
