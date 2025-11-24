@@ -1,0 +1,14 @@
+{
+  "id": 14,
+  "title": "Enhance Test Plan Data Integrity (Snapshotting) & Usability",
+  "description": "## Context\nCurrently, `TestRun` links directly to `TestCase`. If a test case is updated (e.g., steps changed), historical test runs will point to the new version, invalidating the audit trail.\n\n## Objective\nImplement a 'Snapshot' mechanism where the state of a Test Case (title, steps, etc.) is copied into the `TestRun` at the time of creation.\n\n## Scope\n1.  **Database Schema**:\n    *   Update `TestRun` model to add `snapshot` field (String/JSON).\n2.  **API**:\n    *   Update `POST /api/plans/[planId]/cases` to fetch and store case data as a snapshot.\n3.  **UI (Frontend)**:\n    *   Update `types.ts` to reflect the new field.\n    *   (Optional) Update UI to indicate if a case has changed since execution (comparison logic), or simply rely on the snapshot for historical viewing.\n\n## Dependencies\n*   Task 13 (Test Plan Architecture) - Completed\n",
+  "status": "completed",
+  "priority": "high",
+  "tags": [
+    "feature",
+    "backend",
+    "data-integrity"
+  ],
+  "created_at": "2025-11-24T00:00:00.000Z",
+  "updated_at": "2025-11-24T00:00:00.000Z"
+}

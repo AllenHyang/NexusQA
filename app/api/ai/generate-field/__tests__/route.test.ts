@@ -176,7 +176,7 @@ describe('POST /api/ai/generate-field', () => {
         expect(receivedText).toContain('Given a user is logged in...');
         
         const expectedPrompt = `You are a QA Expert. Generate Acceptance Criteria for a test case titled "Login".
-            Context: "User logs in with valid credentials".
+Description: "User logs in with valid credentials"
             Format: List the criteria in Gherkin syntax (Given/When/Then) or a bulleted list.
             Keep it concise. Do not add any other text.`;
         expect(mockGenerateContentStream).toHaveBeenCalledWith({
@@ -222,7 +222,7 @@ describe('POST /api/ai/generate-field', () => {
         expect(receivedText).toContain('• User account exists');
         
         const expectedPrompt = `You are a QA Expert. Generate Preconditions for a test case titled "Login".
-            Context: "User logs in".
+Description: "User logs in"
             Format: Bulleted list of required state before testing.
             Keep it concise. Do not add any other text.`;
         expect(mockGenerateContentStream).toHaveBeenCalledWith({

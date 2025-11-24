@@ -26,7 +26,8 @@ export default function TestCaseDetailPage() {
         projects={projects}
         currentUser={currentUser}
         onBack={() => router.push(`/project/${projectId}`)}
-        onEdit={(tc) => openTestCaseModal(tc, 'EDIT')}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onEdit={(tc) => openTestCaseModal(tc as any, 'EDIT')}
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onRunTest={(tc) => openTestCaseModal(tc as any, 'RUN')}
         onDelete={(id) => { 

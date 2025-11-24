@@ -1,0 +1,14 @@
+{
+  "id": "12",
+  "title": "Add Edit and Delete Project Functionality to Project Detail View",
+  "description": "Implement 'Edit Project' and 'Delete Project' buttons in the Project Detail View header. This functionality is currently missing, forcing users to go back to the project list to manage project settings. The feature should be restricted to ADMIN and QA_LEAD roles.\n\n**Objectives:**\n1.  **Update `ProjectDetailView.tsx`**: Add Edit (Pencil) and Delete (Trash2) buttons to the header area.\n2.  **Update `app/project/[projectId]/page.tsx`**: Pass `onEditProject` and `onDeleteProject` handlers to `ProjectDetailView`. Ideally, reuse `openNewProjectModal` for editing (it supports `initialData`).\n3.  **Store/Context**: Ensure `updateProject` and `deleteProject` from store are accessible and used correctly.\n\n**Acceptance Criteria:**\n-   **Given** an Admin/QA Lead user is on the Project Detail page,\n    **When** they look at the header,\n    **Then** they should see 'Edit' and 'Delete' buttons.\n-   **When** they click 'Edit',\n    **Then** the project modal should open with pre-filled data, and saving should update the project.\n-   **When** they click 'Delete',\n    **Then** a confirmation dialog should appear, and upon confirmation, the project is deleted and user redirected to the project list.\n-   **Given** a Tester user,\n    **Then** they should NOT see these buttons.",
+  "status": "completed",
+  "priority": "medium",
+  "tags": [
+    "feature",
+    "ui",
+    "project-management"
+  ],
+  "created_at": "2025-11-24T06:00:00.000Z",
+  "updated_at": "2025-11-24T06:00:00.000Z"
+}

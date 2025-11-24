@@ -2,8 +2,9 @@ import { create } from 'zustand';
 import { createProjectSlice, ProjectSlice } from './slices/projectSlice';
 import { createTestCaseSlice, TestCaseSlice } from './slices/testCaseSlice';
 import { createUISlice, UISlice } from './slices/uiSlice';
+import { createTestPlanSlice, TestPlanSlice } from './slices/testPlanSlice';
 
-type AppState = ProjectSlice & TestCaseSlice & UISlice & {
+type AppState = ProjectSlice & TestCaseSlice & UISlice & TestPlanSlice & {
   refreshData: () => Promise<void>;
 };
 
@@ -11,6 +12,7 @@ export const useAppStore = create<AppState>((set, get, store) => ({
   ...createProjectSlice(set, get, store),
   ...createTestCaseSlice(set, get, store),
   ...createUISlice(set, get, store),
+  ...createTestPlanSlice(set, get, store),
 
   refreshData: async () => {
     set({ loading: true });

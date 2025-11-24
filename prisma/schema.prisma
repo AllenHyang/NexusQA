@@ -17,6 +17,7 @@ model Project {
   updatedAt     DateTime    @updatedAt
   suites        TestSuite[]
   testCases     TestCase[]
+  testPlans     TestPlan[]
 }
 
 model TestSuite {
@@ -59,6 +60,7 @@ model TestCase {
   updatedAt DateTime @updatedAt
   acceptanceCriteria String?
   reviewStatus String? @default("PENDING")
+  testRuns     TestRun[]
 }
 
 model TestStep {
@@ -83,4 +85,41 @@ model ExecutionRecord {
   
   testCase   TestCase @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
   testCaseId String
+}
+
+model TestPlan {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  startDate   DateTime?
+  endDate     DateTime?
+  status      String    @default("PLANNED") // PLANNED, ACTIVE, COMPLETED, ARCHIVED
+  
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String
+
+  runs        TestRun[]
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model TestRun {
+  id          String    @id @default(cuid())
+  status      String    @default("UNTESTED")
+  executedBy  String?
+  notes       String?
+  executedAt  DateTime?
+  snapshot    String?   // JSON string of the test case at the time of add
+
+  testPlan    TestPlan  @relation(fields: [testPlanId], references: [id], onDelete: Cascade)
+  testPlanId  String
+
+  testCase    TestCase  @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+  testCaseId  String
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([testPlanId, testCaseId])
 }

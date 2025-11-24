@@ -9,13 +9,15 @@ interface TestStepListProps {
   loadingAI: boolean;
   hasTitle: boolean;
   onFeedback: (stepId: string, feedback: 'up' | 'down') => void; // New prop
+  readOnly?: boolean;
 }
 
-export function TestStepList({ steps, onUpdateSteps, onGenerate, loadingAI, hasTitle, onFeedback }: TestStepListProps) {
+export function TestStepList({ steps, onUpdateSteps, onGenerate, loadingAI, hasTitle, onFeedback, readOnly }: TestStepListProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
         <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider">Test Steps</label>
+        {!readOnly && (
         <button 
           onClick={onGenerate}
           disabled={loadingAI || !hasTitle}
@@ -23,6 +25,7 @@ export function TestStepList({ steps, onUpdateSteps, onGenerate, loadingAI, hasT
           {loadingAI ? <AILoader /> : <Sparkles className="w-3.5 h-3.5 mr-1.5 group-hover:text-yellow-400 transition-colors" />}
           <span className="ml-1">{steps && steps.length > 0 ? "Regenerate with AI" : "Generate with AI"}</span>
         </button>
+        )}
       </div>
       <div className="space-y-3">
         {steps?.map((step, idx) => (
@@ -32,26 +35,29 @@ export function TestStepList({ steps, onUpdateSteps, onGenerate, loadingAI, hasT
               <input 
                 type="text"
                 value={step.action}
+                readOnly={readOnly}
                 onChange={(e) => {
                     const newSteps = [...steps];
                     newSteps[idx] = { ...step, action: e.target.value };
                     onUpdateSteps(newSteps);
                 }}
-                className="w-full font-bold text-zinc-800 text-sm leading-relaxed bg-transparent border-b border-transparent hover:border-zinc-200 focus:border-zinc-400 outline-none transition-all placeholder-zinc-300"
+                className={`w-full font-bold text-zinc-800 text-sm leading-relaxed bg-transparent border-b border-transparent ${!readOnly && 'hover:border-zinc-200 focus:border-zinc-400'} outline-none transition-all placeholder-zinc-300`}
                 placeholder="e.g. Click login button"
               />
               <input 
                 type="text"
                 value={step.expected}
+                readOnly={readOnly}
                 onChange={(e) => {
                     const newSteps = [...steps];
                     newSteps[idx] = { ...step, expected: e.target.value };
                     onUpdateSteps(newSteps);
                 }}
-                className="w-full text-zinc-500 text-xs font-medium bg-zinc-50 p-2 rounded-lg border border-zinc-100 focus:bg-white focus:ring-2 focus:ring-zinc-100 outline-none transition-all placeholder-zinc-300"
+                className={`w-full text-zinc-500 text-xs font-medium bg-zinc-50 p-2 rounded-lg border border-zinc-100 ${!readOnly && 'focus:bg-white focus:ring-2 focus:ring-zinc-100'} outline-none transition-all placeholder-zinc-300`}
                 placeholder="e.g. User is redirected"
               />
             </div>
+            {!readOnly && (
             <div className="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-all">
               <button
                 onClick={(e) => { e.stopPropagation(); onFeedback(step.id, 'up'); }}
@@ -72,16 +78,19 @@ export function TestStepList({ steps, onUpdateSteps, onGenerate, loadingAI, hasT
                 onUpdateSteps(newSteps);
               }} className="text-zinc-300 hover:text-red-500"><XCircle className="w-5 h-5"/></button>
             </div>
+            )}
           </div>
         ))}
+        {!readOnly && (
         <button 
           onClick={() => {
-            const newStep: TestStep = { id: Date.now().toString(), action: "New Action", expected: "Expected Result" };
+            const newStep: TestStep = { id: Date.now().toString(), action: "New Action", expected: "Expected Result", order: (steps || []).length };
             onUpdateSteps([...(steps || []), newStep]);
           }}
           className="w-full py-4 flex items-center justify-center border-2 border-zinc-200 border-dashed rounded-2xl text-sm text-zinc-400 hover:bg-zinc-50 hover:border-zinc-400 hover:text-zinc-600 transition-all font-bold group">
           <Plus className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" /> Add Manual Step
         </button>
+        )}
       </div>
     </div>
   );

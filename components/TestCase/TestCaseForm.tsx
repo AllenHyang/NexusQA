@@ -1,7 +1,7 @@
 import React from "react";
 import { TestCase, Priority, TestSuite, ReviewStatus, User } from "@/types";
-import { Folder, Link2, Tag, BookOpen, CheckCircle2, Clock, Sparkles } from "lucide-react";
-import { TagBadge } from "../ui";
+import { Folder, Link2, Tag, BookOpen, CheckCircle2, Clock, Sparkles, Info } from "lucide-react";
+import { TagBadge, Tooltip } from "../ui";
 import { safeParseTags } from "@/lib/formatters";
 
 interface TestCaseFormProps {
@@ -88,9 +88,14 @@ export function TestCaseForm({ editCase, setEditCase, suites, currentUser, onGen
 
         {/* Review Status */}
         <div className="glass-input p-6 rounded-2xl border border-zinc-200 shadow-sm">
-          <label htmlFor="review-status-select" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-3 flex items-center">
-              <Clock className="w-3.5 h-3.5 mr-1.5" /> Review Status
-          </label>
+          <div className="flex items-center justify-between mb-3">
+            <label htmlFor="review-status-select" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center">
+                <Clock className="w-3.5 h-3.5 mr-1.5" /> Review Status
+            </label>
+            <Tooltip content="Approve only if BDD scenarios (User Story & AC) are clearly defined.">
+                <Info className="w-3.5 h-3.5 text-zinc-400 cursor-help" />
+            </Tooltip>
+          </div>
           {(currentUser?.role === "ADMIN" || currentUser?.role === "QA_LEAD") ? (
             <select 
               id="review-status-select"
@@ -107,6 +112,9 @@ export function TestCaseForm({ editCase, setEditCase, suites, currentUser, onGen
               {editCase.reviewStatus || "PENDING"}
             </span>
           )}
+          <p className="text-[10px] text-zinc-400 mt-2 font-medium">
+            Ensure acceptance criteria follow GIVEN/WHEN/THEN format before approving.
+          </p>
         </div>
 
         {/* Tags Input */}
@@ -172,7 +180,7 @@ export function TestCaseForm({ editCase, setEditCase, suites, currentUser, onGen
           </div>
           <textarea 
             className="w-full px-4 py-3 border border-emerald-100 rounded-xl text-sm bg-white focus:bg-white focus:ring-2 focus:ring-emerald-100 outline-none transition-colors min-h-[80px] font-medium text-zinc-800 placeholder-zinc-400"
-            placeholder="Given [context], When [event], Then [outcome]..."
+            placeholder="GIVEN [context], WHEN [event], THEN [outcome]..."
             value={editCase.acceptanceCriteria || ""}
             onChange={e => setEditCase({...editCase, acceptanceCriteria: e.target.value})}
           />

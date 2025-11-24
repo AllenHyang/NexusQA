@@ -45,7 +45,7 @@ describe('TestCaseForm', () => {
     expect(screen.getByPlaceholderText('Requirement ID (e.g. JIRA-1024, REQ-50)')).toHaveValue('');
     expect(screen.getByDisplayValue('Medium')).toBeInTheDocument();
     expect(screen.getByDisplayValue('As a user, I want to do X, so I can get Y.', { exact: false })).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Given [context], When [event], Then [outcome]...')).toHaveValue('Given A, When B, Then C.');
+    expect(screen.getByPlaceholderText('GIVEN [context], WHEN [event], THEN [outcome]...')).toHaveValue('Given A, When B, Then C.');
     expect(screen.getByPlaceholderText('e.g. User is on the login page, Database is reset...')).toHaveValue('User is logged in.');
     expect(screen.getByText('initial')).toBeInTheDocument();
     expect(screen.getByText('tag')).toBeInTheDocument();
@@ -131,7 +131,7 @@ describe('TestCaseForm', () => {
         currentUser={mockTesterUser}
       />
     );
-    const acInput = screen.getByPlaceholderText('Given [context], When [event], Then [outcome]...');
+    const acInput = screen.getByPlaceholderText('GIVEN [context], WHEN [event], THEN [outcome]...');
     fireEvent.change(acInput, { target: { value: 'New AC' } });
     expect(mockSetEditCase).toHaveBeenCalledWith({
       ...defaultEditCase,

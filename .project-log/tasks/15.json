@@ -1,0 +1,10 @@
+{
+  "id": 15,
+  "title": "Upgrade Defect & Requirement Management: Structured Models & Integration",
+  "description": "## Context\nThe current system represents Bugs and Requirements as simple strings (`bugId`, `requirementId`). This leads to weak traceability, lack of structured data (Severity S0-S3, Status), and no validation of external links.\n\n## Objectives\n1. **Structured Data Models**:\n   - Refactor schema (or add related models) to support richer Defect info (Severity: S0-S3, Status, Summary) instead of just ID strings.\n   - Enhance Requirement linking (Source, Link, Description).\n2. **Tracker Integration Interface**:\n   - Create an adapter pattern/interface for External Issue Trackers (e.g., Jira, Generic).\n   - Implement basic validation: Check if IDs match expected patterns (Regex) configured in Settings.\n3. **UI Enhancements**:\n   - Display rich Defect cards (Severity badges, status colors) in Execution History.\n   - Allow inputting structured Defect info during test failure logging.\n\n## Implementation Plan\n1. **Schema Update**: Modify `TestResult` or create `Defect` entity to store `externalId`, `severity`, `status`, `url`.\n2. **Adapter Logic**: Create `lib/trackers/TrackerInterface.ts` and `JiraAdapter`.\n3. **UI Update**: Update `ExecutionPanel` to accept detailed bug info on failure. Update `ExecutionHistory` to render badges.\n\n## Test Design (TDD)\n- **Unit**: \n  - Test `Defect` data validation (ensure Severity is S0-S3).\n  - Test `TrackerAdapter` URL generation and ID validation logic.\n- **Integration**:\n  - Verify that saving a test execution with a S0 defect persists the severity correctly.",
+  "status": "todo",
+  "priority": "high",
+  "tags": ["feature", "data-model", "defect-management"],
+  "created_at": "2025-11-24T10:05:00Z",
+  "updated_at": "2025-11-24T10:05:00Z"
+}

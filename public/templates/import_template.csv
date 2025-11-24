@@ -1,0 +1,4 @@
+Title,Description,Preconditions,Priority,Tags,User Story,Requirement ID,Steps
+Sample Test Case,Verify that the login functionality works correctly.,User must be on the login page.,P1,"login, smoke",US-123,REQ-456,"1. Enter valid username -> Username field is populated
+2. Enter valid password -> Password field is masked
+3. Click Login button -> User is redirected to dashboard"
