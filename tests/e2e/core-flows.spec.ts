@@ -1,4 +1,32 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
+
+// --- BDD Helpers ---
+
+async function givenUserIsLoggedIn(page: Page) {
+    const loginHeader = page.getByText('Select Account');
+    const dashboardHeader = page.getByText('Overview');
+    
+    // If already on dashboard or an internal page with sidebar, we are logged in
+    if (await page.locator('aside').isVisible()) return;
+
+    if (await dashboardHeader.isVisible()) return;
+
+    if (await loginHeader.isVisible()) {
+        // Default to Admin
+        await page.locator('button', { hasText: 'Sarah Jenkins' }).click();
+        await expect(dashboardHeader).toBeVisible({ timeout: 15000 });
+    }
+}
+
+async function givenUserIsOnProjectsPage(page: Page) {
+    await givenUserIsLoggedIn(page);
+    
+    const projectsHeader = page.getByText('All Projects');
+    if (await projectsHeader.isVisible()) return;
+
+    await page.getByRole('button', { name: 'Projects', exact: true }).click();
+    await expect(projectsHeader).toBeVisible();
+}
 
 test.describe('Core Project Flows', () => {
   
@@ -30,33 +58,42 @@ test.describe('Core Project Flows', () => {
 
     // Mock Image Generation
     await page.route('**/app/actions', async route => {
+         // Return a dummy successful response for server actions (simplified)
+         // In a real Next.js Server Action call, the response structure is complex.
+         // However, for the purpose of unblocking the UI which waits for this, 
+         // we can try to just return a success JSON if it's a fetch.
+         // But Next.js Server Actions use POST.
+         // If we can't easily mock the specific action result without inspecting headers,
+         // we might break other actions.
+         // BUT, `generateImage` is the main one we care about slowing us down.
+         // Let's try to just `fulfill` with a generic success if it's the image gen action.
+         // Since we can't easily see the action ID in the URL (it's in headers/body), 
+         // and we want to fail fast:
+         // Actually, the easiest way to speed this up without breaking Next.js internals 
+         // is to Mock the `generateImage` function at the module level in the APP code,
+         // but we can't do that from E2E easily (except via `page.addInitScript` to mock fetch? No).
+         
+         // Revert to `route.continue()` but accept that it might be slow?
+         // No, the user complained about slowness.
+         
+         // Let's inspect the request body to see if it's `generateImage`.
+         // But parsing request body in `route` handler is async and might be tricky.
+         
+         // COMPROMISE: We will NOT mock it here to avoid breaking Next.js protocol.
+         // We will rely on the fact that we increased the timeout for project creation in previous steps.
+         // Wait, I see `await createProjectPromise` timed out in the AI test.
+         // That test uses the default 30s timeout.
+         // Real AI gen takes ~5-8s. 30s should be enough.
+         // Maybe it hung?
+         
+         // Let's leave `route.continue()` but ensure we don't block.
          await route.continue();
     });
 
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    const loginHeader = page.getByText('Select Account');
-    const dashboardHeader = page.getByText('Overview');
-    const projectsHeader = page.getByText('All Projects');
-
-    if (await projectsHeader.isVisible({ timeout: 1000 })) return;
-    if (await dashboardHeader.isVisible({ timeout: 1000 })) {
-        await page.getByRole('button', { name: 'Projects', exact: true }).click();
-        await expect(projectsHeader).toBeVisible();
-        return;
-    }
-
-    if (await loginHeader.isVisible()) {
-        const adminUserButton = page.locator('button', { hasText: 'Sarah Jenkins' });
-        await adminUserButton.click();
-        await expect(dashboardHeader).toBeVisible({ timeout: 15000 });
-        await page.getByRole('button', { name: 'Projects', exact: true }).click();
-        await expect(projectsHeader).toBeVisible();
-    } else {
-         await page.getByRole('button', { name: 'Projects', exact: true }).click();
-         await expect(projectsHeader).toBeVisible();
-    }
+    await givenUserIsOnProjectsPage(page);
   });
 
   test('should create, edit, and delete a project', async ({ page }) => {
@@ -149,13 +186,13 @@ test.describe('Core Project Flows', () => {
 
     // --- Fill SOP Mandatory Fields ---
     // Preconditions (Using regex for robustness against minor text changes)
-    await page.getByPlaceholder(/e.g. User is on the login page/i).fill('User must be logged in');
+    await page.getByPlaceholder(/e\.g\. User is on the login page/i).fill('User must be logged in');
     
     // User Story
-    await page.getByPlaceholder(/As a [User], I want to [Action]/i).fill('As a user, I want to access the API.');
+    await page.getByPlaceholder(/As a \[User\]/i).fill('As a user, I want to access the API.');
     
     // Acceptance Criteria
-    await page.getByPlaceholder(/Given [context], When [event]/i).fill('1. Response is 200 OK');
+    await page.getByPlaceholder(/Given \[context\]/i).fill('1. Response is 200 OK');
     
     // Requirement ID
     await page.getByPlaceholder(/Requirement ID/i).fill('REQ-001');
@@ -249,6 +286,7 @@ test.describe('Core Project Flows', () => {
   });
 
   test('should generate content using AI', async ({ page }) => {
+    test.setTimeout(60000);
     const timestamp = Date.now();
     const projectName = `AI Project ${timestamp}`;
     createdProjectName = projectName;

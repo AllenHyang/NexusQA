@@ -17,7 +17,7 @@ export interface TestCaseSlice {
   deleteSuite: (id: string) => Promise<void>;
 
   generateStepsForCase: (title: string, description: string, setEditCase: (c: Partial<TestCase>) => void, onAIError: (message: string) => void) => Promise<void>; // Updated signature
-  generateFieldForCase: (title: string, fieldType: string, context: string, setField: (val: string) => void, onAIError: (message: string) => void) => Promise<void>;
+  generateFieldForCase: (title: string, fieldType: string, context: string, relatedFields: Record<string, string>, setField: (val: string) => void, onAIError: (message: string) => void) => Promise<void>;
   generateMockupForCase: (prompt: string, onAIError: (message: string) => void) => Promise<string | null>; // Updated signature
 }
 
@@ -150,12 +150,12 @@ export const createTestCaseSlice: StateCreator<TestCaseSlice> = (set) => ({
       }
   },
 
-  generateFieldForCase: async (title, fieldType, context, setField, onAIError) => {
+  generateFieldForCase: async (title, fieldType, context, relatedFields, setField, onAIError) => {
       try {
           const response = await fetch('/api/ai/generate-field', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ title, fieldType, context }),
+              body: JSON.stringify({ title, fieldType, context, relatedFields }),
           });
 
           if (!response.ok) {

@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { title, fieldType, context } = await req.json();
+    const { title, fieldType, context, relatedFields } = await req.json();
 
     if (!title || !fieldType) {
       return new Response(JSON.stringify({ error: "Title and Field Type are required" }), { status: 400 });
@@ -17,22 +17,22 @@ export async function POST(req: Request) {
     const ai = new GoogleGenAI({ apiKey });
     
     let prompt = "";
+    const userStoryContext = relatedFields?.userStory ? `\nUser Story: "${relatedFields.userStory}"` : "";
+    const descriptionContext = context ? `\nDescription: "${context}"` : "";
     
     switch(fieldType) {
         case "userStory":
-            prompt = `You are a QA Expert. Generate a User Story for a test case titled "${title}".
+            prompt = `You are a QA Expert. Generate a User Story for a test case titled "${title}".${descriptionContext}
             Format: "As a [role], I want to [action], so that [benefit]."
             Keep it concise. Do not add any other text.`;
             break;
         case "acceptanceCriteria":
-            prompt = `You are a QA Expert. Generate Acceptance Criteria for a test case titled "${title}".
-            Context: "${context || ''}".
+            prompt = `You are a QA Expert. Generate Acceptance Criteria for a test case titled "${title}".${descriptionContext}${userStoryContext}
             Format: List the criteria in Gherkin syntax (Given/When/Then) or a bulleted list.
             Keep it concise. Do not add any other text.`;
             break;
         case "preconditions":
-            prompt = `You are a QA Expert. Generate Preconditions for a test case titled "${title}".
-            Context: "${context || ''}".
+            prompt = `You are a QA Expert. Generate Preconditions for a test case titled "${title}".${descriptionContext}${userStoryContext}
             Format: Bulleted list of required state before testing.
             Keep it concise. Do not add any other text.`;
             break;
