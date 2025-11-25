@@ -35,3 +35,9 @@ export const useAppStore = create<AppState>((set, get, store) => ({
     }
   },
 }));
+
+// Temporarily expose store for Playwright debugging
+if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any)._APP_STORE_ = useAppStore;
+}

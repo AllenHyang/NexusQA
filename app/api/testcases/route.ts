@@ -8,6 +8,15 @@ interface StepPayload {
     expected: string;
 }
 
+interface DefectPayload {
+    externalId: string;
+    tracker: string;
+    severity: string;
+    status: string;
+    url: string;
+    summary?: string;
+}
+
 interface HistoryPayload {
     date?: string;
     status: TestStatus;
@@ -17,6 +26,7 @@ interface HistoryPayload {
     environment?: string;
     env?: string;
     evidence?: string;
+    defects?: DefectPayload[];
 }
 
 const normalizePriority = (p: string) => {
@@ -49,20 +59,25 @@ export async function GET(request: Request) {
           where,
           include: {
             steps: { orderBy: { order: 'asc' } },
-            history: { orderBy: { date: 'desc' } }
+            // requirements: true, // <<< Temporarily commented out to debug defect-management.spec.ts failure
+            history: { 
+                orderBy: { date: 'desc' },
+                include: { defects: true }
+            },
           },
           orderBy: { createdAt: 'desc' }
       });
       
-      // Parse JSON tags and normalize priority
       const parsedCases = testCases.map(tc => ({
           ...tc,
           tags: safeParseTags(tc.tags),
           priority: normalizePriority(tc.priority),
           history: tc.history.map(h => ({
               ...h,
-              environment: h.env
+              environment: h.env,
+              defects: h.defects
           }))
+          // requirements: tc.requirements // <<< This was the problematic line for deletion
       }));
       
       return NextResponse.json(parsedCases);
@@ -135,7 +150,17 @@ export async function POST(request: Request) {
                                    notes: h.notes,
                                    bugId: h.bugId,
                                    env: h.environment || h.env, 
-                                   evidence: h.evidence
+                                   evidence: h.evidence,
+                                   defects: {
+                                       create: h.defects?.map((d: DefectPayload) => ({
+                                           externalId: d.externalId,
+                                           tracker: d.tracker,
+                                           severity: d.severity,
+                                           status: d.status,
+                                           url: d.url,
+                                           summary: d.summary
+                                       })) || []
+                                   }
                                }
                            })
                        ));
@@ -144,7 +169,13 @@ export async function POST(request: Request) {
 
               return await tx.testCase.findUnique({
                   where: { id: body.id },
-                  include: { steps: { orderBy: { order: 'asc' } }, history: { orderBy: { date: 'desc' } } }
+                  include: { 
+                      steps: { orderBy: { order: 'asc' } }, 
+                      history: { 
+                          orderBy: { date: 'desc' },
+                          include: { defects: true }
+                      } 
+                  }
               });
           });
           
@@ -178,11 +209,26 @@ export async function POST(request: Request) {
                           notes: h.notes,
                           bugId: h.bugId,
                           env: h.environment || h.env,
-                          evidence: h.evidence
+                          evidence: h.evidence,
+                          defects: {
+                              create: h.defects?.map((d: DefectPayload) => ({
+                                  externalId: d.externalId,
+                                  tracker: d.tracker,
+                                  severity: d.severity,
+                                  status: d.status,
+                                  url: d.url,
+                                  summary: d.summary
+                              })) || []
+                          }
                       })) || []
                   }
               },
-              include: { steps: true, history: true }
+              include: { 
+                  steps: true, 
+                  history: {
+                      include: { defects: true }
+                  } 
+              }
           });
           return NextResponse.json({
               ...created,

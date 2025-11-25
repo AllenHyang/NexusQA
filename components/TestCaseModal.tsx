@@ -19,12 +19,20 @@ interface TestCaseModalProps {
   currentUser: User;
   executionNote: string;
   setExecutionNote: (s: string) => void;
-  executionBugId: string;
-  setExecutionBugId: (s: string) => void;
   executionEnv: string;
   setExecutionEnv: (s: string) => void;
   executionEvidence: string;
   setExecutionEvidence: (s: string) => void;
+  executionDefectExternalId: string;
+  setExecutionDefectExternalId: (s: string) => void;
+  executionDefectTracker: string;
+  setExecutionDefectTracker: (s: string) => void;
+  executionDefectSeverity: string;
+  setExecutionDefectSeverity: (s: string) => void;
+  executionDefectStatus: string;
+  setExecutionDefectStatus: (s: string) => void;
+  executionDefectUrl: string;
+  setExecutionDefectUrl: (s: string) => void;
   onExecute: (status: TestStatus) => void;
   suites: TestSuite[]; 
   onStepFeedback: (stepId: string, feedback: 'up' | 'down') => void;
@@ -44,12 +52,20 @@ export function TestCaseModal({
   currentUser,
   executionNote,
   setExecutionNote,
-  executionBugId,
-  setExecutionBugId,
   executionEnv,
   setExecutionEnv,
   executionEvidence,
   setExecutionEvidence,
+  executionDefectExternalId,
+  setExecutionDefectExternalId,
+  executionDefectTracker,
+  setExecutionDefectTracker,
+  executionDefectSeverity,
+  setExecutionDefectSeverity,
+  executionDefectStatus,
+  setExecutionDefectStatus,
+  executionDefectUrl,
+  setExecutionDefectUrl,
   onExecute,
   suites,
   onStepFeedback,
@@ -136,8 +152,16 @@ export function TestCaseModal({
                 setEvidence={setExecutionEvidence}
                 note={executionNote}
                 setNote={setExecutionNote}
-                bugId={executionBugId}
-                setBugId={setExecutionBugId}
+                defectExternalId={executionDefectExternalId}
+                setDefectExternalId={setExecutionDefectExternalId}
+                defectTracker={executionDefectTracker}
+                setDefectTracker={setExecutionDefectTracker}
+                defectSeverity={executionDefectSeverity}
+                setDefectSeverity={setExecutionDefectSeverity}
+                defectStatus={executionDefectStatus}
+                setDefectStatus={setExecutionDefectStatus}
+                defectUrl={executionDefectUrl}
+                setDefectUrl={setExecutionDefectUrl}
                 onExecute={onExecute}
                 reviewStatus={editCase.reviewStatus}
               />

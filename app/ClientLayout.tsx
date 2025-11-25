@@ -61,9 +61,14 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     showImportProjectModal, closeImportProjectModal,
     loadingAI, setLoadingAI,
     executionNote, setExecutionNote,
-    executionBugId, setExecutionBugId,
     executionEnv, setExecutionEnv,
     executionEvidence, setExecutionEvidence,
+    // Defect Fields
+    executionDefectExternalId, setExecutionDefectExternalId,
+    executionDefectTracker, setExecutionDefectTracker,
+    executionDefectSeverity, setExecutionDefectSeverity,
+    executionDefectStatus, setExecutionDefectStatus,
+    executionDefectUrl, setExecutionDefectUrl,
   } = useUI();
 
   // --- Handlers ---
@@ -172,8 +177,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     if (!editCase.id) return;
     
     // Validation: Enforce Bug ID for FAILED status
-    if (status === "FAILED" && !executionBugId.trim()) {
-      showToast("Bug ID is required when marking a test as FAILED.", 'error');
+    if (status === "FAILED" && !executionDefectExternalId.trim()) {
+      showToast("Defect ID is required when marking a test as FAILED.", 'error');
       return;
     }
 
@@ -183,9 +188,17 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         status,
         executedBy: currentUser!.name,
         notes: executionNote,
-        bugId: status === "FAILED" ? executionBugId : undefined,
         environment: executionEnv,
-        evidence: executionEvidence
+        evidence: executionEvidence,
+        defects: status === "FAILED" ? [{
+            id: `def-${Date.now()}`,
+            externalId: executionDefectExternalId,
+            tracker: executionDefectTracker,
+            severity: executionDefectSeverity,
+            status: executionDefectStatus,
+            url: executionDefectUrl,
+            summary: `Defect for ${editCase.title}` // Auto-summary for now
+        }] : []
     };
 
     const updatedCase: Partial<TestCase> = {
@@ -194,15 +207,20 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         history: [...(editCase.history || []), newRecord]
     };
 
-    await saveTestCase(updatedCase);
+    const resultCase = await saveTestCase(updatedCase);
+
+    if (resultCase) {
+        setEditCase(resultCase); // Update editCase in UIContext
+    }
     
     // Reset form
     setExecutionNote("");
-    setExecutionBugId("");
     setExecutionEnv("QA");
     setExecutionEvidence("");
+    setExecutionDefectExternalId("");
+    setExecutionDefectUrl("");
     
-    closeTestCaseModal();
+        closeTestCaseModal(); // Restore intended behavior
   };
 
   const handleStepFeedback = (stepId: string, feedback: 'up' | 'down') => {
@@ -266,12 +284,20 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             currentUser={currentUser}
             executionNote={executionNote}
             setExecutionNote={setExecutionNote}
-            executionBugId={executionBugId}
-            setExecutionBugId={setExecutionBugId}
             executionEnv={executionEnv}
             setExecutionEnv={setExecutionEnv}
             executionEvidence={executionEvidence}
             setExecutionEvidence={setExecutionEvidence}
+            executionDefectExternalId={executionDefectExternalId}
+            setExecutionDefectExternalId={setExecutionDefectExternalId}
+            executionDefectTracker={executionDefectTracker}
+            setExecutionDefectTracker={setExecutionDefectTracker}
+            executionDefectSeverity={executionDefectSeverity}
+            setExecutionDefectSeverity={setExecutionDefectSeverity}
+            executionDefectStatus={executionDefectStatus}
+            setExecutionDefectStatus={setExecutionDefectStatus}
+            executionDefectUrl={executionDefectUrl}
+            setExecutionDefectUrl={setExecutionDefectUrl}
             onExecute={handleExecute}
             suites={suites}
             onStepFeedback={handleStepFeedback}

@@ -19,13 +19,33 @@ export type TestStatus = "DRAFT" | "PASSED" | "FAILED" | "BLOCKED" | "UNTESTED" 
 export type ReviewStatus = "PENDING" | "APPROVED" | "CHANGES_REQUESTED";
 export type Priority = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
+export interface Defect {
+  id: string;
+  externalId: string;
+  tracker: string;
+  url: string;
+  status: string;
+  severity: string;
+  summary?: string;
+  createdAt?: string;
+}
+
+export interface Requirement {
+  id: string;
+  externalId: string;
+  tracker: string;
+  url: string;
+  description?: string;
+}
+
 export interface ExecutionRecord {
   id: string;
   date: string;
   status: TestStatus;
   executedBy: string; // User Name
   notes?: string;
-  bugId?: string;
+  bugId?: string; // Legacy support
+  defects?: Defect[];
   environment?: string; // e.g., "Staging - Chrome", "Prod - iOS"
   evidence?: string; // URL to screenshot or log
 }
@@ -50,6 +70,7 @@ export interface TestCase {
   // Use Case Driven Development Fields
   userStory?: string; // "As a [user], I want to [action], so that [benefit]"
   requirementId?: string; // Link to Jira Ticket / PRD (e.g., PROJ-123)
+  requirements?: Requirement[];
   
   tags?: string[]; // e.g., "Smoke", "Regression", "API"
 

@@ -4,17 +4,18 @@ import { test, expect, Page } from '@playwright/test';
 
 async function givenUserIsLoggedIn(page: Page) {
     const loginHeader = page.getByText('Select Account');
-    const dashboardHeader = page.getByText('Overview');
+    const dashboardOverviewHeader = page.getByText('Overview'); // Correctly identify the Dashboard header
     
-    // If already on dashboard or an internal page with sidebar, we are logged in
-    if (await page.locator('aside').isVisible()) return;
-
-    if (await dashboardHeader.isVisible()) return;
+    // If already on Dashboard or internal page with sidebar
+    if (await page.locator('aside').isVisible()) return; 
+    if (await dashboardOverviewHeader.isVisible()) return; // If already on the Dashboard view
 
     if (await loginHeader.isVisible()) {
-        // Default to Admin
         await page.locator('button', { hasText: 'Sarah Jenkins' }).click();
-        await expect(dashboardHeader).toBeVisible({ timeout: 15000 });
+        // Wait for the 'Overview' header to become visible on the Dashboard page after login
+        await dashboardOverviewHeader.waitFor({ state: 'visible', timeout: 30000 });
+        // Additional assertion for robustness
+        await expect(dashboardOverviewHeader).toBeVisible({ timeout: 10000 }); 
     }
 }
 
@@ -50,45 +51,16 @@ test.describe('Core Project Flows', () => {
   });
 
   test.beforeEach(async ({ page }) => {
-    // Mock AI endpoints to speed up tests
-    await page.route('/api/ai/generate-steps', async route => {
-        const mockResponse = `{"action": "Mock Step 1", "expected": "Mock Result 1"}\n{"action": "Mock Step 2", "expected": "Mock Result 2"}`;
-        await route.fulfill({ status: 200, contentType: 'text/plain', body: mockResponse });
+    page.on('console', msg => console.log(`PAGE CONSOLE [${msg.type()}]: ${msg.text()}`));
+    page.on('pageerror', error => console.error(`PAGE ERROR: ${error.message}`));
+    page.on('request', request => console.log(`NETWORK REQUEST: ${request.method()} ${request.url()}`));
+    page.on('requestfailed', request => console.error(`NETWORK REQUEST FAILED: ${request.method()} ${request.url()} - ${request.failure()?.errorText}`));
+    page.on('response', async response => {
+        if (response.url().includes('/api/') && response.status() >= 400) {
+            console.error(`NETWORK RESPONSE ERROR: ${response.status()} ${response.url()} - ${await response.text()}`);
+        }
     });
-
-    // Mock Image Generation
-    await page.route('**/app/actions', async route => {
-         // Return a dummy successful response for server actions (simplified)
-         // In a real Next.js Server Action call, the response structure is complex.
-         // However, for the purpose of unblocking the UI which waits for this, 
-         // we can try to just return a success JSON if it's a fetch.
-         // But Next.js Server Actions use POST.
-         // If we can't easily mock the specific action result without inspecting headers,
-         // we might break other actions.
-         // BUT, `generateImage` is the main one we care about slowing us down.
-         // Let's try to just `fulfill` with a generic success if it's the image gen action.
-         // Since we can't easily see the action ID in the URL (it's in headers/body), 
-         // and we want to fail fast:
-         // Actually, the easiest way to speed this up without breaking Next.js internals 
-         // is to Mock the `generateImage` function at the module level in the APP code,
-         // but we can't do that from E2E easily (except via `page.addInitScript` to mock fetch? No).
-         
-         // Revert to `route.continue()` but accept that it might be slow?
-         // No, the user complained about slowness.
-         
-         // Let's inspect the request body to see if it's `generateImage`.
-         // But parsing request body in `route` handler is async and might be tricky.
-         
-         // COMPROMISE: We will NOT mock it here to avoid breaking Next.js protocol.
-         // We will rely on the fact that we increased the timeout for project creation in previous steps.
-         // Wait, I see `await createProjectPromise` timed out in the AI test.
-         // That test uses the default 30s timeout.
-         // Real AI gen takes ~5-8s. 30s should be enough.
-         // Maybe it hung?
-         
-         // Let's leave `route.continue()` but ensure we don't block.
-         await route.continue();
-    });
+    page.on('url', url => console.log(`PAGE URL CHANGED TO: ${url}`));
 
     await page.goto('/');
     await page.waitForLoadState('networkidle');
@@ -286,7 +258,7 @@ test.describe('Core Project Flows', () => {
   });
 
   test('should generate content using AI', async ({ page }) => {
-    test.setTimeout(60000);
+    test.setTimeout(60000); // Keep increased timeout for AI test due to actual AI call if not mocked. Currently mocked.
     const timestamp = Date.now();
     const projectName = `AI Project ${timestamp}`;
     createdProjectName = projectName;
@@ -303,15 +275,40 @@ test.describe('Core Project Flows', () => {
     // 2. Create Test Case
     await page.getByRole('button', { name: 'Create Case' }).first().click();
     await expect(page.getByText('New Test Case')).toBeVisible();
+    
+    // Explicitly wait for the modal to be stable
+    await page.waitForSelector('.modal-overlay', { state: 'visible', timeout: 10000 }); // Wait for the modal wrapper
+    await page.waitForSelector('h3:has-text("New Test Case")', { state: 'visible', timeout: 5000 }); // Wait for modal title
 
     // 3. Fill Title and Generate
     await page.getByPlaceholder('e.g. Verify successful login with valid credentials').fill(caseTitle);
+    
+    // IMPORTANT: Move the mock here to ensure it's active for this specific request
+    await page.route('/api/ai/generate-steps', async route => {
+        // Correct the mockResponse to have a newline between JSON objects
+        const mockResponse = `{"action": "Mock Step 1", "expected": "Mock Result 1"}\n{"action": "Mock Step 2", "expected": "Mock Result 2"}`;
+        await route.fulfill({ status: 200, contentType: 'text/plain', body: mockResponse });
+    });
+
+    console.log("PAGE LOG: Attempting to click 'Generate with AI' button.");
+
+    const generateStepsResponsePromise = page.waitForResponse(resp => resp.url().includes('/api/ai/generate-steps') && resp.status() === 200);
     await page.getByRole('button', { name: /Generate with AI/i }).click();
+    await generateStepsResponsePromise; // Wait for the mock API response
 
     // 4. Verify AI Generation (Mocked)
-    const firstActionInput = page.getByPlaceholder('e.g. Click login button').first();
-    await expect(firstActionInput).toBeVisible();
-    await expect(firstActionInput).toHaveValue('Mock Step 1');
+    const firstActionInputPlaceholderSelector = 'input[placeholder="e.g. Click login button"]';
+    const firstActionInputLocator = page.locator(firstActionInputPlaceholderSelector).first();
+    
+    await expect(page.getByRole('button', { name: /Generate with AI/i }).locator('svg.lucide-sparkles')).toBeVisible({ timeout: 10000 });
+
+    await firstActionInputLocator.waitFor({ state: 'visible', timeout: 10000 }); 
+
+    const actualInputValue = await firstActionInputLocator.evaluate((input: HTMLInputElement) => input.value);
+    console.log(`PAGE LOG: Actual input value BEFORE waitForFunction: "${actualInputValue}"`);
+    
+    await expect(firstActionInputLocator).toBeVisible();
+    await expect(firstActionInputLocator).toHaveValue('Mock Step 1');
     
     // 5. Save and Verify
     await page.getByRole('button', { name: 'Save Changes' }).click();

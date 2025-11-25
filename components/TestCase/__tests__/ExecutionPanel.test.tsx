@@ -7,7 +7,13 @@ describe('ExecutionPanel', () => {
   const mockSetEnv = jest.fn();
   const mockSetEvidence = jest.fn();
   const mockSetNote = jest.fn();
-  const mockSetBugId = jest.fn();
+  
+  const mockSetDefectExternalId = jest.fn();
+  const mockSetDefectTracker = jest.fn();
+  const mockSetDefectSeverity = jest.fn();
+  const mockSetDefectStatus = jest.fn();
+  const mockSetDefectUrl = jest.fn();
+
   const mockOnExecute = jest.fn();
 
   const defaultProps = {
@@ -17,8 +23,18 @@ describe('ExecutionPanel', () => {
     setEvidence: mockSetEvidence,
     note: '',
     setNote: mockSetNote,
-    bugId: '',
-    setBugId: mockSetBugId,
+    
+    defectExternalId: '',
+    setDefectExternalId: mockSetDefectExternalId,
+    defectTracker: 'Jira',
+    setDefectTracker: mockSetDefectTracker,
+    defectSeverity: 'S2',
+    setDefectSeverity: mockSetDefectSeverity,
+    defectStatus: 'OPEN',
+    setDefectStatus: mockSetDefectStatus,
+    defectUrl: '',
+    setDefectUrl: mockSetDefectUrl,
+
     onExecute: mockOnExecute,
   };
 
@@ -32,7 +48,7 @@ describe('ExecutionPanel', () => {
     expect(screen.getByPlaceholderText('Env (e.g. Chrome)')).toHaveValue('QA');
     expect(screen.getByPlaceholderText('Evidence URL')).toHaveValue('');
     expect(screen.getByPlaceholderText('Execution Notes...')).toHaveValue('');
-    expect(screen.getByPlaceholderText('Bug ID / Jira Ticket (Mandatory for FAILED)')).toHaveValue('');
+    expect(screen.getByPlaceholderText('Defect ID (e.g. JIRA-123)')).toHaveValue('');
   });
 
   it('calls onExecute with PASSED when Pass button is clicked', () => {
@@ -58,17 +74,4 @@ describe('ExecutionPanel', () => {
     fireEvent.click(screen.getByText('Skip'));
     expect(mockOnExecute).toHaveBeenCalledWith('SKIPPED');
   });
-
-  it('applies warning style to Bug ID input when empty', () => {
-     render(<ExecutionPanel {...defaultProps} bugId="" />);
-     const input = screen.getByPlaceholderText('Bug ID / Jira Ticket (Mandatory for FAILED)');
-     expect(input).toHaveClass('border-red-200');
-  });
-
-  it('does not apply warning style to Bug ID input when filled', () => {
-    render(<ExecutionPanel {...defaultProps} bugId="BUG-123" />);
-    const input = screen.getByPlaceholderText('Bug ID / Jira Ticket (Mandatory for FAILED)');
-    expect(input).not.toHaveClass('border-red-200');
-    expect(input).toHaveClass('border-zinc-200');
- });
 });

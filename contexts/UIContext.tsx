@@ -50,6 +50,18 @@ interface UIContextType {
   executionEvidence: string;
   setExecutionEvidence: (evidence: string) => void;
   
+  // Execution Defect Form
+  executionDefectExternalId: string;
+  setExecutionDefectExternalId: (id: string) => void;
+  executionDefectTracker: string;
+  setExecutionDefectTracker: (tracker: string) => void;
+  executionDefectSeverity: string;
+  setExecutionDefectSeverity: (severity: string) => void;
+  executionDefectStatus: string;
+  setExecutionDefectStatus: (status: string) => void;
+  executionDefectUrl: string;
+  setExecutionDefectUrl: (url: string) => void;
+  
   // Global Search
   searchQuery: string;
   setSearchQuery: (query: string) => void;
@@ -86,6 +98,13 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
   const [executionEnv, setExecutionEnv] = useState("QA");
   const [executionEvidence, setExecutionEvidence] = useState("");
   
+  // Execution Defect Form
+  const [executionDefectExternalId, setExecutionDefectExternalId] = useState("");
+  const [executionDefectTracker, setExecutionDefectTracker] = useState("Jira");
+  const [executionDefectSeverity, setExecutionDefectSeverity] = useState("S2");
+  const [executionDefectStatus, setExecutionDefectStatus] = useState("OPEN");
+  const [executionDefectUrl, setExecutionDefectUrl] = useState("");
+  
   // Search
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -115,6 +134,12 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
     setExecutionBugId("");
     setExecutionEnv("QA");
     setExecutionEvidence("");
+    // Reset defect fields
+    setExecutionDefectExternalId("");
+    setExecutionDefectTracker("Jira");
+    setExecutionDefectSeverity("S2");
+    setExecutionDefectStatus("OPEN");
+    setExecutionDefectUrl("");
     setShowCaseModal(true);
   };
 
@@ -162,6 +187,11 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
       executionBugId, setExecutionBugId,
       executionEnv, setExecutionEnv,
       executionEvidence, setExecutionEvidence,
+      executionDefectExternalId, setExecutionDefectExternalId,
+      executionDefectTracker, setExecutionDefectTracker,
+      executionDefectSeverity, setExecutionDefectSeverity,
+      executionDefectStatus, setExecutionDefectStatus,
+      executionDefectUrl, setExecutionDefectUrl,
       searchQuery, setSearchQuery
     }}>
       {children}

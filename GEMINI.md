@@ -1,58 +1,56 @@
-# NexusQA – Project Context for Agents
+# Project Context: Internal Tool Portal (DevPortal)
 
 ## Workflow Rules (CRITICAL)
-This project enforces strict workflow execution rules for agent workflows.
+This project enforces strict workflow execution rules.
 !{cat .agent/references/workflow-rules.md}
 
 ## Overview
-NexusQA is an **AI-assisted test management system** built for software QA teams. It lets users:
-- Organize projects, suites (folders), and detailed test cases.
-- Use Gemini to generate test steps, acceptance criteria, and visual mockups.
-- Track execution history (Pass/Fail/Blocked/Skipped) with environment, evidence, and bug IDs.
-- Plan test cycles via Test Plans and Test Runs.
+This project is a **React-based dashboard** designed to serve as a central hub for internal engineering tools. It allows users to:
+- View a catalog of internal services (CI/CD, Databases, Monitoring, etc.).
+- Filter tools by category or search by name/description.
+- Access direct links to tool interfaces, logs, admin panels, and repositories.
+- Simulate adding new tools (currently client-side only).
 
-**Project Name:** `nexus-qa`
+**Project Name:** `radiant-nova` (Package Name) / "内部工具门户" (Directory Name)
 
 ## Architecture & Technologies
 
 ### Core Stack
-- **Framework:** Next.js 15 (App Router) + React 19
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS + custom UI components
-- **State Management:** Zustand store (see `store/`)
-- **Database:** Prisma + SQLite (`prisma/schema.prisma`)
-- **AI Integration:** Google GenAI SDK (`@google/genai`) for text + image
-- **Testing:** Jest (unit/API) + Playwright (E2E under `tests/e2e`)
+- **Framework:** [React 19](https://react.dev/)
+- **Build Tool:** [Vite 7](https://vitejs.dev/)
+- **Language:** JavaScript (ESModules)
 
-### Project Structure (High Level)
-- `app/` – Next.js routes (pages) and API route handlers under `app/api/*`.
-- `views/` – Page-level views (Dashboard, Projects, ProjectDetail, Settings, TestCaseDetail).
-- `components/` – Reusable UI (modals, folder tree, plan list, execution history, etc.).
-- `store/` – Zustand slices for projects, test cases, test plans, and UI.
-- `prisma/` – Prisma schema and migrations; local DB (`dev.db`).
-- `tests/e2e/` – Playwright specs for SOP-critical flows.
-- `lib/` – Helpers for import/export, formatting, Prisma client.
+### Project Structure
+- **`src/App.jsx`**: Main entry point containing the layout (Sidebar + Main Content), state management (tools list, search, filter), and routing logic (simulated via categories).
+- **`src/data/mockData.js`**: Contains the `tools` array, which acts as the mock database for the application.
+- **`src/components/`**:
+    - `ToolCard.jsx`: Displays individual tool details (status, version, links).
+    - `AddToolModal.jsx`: Form to add a new tool.
+    - `StatusBadge.jsx`: Visual indicator for tool status (online, offline, maintenance).
+- **`public/`**: Static assets.
+
+### Styling
+- **Approach:** A mix of global CSS classes (likely in `index.css`) and inline React styles for dynamic values (e.g., mouse tracking effects).
+- **Theme:** Dark mode aesthetic with glassmorphism effects (`backdrop-filter`), utilizing CSS variables for colors (e.g., `--accent-primary`, `--bg-mesh`).
 
 ## Development Workflow
 
 ### Prerequisites
-- Node.js (LTS)
+- Node.js (Latest LTS recommended)
 - npm
-- `GEMINI_API_KEY` configured in `.env.local`
 
 ### Key Commands
 | Command | Description |
 | :--- | :--- |
 | `npm install` | Install dependencies. |
-| `npm run dev` | Start the Next.js dev server at `http://localhost:3000`. |
+| `npm run dev` | Start the development server (typically at `http://localhost:5173`). |
 | `npm run build` | Build the application for production. |
-| `npm start` | Serve the built app. |
-| `npm run lint` | Run ESLint checks. |
-| `npm test` | Run Jest unit/API tests. |
-| `npx playwright test` | Run Playwright E2E tests in `tests/e2e`. |
+| `npm run preview` | Preview the production build locally. |
+| `npm run lint` | Run ESLint to check for code quality issues. |
 
 ## Conventions
 
-- Use BDD-style fields (`userStory`, `acceptanceCriteria`, `preconditions`) when designing test cases.
-- Respect review gates: `reviewStatus` should be `APPROVED` before regular execution.
-- Keep tests close to code (`components/__tests__`, `lib/__tests__`, `store/slices/__tests__`).
+*   **Components:** Functional components with hooks (`useState`, `useMemo`).
+*   **State Management:** Local component state (`useState`) in `App.jsx` passed down via props. No global state manager (Redux/Context) is currently in use.
+*   **Data Flow:** Unidirectional. Data originates in `App.jsx` (initialized from `mockData.js`) and flows down to `ToolCard`.
+*   **Styling:** Use CSS variables for theming. Maintain the dark/glassmorphic visual style.

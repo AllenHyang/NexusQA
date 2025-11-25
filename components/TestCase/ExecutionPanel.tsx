@@ -1,6 +1,6 @@
 import React from "react";
 import { TestStatus } from "@/types";
-import { CheckCircle2, XCircle, AlertCircle, Monitor, Paperclip, Forward } from "lucide-react";
+import { CheckCircle2, XCircle, AlertCircle, Monitor, Paperclip, Forward, Bug } from "lucide-react";
 
 interface ExecutionPanelProps {
   env: string;
@@ -9,14 +9,27 @@ interface ExecutionPanelProps {
   setEvidence: (s: string) => void;
   note: string;
   setNote: (s: string) => void;
-  bugId: string;
-  setBugId: (s: string) => void;
+  
+  // New Defect Fields
+  defectExternalId: string;
+  setDefectExternalId: (s: string) => void;
+  defectTracker: string;
+  setDefectTracker: (s: string) => void;
+  defectSeverity: string;
+  setDefectSeverity: (s: string) => void;
+  defectStatus: string;
+  setDefectStatus: (s: string) => void;
+  defectUrl: string;
+  setDefectUrl: (s: string) => void;
+
   onExecute: (status: TestStatus) => void;
-  reviewStatus?: string; // Added reviewStatus prop
+  reviewStatus?: string;
 }
 
 export function ExecutionPanel({ 
-  env, setEnv, evidence, setEvidence, note, setNote, bugId, setBugId, onExecute, reviewStatus 
+  env, setEnv, evidence, setEvidence, note, setNote, 
+  defectExternalId, setDefectExternalId, defectTracker, setDefectTracker, defectSeverity, setDefectSeverity, defectStatus, setDefectStatus, defectUrl, setDefectUrl,
+  onExecute, reviewStatus 
 }: ExecutionPanelProps) {
   const isApproved = reviewStatus === 'APPROVED';
 
@@ -67,16 +80,70 @@ export function ExecutionPanel({
             value={note}
             onChange={e => setNote(e.target.value)}
           />
-          <div className="relative group">
+          
+          {/* Defect Section */}
+          <div className="p-4 border border-zinc-200 rounded-xl bg-zinc-50/50 space-y-3">
+              <div className="flex items-center gap-2 mb-1">
+                  <Bug className="w-4 h-4 text-zinc-500" />
+                  <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Defect Details (If Failed)</span>
+              </div>
+              <div className="flex gap-3">
+                  <div className="flex-[2] relative">
+                      <input 
+                        type="text"
+                        className={`w-full pl-3 pr-4 py-2.5 border rounded-xl text-sm bg-white focus:outline-none focus:ring-2 transition-all font-medium placeholder-zinc-400 text-zinc-800 ${!defectExternalId && 'border-zinc-200 focus:ring-zinc-900/5'}`}
+                        placeholder="Defect ID (e.g. JIRA-123)"
+                        value={defectExternalId}
+                        onChange={e => setDefectExternalId(e.target.value)}
+                      />
+                  </div>
+                  <div className="flex-1">
+                      <select 
+                        className="w-full px-3 py-2.5 border border-zinc-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900/5 font-medium text-zinc-700"
+                        value={defectTracker}
+                        onChange={e => setDefectTracker(e.target.value)}
+                      >
+                          <option value="Jira">Jira</option>
+                          <option value="GitHub">GitHub</option>
+                          <option value="Generic">Generic</option>
+                      </select>
+                  </div>
+              </div>
+              <div className="flex gap-3">
+                  <div className="flex-1">
+                      <select 
+                        className="w-full px-3 py-2.5 border border-zinc-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900/5 font-medium text-zinc-700"
+                        value={defectSeverity}
+                        onChange={e => setDefectSeverity(e.target.value)}
+                      >
+                          <option value="S0">S0 - Critical</option>
+                          <option value="S1">S1 - Major</option>
+                          <option value="S2">S2 - Normal</option>
+                          <option value="S3">S3 - Minor</option>
+                      </select>
+                  </div>
+                  <div className="flex-1">
+                      <select 
+                        className="w-full px-3 py-2.5 border border-zinc-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900/5 font-medium text-zinc-700"
+                        value={defectStatus}
+                        onChange={e => setDefectStatus(e.target.value)}
+                      >
+                          <option value="OPEN">Open</option>
+                          <option value="IN_PROGRESS">In Progress</option>
+                          <option value="RESOLVED">Resolved</option>
+                          <option value="CLOSED">Closed</option>
+                      </select>
+                  </div>
+              </div>
               <input 
                 type="text"
-                className={`w-full pl-10 pr-4 py-2.5 border rounded-xl text-sm bg-zinc-50 focus:bg-white outline-none focus:ring-2 transition-all font-medium placeholder-zinc-400 text-zinc-800 ${!bugId ? 'border-red-200 focus:ring-red-100' : 'border-zinc-200 focus:ring-zinc-900/5'}`}
-                placeholder="Bug ID / Jira Ticket (Mandatory for FAILED)"
-                value={bugId}
-                onChange={e => setBugId(e.target.value)}
+                className="w-full px-3 py-2.5 border border-zinc-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900/5 font-medium placeholder-zinc-400 text-zinc-800"
+                placeholder="Defect URL (Optional)"
+                value={defectUrl}
+                onChange={e => setDefectUrl(e.target.value)}
               />
-              <AlertCircle className="w-4 h-4 text-zinc-400 absolute left-3 top-3 group-focus-within:text-red-500 transition-colors" />
           </div>
+
         </div>
         <div className="grid grid-cols-4 gap-3">
           <button 

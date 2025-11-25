@@ -28,7 +28,7 @@ export const createTestCaseSlice: StateCreator<TestCaseSlice> = (set) => ({
   saveTestCase: async (testCase) => {
       const dataToSave: Partial<TestCase> = { ...testCase };
       // Tags are handled automatically by JSON.stringify of the body
-
+      
       const res = await fetch('/api/testcases', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -44,7 +44,9 @@ export const createTestCaseSlice: StateCreator<TestCaseSlice> = (set) => ({
                   return { testCases: [savedCase, ...state.testCases] };
               }
           });
+          return savedCase; // <<< Return the savedCase
       }
+      return null; // Return null on failure
   },
 
   deleteTestCase: async (id) => {
@@ -117,7 +119,7 @@ export const createTestCaseSlice: StateCreator<TestCaseSlice> = (set) => ({
               throw new Error(errorData.error || 'Failed to generate steps');
           }
 
-          const text = await response.text();
+                    const text = await response.text();
           const lines = text.split('\n');
 
           for (const line of lines) {
@@ -143,9 +145,7 @@ export const createTestCaseSlice: StateCreator<TestCaseSlice> = (set) => ({
               setEditCase({ steps: currentSteps });
           } else {
               onAIError("AI generated content but no valid steps were found.");
-          }
-
-      } catch (error) {
+          }      } catch (error) {
           console.error("Error generating steps:", error);
           onAIError(error instanceof Error ? error.message : "An unexpected error occurred during step generation.");
       }
