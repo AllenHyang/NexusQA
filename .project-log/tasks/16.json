@@ -1,10 +1,17 @@
 {
-  "id": 16,
-  "title": "Enhance Observability: Unified Logging, Tracing, and Metrics",
-  "description": "## Context\nCurrent system relies heavily on `console.error` for API and AI calls. There is no unified log aggregation, error alerting, or request tracing (missing Request IDs), making debugging and performance monitoring difficult.\n\n## Objectives\n1. **Structured Logging**: Replace ad-hoc `console.log/error` with a unified `Logger` utility that supports log levels (INFO, WARN, ERROR) and structured metadata (JSON format).\n2. **Request Tracing**: Implement `x-request-id` propagation in API middleware to trace requests end-to-end.\n3. **Centralized Error Handling**: Create a mechanism to capture and normalize errors for better alerting potential.\n\n## Implementation Plan\n1. **Logger Utility**: Create `lib/logger.ts` using a library like `pino` or a custom structured wrapper around console.\n2. **Middleware**: Add Next.js middleware to generate/attach `x-request-id` to all incoming requests and response headers.\n3. **Refactor**: Update `app/api/**` and `app/actions.ts` to use the new `Logger` and pass the Request ID context.\n\n## Test Design (TDD)\n- **Unit**:\n  - Test `Logger` output format (ensure JSON structure contains timestamp, level, message).\n- **Integration**:\n  - Test middleware ensures every response has an `x-request-id` header.\n  - Test that API errors are logged with the correct Request ID.",
-  "status": "todo",
+  "id": "16",
+  "title": "Refactor to Internal Defect Management System",
+  "description": "Transition from a lightweight, external-link-focused defect record to a full-fledged internal Defect entity. This includes creating a dedicated Defect model, management UI, and linking logic to allow reuse, status tracking, and editing of defects directly within the system.",
+  "status": "completed",
+  "created_at": "2025-11-25T03:15:00Z",
+  "updated_at": "2025-11-25T04:30:00Z",
+  "dependencies": ["15"],
   "priority": "high",
-  "tags": ["infrastructure", "observability", "logging"],
-  "created_at": "2025-11-24T10:10:00Z",
-  "updated_at": "2025-11-24T10:10:00Z"
+  "verification_steps": [
+    "Prisma schema updated with standalone Defect model and relations.",
+    "CRUD API endpoints for defects created (/api/defects).",
+    "Defect management view accessible within projects.",
+    "ExecutionPanel allows creating new defects or linking existing ones.",
+    "Defect status changes reflect across all linked test cases."
+  ]
 }

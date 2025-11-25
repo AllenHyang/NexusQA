@@ -11,23 +11,31 @@ export interface TestStep {
   id: string;
   action: string;
   expected: string;
-  order: number; // Added order
-  feedback?: 'up' | 'down'; // Added for AI generation feedback
+  order: number; 
+  feedback?: 'up' | 'down'; 
 }
 
 export type TestStatus = "DRAFT" | "PASSED" | "FAILED" | "BLOCKED" | "UNTESTED" | "SKIPPED";
 export type ReviewStatus = "PENDING" | "APPROVED" | "CHANGES_REQUESTED";
 export type Priority = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+export type DefectStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
 
 export interface Defect {
   id: string;
-  externalId: string;
-  tracker: string;
-  url: string;
-  status: string;
-  severity: string;
-  summary?: string;
+  title: string;
+  description?: string;
+  status: DefectStatus | string;
+  severity: Priority | string;
+  
+  projectId: string;
+  authorId: string;
+  assigneeId?: string;
+  
+  externalIssueId?: string;
+  externalUrl?: string;
+  
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Requirement {
@@ -42,19 +50,19 @@ export interface ExecutionRecord {
   id: string;
   date: string;
   status: TestStatus;
-  executedBy: string; // User Name
+  executedBy: string; 
   notes?: string;
-  bugId?: string; // Legacy support
+  bugId?: string; 
   defects?: Defect[];
-  environment?: string; // e.g., "Staging - Chrome", "Prod - iOS"
-  evidence?: string; // URL to screenshot or log
+  environment?: string; 
+  evidence?: string; 
 }
 
 export interface TestSuite {
   id: string;
   projectId: string;
   name: string;
-  parentId?: string | null; // For nested folders
+  parentId?: string | null; 
   description?: string;
   createdAt: string;
 }
@@ -62,17 +70,16 @@ export interface TestSuite {
 export interface TestCase {
   id: string;
   projectId: string;
-  suiteId?: string; // Link to a TestSuite (Folder). If undefined, it's in the root.
+  suiteId?: string; 
   
   title: string;
   description: string;
   
-  // Use Case Driven Development Fields
-  userStory?: string; // "As a [user], I want to [action], so that [benefit]"
-  requirementId?: string; // Link to Jira Ticket / PRD (e.g., PROJ-123)
+  userStory?: string; 
+  requirementId?: string; 
   requirements?: Requirement[];
   
-  tags?: string[]; // e.g., "Smoke", "Regression", "API"
+  tags?: string[]; 
 
   preconditions: string;
   steps: TestStep[];
@@ -80,9 +87,9 @@ export interface TestCase {
   priority: Priority;
   authorId: string;
   assignedToId?: string;
-  visualReference?: string; // Base64 image
-  imageFeedback?: 'up' | 'down'; // Added for AI image generation feedback
-  history?: ExecutionRecord[]; // Audit trail
+  visualReference?: string; 
+  imageFeedback?: 'up' | 'down'; 
+  history?: ExecutionRecord[]; 
   createdAt?: string;
   updatedAt?: string;
   acceptanceCriteria?: string;
@@ -93,13 +100,14 @@ export interface Project {
   id: string;
   name: string;
   description: string;
-  coverImage?: string; // Base64 image
+  coverImage?: string; 
   createdAt: string;
   
-  // New fields for Project Management
-  repositoryUrl?: string; // e.g. GitHub/GitLab link
+  repositoryUrl?: string; 
   startDate?: string;
   dueDate?: string;
+  
+  defects?: Defect[];
 }
 
 export interface TestPlan {
@@ -125,6 +133,6 @@ export interface TestRun {
   executedBy?: string;
   notes?: string;
   executedAt?: string;
-  snapshot?: string; // JSON string of Test Case state
-  testCase?: TestCase; // for UI convenience
+  snapshot?: string; 
+  testCase?: TestCase; 
 }

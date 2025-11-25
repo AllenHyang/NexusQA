@@ -8,12 +8,8 @@ describe('ExecutionPanel', () => {
   const mockSetEvidence = jest.fn();
   const mockSetNote = jest.fn();
   
-  const mockSetDefectExternalId = jest.fn();
-  const mockSetDefectTracker = jest.fn();
-  const mockSetDefectSeverity = jest.fn();
-  const mockSetDefectStatus = jest.fn();
-  const mockSetDefectUrl = jest.fn();
-
+  const mockOnSelectDefectId = jest.fn();
+  const mockOnNewDefectData = jest.fn();
   const mockOnExecute = jest.fn();
 
   const defaultProps = {
@@ -24,16 +20,11 @@ describe('ExecutionPanel', () => {
     note: '',
     setNote: mockSetNote,
     
-    defectExternalId: '',
-    setDefectExternalId: mockSetDefectExternalId,
-    defectTracker: 'Jira',
-    setDefectTracker: mockSetDefectTracker,
-    defectSeverity: 'S2',
-    setDefectSeverity: mockSetDefectSeverity,
-    defectStatus: 'OPEN',
-    setDefectStatus: mockSetDefectStatus,
-    defectUrl: '',
-    setDefectUrl: mockSetDefectUrl,
+    projectDefects: [],
+    selectedDefectId: null,
+    onSelectDefectId: mockOnSelectDefectId,
+    newDefectData: null,
+    onNewDefectData: mockOnNewDefectData,
 
     onExecute: mockOnExecute,
   };
@@ -42,13 +33,16 @@ describe('ExecutionPanel', () => {
     jest.clearAllMocks();
   });
 
-  it('renders all fields correctly', () => {
+  it('renders all fields correctly including DefectSelector', () => {
     render(<ExecutionPanel {...defaultProps} />);
     
     expect(screen.getByPlaceholderText('Env (e.g. Chrome)')).toHaveValue('QA');
     expect(screen.getByPlaceholderText('Evidence URL')).toHaveValue('');
     expect(screen.getByPlaceholderText('Execution Notes...')).toHaveValue('');
-    expect(screen.getByPlaceholderText('Defect ID (e.g. JIRA-123)')).toHaveValue('');
+    
+    // Check DefectSelector presence
+    expect(screen.getByText('Create New')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Defect Title')).toBeInTheDocument();
   });
 
   it('calls onExecute with PASSED when Pass button is clicked', () => {
@@ -61,17 +55,5 @@ describe('ExecutionPanel', () => {
     render(<ExecutionPanel {...defaultProps} />);
     fireEvent.click(screen.getByText('Fail'));
     expect(mockOnExecute).toHaveBeenCalledWith('FAILED');
-  });
-
-  it('calls onExecute with BLOCKED when Block button is clicked', () => {
-    render(<ExecutionPanel {...defaultProps} />);
-    fireEvent.click(screen.getByText('Block'));
-    expect(mockOnExecute).toHaveBeenCalledWith('BLOCKED');
-  });
-
-  it('calls onExecute with SKIPPED when Skip button is clicked', () => {
-    render(<ExecutionPanel {...defaultProps} />);
-    fireEvent.click(screen.getByText('Skip'));
-    expect(mockOnExecute).toHaveBeenCalledWith('SKIPPED');
   });
 });

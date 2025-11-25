@@ -9,12 +9,12 @@ interface StepPayload {
 }
 
 interface DefectPayload {
-    externalId: string;
-    tracker: string;
-    severity: string;
-    status: string;
-    url: string;
-    summary?: string;
+    id?: string;
+    title?: string;
+    severity?: string;
+    status?: string;
+    externalIssueId?: string;
+    externalUrl?: string;
 }
 
 interface HistoryPayload {
@@ -152,13 +152,17 @@ export async function POST(request: Request) {
                                    env: h.environment || h.env, 
                                    evidence: h.evidence,
                                    defects: {
-                                       create: h.defects?.map((d: DefectPayload) => ({
-                                           externalId: d.externalId,
-                                           tracker: d.tracker,
-                                           severity: d.severity,
-                                           status: d.status,
-                                           url: d.url,
-                                           summary: d.summary
+                                       create: h.defects?.filter(d => !d.id).map((d: DefectPayload) => ({
+                                           title: d.title!,
+                                           severity: d.severity || "MEDIUM",
+                                           status: d.status || "OPEN",
+                                           projectId: body.projectId,
+                                           authorId: body.authorId,
+                                           externalIssueId: d.externalIssueId,
+                                           externalUrl: d.externalUrl
+                                       })) || [],
+                                       connect: h.defects?.filter(d => d.id).map((d: DefectPayload) => ({
+                                            id: d.id
                                        })) || []
                                    }
                                }
@@ -211,14 +215,18 @@ export async function POST(request: Request) {
                           env: h.environment || h.env,
                           evidence: h.evidence,
                           defects: {
-                              create: h.defects?.map((d: DefectPayload) => ({
-                                  externalId: d.externalId,
-                                  tracker: d.tracker,
-                                  severity: d.severity,
-                                  status: d.status,
-                                  url: d.url,
-                                  summary: d.summary
-                              })) || []
+                               create: h.defects?.filter(d => !d.id).map((d: DefectPayload) => ({
+                                   title: d.title!,
+                                   severity: d.severity || "MEDIUM",
+                                   status: d.status || "OPEN",
+                                   projectId: body.projectId,
+                                   authorId: body.authorId,
+                                   externalIssueId: d.externalIssueId,
+                                   externalUrl: d.externalUrl
+                               })) || [],
+                               connect: h.defects?.filter(d => d.id).map((d: DefectPayload) => ({
+                                    id: d.id
+                               })) || []
                           }
                       })) || []
                   }
@@ -243,12 +251,10 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
-    // Bulk Update Handler (Status, Suite, etc.)
     try {
         const body = await request.json();
         const { ids, updates } = body;
         
-        // Prisma updateMany (works fine for top-level fields)
         await prisma.testCase.updateMany({
             where: { id: { in: ids } },
             data: updates
@@ -264,7 +270,7 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    const ids = searchParams.get('ids'); // Comma separated
+    const ids = searchParams.get('ids');
 
     try {
         if (id) {

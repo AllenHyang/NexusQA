@@ -2,11 +2,12 @@
 
 import React, { useState } from "react";
 import { Project, TestCase, User, TestSuite, TestPlan, TestStatus } from "../types";
-import { Download, Plus, ChevronDown, Trash2, Pencil, Github, BarChart3, Layout, ClipboardList, FolderInput } from "lucide-react";
+import { Download, Plus, ChevronDown, Trash2, Pencil, Github, BarChart3, Layout, ClipboardList, FolderInput, Bug } from "lucide-react";
 import { Tooltip } from "../components/ui";
 
 // Import the new sub-views
 import { ProjectCasesView } from "./ProjectCasesView";
+import { ProjectDefectsView } from "./ProjectDefectsView";
 import { ProjectPlansView } from "./ProjectPlansView";
 import { ProjectAnalyticsView } from "./ProjectAnalyticsView";
 
@@ -67,7 +68,7 @@ export function ProjectDetailView({
   onAddToPlan
 }: ProjectDetailViewProps) {
   // New state for top-level navigation
-  const [activeMainTab, setActiveMainTab] = useState<"CASES" | "PLANS" | "ANALYTICS">("CASES");
+  const [activeMainTab, setActiveMainTab] = useState<"CASES" | "PLANS" | "DEFECTS" | "ANALYTICS">("CASES");
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [showMobileFolders, setShowMobileFolders] = useState(false); // Still needed for cases view
 
@@ -106,6 +107,12 @@ export function ProjectDetailView({
                 className={`px-3 md:px-4 py-2 rounded-lg text-xs font-bold flex items-center transition-all ${activeMainTab === "PLANS" ? 'bg-zinc-900 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'}`}
               >
                 <ClipboardList className="w-3.5 h-3.5 mr-1.5" /> <span className="hidden sm:inline">Test Plans</span>
+              </button>
+              <button 
+                onClick={() => setActiveMainTab("DEFECTS")}
+                className={`px-3 md:px-4 py-2 rounded-lg text-xs font-bold flex items-center transition-all ${activeMainTab === "DEFECTS" ? 'bg-zinc-900 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'}`}
+              >
+                <Bug className="w-3.5 h-3.5 mr-1.5" /> <span className="hidden sm:inline">Defects</span>
               </button>
               <button 
                 onClick={() => setActiveMainTab("ANALYTICS")}
@@ -213,6 +220,12 @@ export function ProjectDetailView({
             project={project}
             plans={plans}
             onCreatePlan={onCreatePlan}
+          />
+        )}
+        {activeMainTab === "DEFECTS" && (
+          <ProjectDefectsView
+            project={project}
+            currentUser={currentUser}
           />
         )}
         {activeMainTab === "ANALYTICS" && (

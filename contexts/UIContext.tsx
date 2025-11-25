@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Project } from "@/types";
+import { Project, Defect } from "@/types";
 import { TestCase as PrismaTestCase, TestStep as PrismaTestStep } from '@prisma/client';
 
 interface UIContextType {
@@ -14,9 +14,9 @@ interface UIContextType {
 
   // Test Case Modal
   showCaseModal: boolean;
-  modalMode: 'EDIT' | 'RUN'; // Added mode
+  modalMode: 'EDIT' | 'RUN';
   editCase: Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }>;
-  openTestCaseModal: (testCase?: Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }>, mode?: 'EDIT' | 'RUN') => void; // Updated signature
+  openTestCaseModal: (testCase?: Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }>, mode?: 'EDIT' | 'RUN') => void;
   closeTestCaseModal: () => void;
   setEditCase: React.Dispatch<React.SetStateAction<Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }>>>;
 
@@ -36,31 +36,23 @@ interface UIContextType {
   openImportProjectModal: () => void;
   closeImportProjectModal: () => void;
 
-  // Loading State (Global AI or Operations)
+  // Loading State
   loadingAI: boolean;
   setLoadingAI: (loading: boolean) => void;
 
-  // Execution Form State (Shared for now, could be in TestCaseModal)
+  // Execution Form State
   executionNote: string;
   setExecutionNote: (note: string) => void;
-  executionBugId: string;
-  setExecutionBugId: (id: string) => void;
   executionEnv: string;
   setExecutionEnv: (env: string) => void;
   executionEvidence: string;
   setExecutionEvidence: (evidence: string) => void;
   
-  // Execution Defect Form
-  executionDefectExternalId: string;
-  setExecutionDefectExternalId: (id: string) => void;
-  executionDefectTracker: string;
-  setExecutionDefectTracker: (tracker: string) => void;
-  executionDefectSeverity: string;
-  setExecutionDefectSeverity: (severity: string) => void;
-  executionDefectStatus: string;
-  setExecutionDefectStatus: (status: string) => void;
-  executionDefectUrl: string;
-  setExecutionDefectUrl: (url: string) => void;
+  // Execution Defect Selection (New)
+  executionSelectedDefectId: string | null;
+  setExecutionSelectedDefectId: (id: string | null) => void;
+  executionNewDefectData: Partial<Defect> | null;
+  setExecutionNewDefectData: (data: Partial<Defect> | null) => void;
   
   // Global Search
   searchQuery: string;
@@ -94,16 +86,12 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
 
   // Execution Form
   const [executionNote, setExecutionNote] = useState("");
-  const [executionBugId, setExecutionBugId] = useState("");
   const [executionEnv, setExecutionEnv] = useState("QA");
   const [executionEvidence, setExecutionEvidence] = useState("");
   
-  // Execution Defect Form
-  const [executionDefectExternalId, setExecutionDefectExternalId] = useState("");
-  const [executionDefectTracker, setExecutionDefectTracker] = useState("Jira");
-  const [executionDefectSeverity, setExecutionDefectSeverity] = useState("S2");
-  const [executionDefectStatus, setExecutionDefectStatus] = useState("OPEN");
-  const [executionDefectUrl, setExecutionDefectUrl] = useState("");
+  // Defect Selection
+  const [executionSelectedDefectId, setExecutionSelectedDefectId] = useState<string | null>(null);
+  const [executionNewDefectData, setExecutionNewDefectData] = useState<Partial<Defect> | null>(null);
   
   // Search
   const [searchQuery, setSearchQuery] = useState("");
@@ -128,18 +116,12 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
   const openTestCaseModal = (testCase: Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }> = {}, mode: 'EDIT' | 'RUN' = 'EDIT') => {
     setEditCase(testCase);
     setModalMode(mode);
-    // Reset execution form when opening standard modal? 
-    // Maybe not, but for now let's keep simple.
     setExecutionNote("");
-    setExecutionBugId("");
     setExecutionEnv("QA");
     setExecutionEvidence("");
     // Reset defect fields
-    setExecutionDefectExternalId("");
-    setExecutionDefectTracker("Jira");
-    setExecutionDefectSeverity("S2");
-    setExecutionDefectStatus("OPEN");
-    setExecutionDefectUrl("");
+    setExecutionSelectedDefectId(null);
+    setExecutionNewDefectData(null);
     setShowCaseModal(true);
   };
 
@@ -184,14 +166,10 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
       showImportProjectModal, openImportProjectModal, closeImportProjectModal,
       loadingAI, setLoadingAI,
       executionNote, setExecutionNote,
-      executionBugId, setExecutionBugId,
       executionEnv, setExecutionEnv,
       executionEvidence, setExecutionEvidence,
-      executionDefectExternalId, setExecutionDefectExternalId,
-      executionDefectTracker, setExecutionDefectTracker,
-      executionDefectSeverity, setExecutionDefectSeverity,
-      executionDefectStatus, setExecutionDefectStatus,
-      executionDefectUrl, setExecutionDefectUrl,
+      executionSelectedDefectId, setExecutionSelectedDefectId,
+      executionNewDefectData, setExecutionNewDefectData,
       searchQuery, setSearchQuery
     }}>
       {children}

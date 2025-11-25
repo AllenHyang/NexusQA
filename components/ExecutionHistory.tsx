@@ -1,4 +1,3 @@
-
 import React from "react";
 import { TestCase, TestStep } from "@prisma/client";
 import { ExecutionRecord, TestStatus } from "../types";
@@ -120,15 +119,15 @@ export function ExecutionHistoryList({ history, defectTrackerUrl, testCase }: Ex
                       {record.defects.map(defect => (
                           <a 
                              key={defect.id}
-                             href={defect.url || '#'} 
+                             href={defect.externalUrl || '#'} 
                              target="_blank" 
                              rel="noreferrer"
                              className="flex items-center gap-2 p-2 rounded-lg bg-white border border-red-100 hover:border-red-200 shadow-sm hover:shadow-md transition-all group/defect decoration-0"
                           >
                              <span className={`text-[10px] font-black px-1.5 py-0.5 rounded uppercase ${
-                                 defect.severity === 'S0' ? 'bg-red-600 text-white' :
-                                 defect.severity === 'S1' ? 'bg-orange-500 text-white' :
-                                 defect.severity === 'S2' ? 'bg-yellow-500 text-white' :
+                                 defect.severity === 'CRITICAL' ? 'bg-red-600 text-white' :
+                                 defect.severity === 'HIGH' ? 'bg-orange-500 text-white' :
+                                 defect.severity === 'MEDIUM' ? 'bg-yellow-500 text-white' :
                                  'bg-blue-500 text-white'
                              }`}>
                                  {defect.severity}
@@ -137,15 +136,15 @@ export function ExecutionHistoryList({ history, defectTrackerUrl, testCase }: Ex
                                  <div className="flex items-center gap-1.5">
                                      <span className="text-xs font-bold text-zinc-800 group-hover/defect:text-blue-600 transition-colors flex items-center">
                                          <Bug className="w-3 h-3 mr-1 text-red-500" />
-                                         {defect.externalId}
+                                         {defect.title}
                                      </span>
                                      <span className="text-[10px] font-medium text-zinc-400 uppercase tracking-wide border border-zinc-100 px-1 rounded bg-zinc-50">
                                          {defect.status}
                                      </span>
                                  </div>
-                                 {defect.summary && <span className="text-[10px] text-zinc-500 line-clamp-1 max-w-[200px]">{defect.summary}</span>}
+                                 {defect.externalIssueId && <span className="text-[10px] text-zinc-500 line-clamp-1 max-w-[200px]">External: {defect.externalIssueId}</span>}
                              </div>
-                             <ExternalLink className="w-3 h-3 ml-auto text-zinc-300 group-hover/defect:text-blue-400" />
+                             {defect.externalUrl && <ExternalLink className="w-3 h-3 ml-auto text-zinc-300 group-hover/defect:text-blue-400" />}
                           </a>
                       ))}
                   </div>
