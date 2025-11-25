@@ -75,7 +75,7 @@ export function ProjectDetailView({
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Header - Non-scrolling */}
-      <div className="flex-shrink-0 pt-4 px-4 md:pt-6 md:px-6 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-zinc-200 bg-[#F2F0E9]">
+      <div className="flex-shrink-0 pt-4 px-4 md:pt-8 md:px-8 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-zinc-200 bg-[#F2F0E9]">
         <div>
           <div className="flex items-center gap-3 mb-1">
             <h1 className="text-2xl md:text-3xl font-black text-zinc-900 tracking-tight">{project.name}</h1>
