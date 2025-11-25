@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; 
+import { usePathname } from "next/navigation";
 import { Project, TestCase, User, TestSuite, TestPlan, TestStatus } from "../types";
 import { Download, Plus, ChevronDown, Trash2, Pencil, Github, BarChart3, Layout, ClipboardList, FolderInput, Bug } from "lucide-react";
 import { Tooltip } from "../components/ui";
+import { useAppStore } from "@/store/useAppStore"; 
 
 // Import the new sub-views
 import { ProjectCasesView } from "./ProjectCasesView";
@@ -11,7 +13,6 @@ import { ProjectDefectsView } from "./ProjectDefectsView";
 import { ProjectPlansView } from "./ProjectPlansView";
 import { ProjectAnalyticsView } from "./ProjectAnalyticsView";
 
-// Update props interface
 interface ProjectDetailViewProps {
   project: Project;
   testCases: TestCase[];
@@ -67,10 +68,22 @@ export function ProjectDetailView({
   onCreatePlan,
   onAddToPlan
 }: ProjectDetailViewProps) {
-  // New state for top-level navigation
-  const [activeMainTab, setActiveMainTab] = useState<"CASES" | "PLANS" | "DEFECTS" | "ANALYTICS">("CASES");
+  const pathname = usePathname(); 
+  const { fetchPlans } = useAppStore(); 
+
+  const [activeMainTab, setActiveMainTab] = useState<"CASES" | "PLANS" | "DEFECTS" | "ANALYTICS">(() => {
+    if (pathname.includes("/plans")) return "PLANS";
+    if (pathname.includes("/defects")) return "DEFECTS"; 
+    return "CASES"; 
+  });
   const [showExportDropdown, setShowExportDropdown] = useState(false);
-  const [showMobileFolders, setShowMobileFolders] = useState(false); // Still needed for cases view
+  const [showMobileFolders, setShowMobileFolders] = useState(false); 
+
+  useEffect(() => {
+    if (activeMainTab === "PLANS" && project?.id) {
+      fetchPlans(project.id);
+    }
+  }, [activeMainTab, project?.id, fetchPlans]);
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -125,7 +138,7 @@ export function ProjectDetailView({
           {(currentUser.role === "ADMIN" || currentUser.role === "QA_LEAD") && (
             <>
                 <Tooltip content="Edit Project">
-                    <button onClick={onEditProject} className="p-2.5 rounded-xl hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900 transition-colors border border-zinc-200 bg-white shadow-sm">
+                    <button onClick={() => onEditProject()} className="p-2.5 rounded-xl hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900 transition-colors border border-zinc-200 bg-white shadow-sm">
                         <Pencil className="w-4 h-4" />
                     </button>
                 </Tooltip>
@@ -170,7 +183,7 @@ export function ProjectDetailView({
               </div>
               {(currentUser.role === "ADMIN" || currentUser.role === "QA_LEAD") && (
                 <button
-                  onClick={onImportCases}
+                  onClick={() => onImportCases()}
                   className="glass-button px-4 py-2.5 rounded-xl text-sm font-bold flex items-center"
                 >
                   <FolderInput className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">Import</span>
@@ -178,7 +191,7 @@ export function ProjectDetailView({
               )}
               {(currentUser.role !== "TESTER") && (
                 <button 
-                  onClick={() => onCreateCase(null)} // passing null for suiteId for now, will be refined in ProjectCasesView
+                  onClick={() => onCreateCase(null)} 
                   className="bg-zinc-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center hover:bg-black shadow-lg hover:-translate-y-0.5 transition-all ml-auto md:ml-0">
                   <Plus className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">Create Case</span><span className="md:hidden">New</span>
                 </button>
@@ -188,7 +201,6 @@ export function ProjectDetailView({
         </div>
       </div>
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-h-0">
         {activeMainTab === "CASES" && (
           <ProjectCasesView 

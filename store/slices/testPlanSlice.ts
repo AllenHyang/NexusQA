@@ -1,6 +1,5 @@
 import { StateCreator } from 'zustand';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { TestPlan, TestRun } from '@/types';
+import { TestPlan } from '@/types';
 
 export interface TestPlanSlice {
   plans: TestPlan[];
@@ -11,9 +10,9 @@ export interface TestPlanSlice {
   addCasesToPlan: (planId: string, caseIds: string[]) => Promise<void>;
   removeCaseFromPlan: (planId: string, caseId: string) => Promise<void>;
   updateRunStatus: (runId: string, status: string, notes?: string) => Promise<void>;
+  duplicateTestPlan: (planId: string) => Promise<void>; // Added duplicateTestPlan action
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const createTestPlanSlice: StateCreator<TestPlanSlice, [], [], TestPlanSlice> = (set, get) => ({
   plans: [],
   currentPlan: null,
@@ -56,7 +55,6 @@ export const createTestPlanSlice: StateCreator<TestPlanSlice, [], [], TestPlanSl
           body: JSON.stringify({ caseIds })
       });
       if (res.ok) {
-          // Refresh current plan to show new runs
           await get().fetchPlan(planId);
       }
   },
@@ -89,5 +87,23 @@ export const createTestPlanSlice: StateCreator<TestPlanSlice, [], [], TestPlanSl
               set({ currentPlan: { ...currentPlan, runs: newRuns } });
           }
       }
-  }
+  },
+
+  duplicateTestPlan: async (planId) => {
+    try {
+        const res = await fetch(`/api/plans/${planId}/duplicate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+        });
+        if (res.ok) {
+            const newPlan = await res.json();
+            set(state => ({ plans: [newPlan, ...state.plans] })); // Add new plan to list
+        } else {
+            const errorData = await res.json();
+            console.error("Failed to duplicate plan:", errorData.error);
+        }
+    } catch (error) {
+        console.error("Error duplicating plan:", error);
+    }
+  },
 });

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAppStore } from "@/store/useAppStore";
-import { ArrowLeft, CheckCircle2, XCircle, AlertCircle, Calendar, Search, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, AlertCircle, Calendar, Search, Plus, Trash2, Copy } from "lucide-react"; 
 import { StatusBadge, PriorityBadge, ProgressBar } from "@/components/ui";
 import { TestStatus } from "@/types";
 
@@ -12,12 +12,11 @@ export default function PlanDetailPage() {
   const planId = params.planId as string;
   const projectId = params.projectId as string;
   const router = useRouter();
-  const { currentPlan, fetchPlan, updateRunStatus, addCasesToPlan, removeCaseFromPlan, testCases } = useAppStore();
+  const { currentPlan, fetchPlan, updateRunStatus, addCasesToPlan, removeCaseFromPlan, testCases, duplicateTestPlan } = useAppStore(); 
   
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<TestStatus | "ALL">("ALL");
   
-  // Add Case Modal State
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedCaseIds, setSelectedCaseIds] = useState<string[]>([]);
   const [addModalSearch, setAddModalSearch] = useState("");
@@ -32,14 +31,12 @@ export default function PlanDetailPage() {
 
   const runs = currentPlan.runs || [];
   
-  // Stats
   const total = runs.length;
   const passed = runs.filter(r => r.status === "PASSED").length;
   const failed = runs.filter(r => r.status === "FAILED").length;
   const blocked = runs.filter(r => r.status === "BLOCKED").length;
   const progress = total > 0 ? Math.round((passed / total) * 100) : 0;
 
-  // Filtering
   const filteredRuns = runs.filter(r => {
       const matchesSearch = r.testCase?.title.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === "ALL" || r.status === statusFilter;
@@ -58,11 +55,15 @@ export default function PlanDetailPage() {
       }
   };
 
-  // Filter available cases for modal (exclude already added)
+  const handleDuplicate = async () => {
+      if (!currentPlan) return;
+      if (confirm(`Are you sure you want to duplicate "${currentPlan.name}"?`)) {
+          await duplicateTestPlan(currentPlan.id);
+          router.push(`/project/${projectId}/plans`); 
+      }
+  };
+
   const existingCaseIds = new Set(runs.map(r => r.testCaseId));
-  // Assuming testCases are loaded in store (if not, we might need to fetch them, but usually project loads them)
-  // In a real app, we might need to fetch specifically available cases if the list is huge.
-  // For now, relying on store.testCases filtered by project.
   const availableCases = testCases.filter(tc => 
       tc.projectId === projectId && 
       !existingCaseIds.has(tc.id) &&
@@ -73,20 +74,32 @@ export default function PlanDetailPage() {
     <div className="h-screen flex flex-col bg-white overflow-hidden">
       {/* Header */}
       <div className="flex-shrink-0 pt-6 px-6 pb-6 border-b border-zinc-200 bg-[#F2F0E9]">
-        <div className="flex items-center mb-4">
-            <button 
-                onClick={() => router.push(`/project/${projectId}`)}
-                className="mr-4 p-2 rounded-xl hover:bg-white/50 text-zinc-500 hover:text-zinc-900 transition-colors"
-            >
-                <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div>
-                <h1 className="text-2xl font-black text-zinc-900 tracking-tight">{currentPlan.name}</h1>
-                <div className="flex items-center gap-4 text-xs font-bold text-zinc-500 mt-1">
-                    <span className="flex items-center"><Calendar className="w-3.5 h-3.5 mr-1.5" /> {currentPlan.startDate ? new Date(currentPlan.startDate).toLocaleDateString() : 'No start date'}</span>
-                    {currentPlan.status && <span className="bg-zinc-200 px-2 py-0.5 rounded text-zinc-600 uppercase text-[10px]">{currentPlan.status}</span>}
+        <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+                <button 
+                    onClick={() => router.push(`/project/${projectId}/plans`)} 
+                    className="mr-4 p-2 rounded-xl hover:bg-white/50 text-zinc-500 hover:text-zinc-900 transition-colors"
+                    aria-label="Back to plans list"
+                >
+                    <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div>
+                    <h1 className="text-2xl font-black text-zinc-900 tracking-tight">{currentPlan.name}</h1>
+                    <div className="flex items-center gap-4 text-xs font-bold text-zinc-500 mt-1">
+                        <span className="flex items-center"><Calendar className="w-3.5 h-3.5 mr-1.5" /> {currentPlan.startDate ? new Date(currentPlan.startDate).toLocaleDateString() : 'No start date'}</span>
+                        {currentPlan.status && <span className="bg-zinc-200 px-2 py-0.5 rounded text-zinc-600 uppercase text-[10px]">{currentPlan.status}</span>}
+                    </div>
                 </div>
             </div>
+            
+            {/* Duplicate Button */}
+            <button
+                onClick={handleDuplicate}
+                className="px-4 py-2 bg-zinc-900 text-white rounded-lg text-sm font-bold flex items-center hover:bg-black transition-colors shadow-sm"
+                title="Duplicate Plan"
+            >
+                <Copy className="w-4 h-4 mr-2" /> Duplicate
+            </button>
         </div>
 
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -153,7 +166,7 @@ export default function PlanDetailPage() {
       <div className="flex-1 overflow-y-auto p-6">
           <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
               <table className="w-full text-left text-sm">
-                  <thead className="bg-zinc-50 border-b border-zinc-100">
+                  <thead className="bg-zinc-50 sticky top-0">
                       <tr>
                           <th className="px-6 py-3 font-bold text-zinc-400">Test Case</th>
                           <th className="px-6 py-3 font-bold text-zinc-400">Priority</th>
@@ -164,7 +177,6 @@ export default function PlanDetailPage() {
                   </thead>
                   <tbody className="divide-y divide-zinc-50">
                       {filteredRuns.map(run => {
-                          // Parse snapshot if available
                           const snapshot = run.snapshot ? JSON.parse(run.snapshot) : null;
                           const displayCase = snapshot || run.testCase || { title: "Unknown Case", priority: "MEDIUM" };
                           const isSnapshot = !!run.snapshot;

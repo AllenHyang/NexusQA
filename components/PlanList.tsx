@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { TestPlan } from '@/types';
 import { useRouter } from 'next/navigation';
-import { Plus, Calendar, BarChart3 } from 'lucide-react';
+import { Plus, Calendar, BarChart3, Copy } from 'lucide-react'; // Import Copy icon
 import { ProgressBar } from './ui';
 
 interface PlanListProps {
   projectId: string;
   plans: TestPlan[];
   onCreatePlan: (data: Partial<TestPlan>) => void;
+  onDuplicatePlan: (planId: string) => void; // Added onDuplicatePlan prop
 }
 
-export function PlanList({ projectId, plans, onCreatePlan }: PlanListProps) {
+export function PlanList({ projectId, plans, onCreatePlan, onDuplicatePlan }: PlanListProps) {
   const router = useRouter();
   const [isCreating, setIsCreating] = useState(false);
   const [newPlanName, setNewPlanName] = useState("");
@@ -64,8 +65,17 @@ export function PlanList({ projectId, plans, onCreatePlan }: PlanListProps) {
                             <h4 className="font-bold text-zinc-900 group-hover:text-blue-600 transition-colors">{plan.name}</h4>
                             <p className="text-xs text-zinc-500 mt-1 font-medium">{plan.status}</p>
                         </div>
-                        <div className="bg-zinc-50 p-2 rounded-lg text-zinc-400">
-                            <BarChart3 className="w-5 h-5" />
+                        <div className="flex items-center gap-2"> {/* New div to hold multiple actions */}
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onDuplicatePlan(plan.id); }} // Prevent navigation
+                                className="p-2 rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+                                title="Duplicate Plan"
+                            >
+                                <Copy className="w-5 h-5" />
+                            </button>
+                            <div className="bg-zinc-50 p-2 rounded-lg text-zinc-400">
+                                <BarChart3 className="w-5 h-5" />
+                            </div>
                         </div>
                     </div>
                     

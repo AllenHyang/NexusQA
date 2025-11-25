@@ -47,7 +47,6 @@ export default function ProjectDetailPage() {
         currentUser={currentUser}
         users={users}
         searchQuery={searchQuery}
-        defectTrackerUrl="" // TODO - this prop is now unused by ProjectDetailView
         onExport={() => {
             const exportData = {
                 ...project,
@@ -75,9 +74,6 @@ export default function ProjectDetailPage() {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             openTestCaseModal(dupe as any);
         }}
-        // The onViewHistory prop is no longer directly handled by ProjectDetailView, 
-        // as the test case details view will handle its own history.
-        // onViewHistory={openHistoryModal as any}
         onImportCases={() => openImportCasesModal(project.id)}
         onBulkDelete={bulkDeleteTestCases}
         onBulkStatusUpdate={bulkUpdateStatus}
