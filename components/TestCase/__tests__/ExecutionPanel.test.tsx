@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { ExecutionPanel } from '../ExecutionPanel';
 
@@ -7,10 +7,10 @@ describe('ExecutionPanel', () => {
   const mockSetEnv = jest.fn();
   const mockSetEvidence = jest.fn();
   const mockSetNote = jest.fn();
-  
+
   const mockOnSelectDefectId = jest.fn();
   const mockOnNewDefectData = jest.fn();
-  const mockOnExecute = jest.fn();
+  const mockOnExecute = jest.fn().mockResolvedValue(undefined);
 
   const defaultProps = {
     env: 'QA',
@@ -19,7 +19,7 @@ describe('ExecutionPanel', () => {
     setEvidence: mockSetEvidence,
     note: '',
     setNote: mockSetNote,
-    
+
     projectDefects: [],
     selectedDefectId: null,
     onSelectDefectId: mockOnSelectDefectId,
@@ -27,6 +27,7 @@ describe('ExecutionPanel', () => {
     onNewDefectData: mockOnNewDefectData,
 
     onExecute: mockOnExecute,
+    reviewStatus: 'APPROVED' as const,
   };
 
   beforeEach(() => {
@@ -35,25 +36,35 @@ describe('ExecutionPanel', () => {
 
   it('renders all fields correctly including DefectSelector', () => {
     render(<ExecutionPanel {...defaultProps} />);
-    
+
     expect(screen.getByPlaceholderText('Env (e.g. Chrome)')).toHaveValue('QA');
     expect(screen.getByPlaceholderText('Evidence URL')).toHaveValue('');
     expect(screen.getByPlaceholderText('Execution Notes...')).toHaveValue('');
-    
+
     // Check DefectSelector presence
     expect(screen.getByText('Create New')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Defect Title')).toBeInTheDocument();
   });
 
-  it('calls onExecute with PASSED when Pass button is clicked', () => {
+  it('calls onExecute with PASSED when Pass button is clicked and confirmed', async () => {
     render(<ExecutionPanel {...defaultProps} />);
+    // First select the status
     fireEvent.click(screen.getByText('Pass'));
-    expect(mockOnExecute).toHaveBeenCalledWith('PASSED');
+    // Then confirm the execution
+    fireEvent.click(screen.getByText('Save Execution Result'));
+    await waitFor(() => {
+      expect(mockOnExecute).toHaveBeenCalledWith('PASSED');
+    });
   });
 
-  it('calls onExecute with FAILED when Fail button is clicked', () => {
+  it('calls onExecute with FAILED when Fail button is clicked and confirmed', async () => {
     render(<ExecutionPanel {...defaultProps} />);
+    // First select the status
     fireEvent.click(screen.getByText('Fail'));
-    expect(mockOnExecute).toHaveBeenCalledWith('FAILED');
+    // Then confirm the execution
+    fireEvent.click(screen.getByText('Save Execution Result'));
+    await waitFor(() => {
+      expect(mockOnExecute).toHaveBeenCalledWith('FAILED');
+    });
   });
 });

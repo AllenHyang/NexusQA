@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAppStore } from "@/store/useAppStore";
-import { ArrowLeft, CheckCircle2, XCircle, AlertCircle, Calendar, Search, Plus, Trash2, Copy } from "lucide-react"; 
+import { ArrowLeft, CheckCircle2, XCircle, AlertCircle, Calendar, Search, Plus, Trash2, Copy, Eye } from "lucide-react"; 
 import { StatusBadge, PriorityBadge, ProgressBar } from "@/components/ui";
 import { TestStatus } from "@/types";
 
@@ -185,7 +185,13 @@ export default function PlanDetailPage() {
                           <tr key={run.id} className="hover:bg-zinc-50/50 transition-colors group">
                               <td className="px-6 py-4">
                                   <div className="flex items-center gap-2">
-                                      <div className="font-bold text-zinc-700">{displayCase.title}</div>
+                                      <button
+                                          onClick={() => router.push(`/project/${projectId}/case/${run.testCaseId}`)}
+                                          className="font-bold text-zinc-700 hover:text-blue-600 hover:underline transition-colors text-left"
+                                          title="View test case details"
+                                      >
+                                          {displayCase.title}
+                                      </button>
                                       {isSnapshot && (
                                           <span className="text-[10px] font-bold text-zinc-400 bg-zinc-100 px-1.5 py-0.5 rounded border border-zinc-200/50" title="This run is locked to a specific version of the test case">
                                               SNAPSHOT
@@ -212,31 +218,39 @@ export default function PlanDetailPage() {
                               </td>
                               <td className="px-6 py-4 text-right">
                                   <div className="flex justify-end gap-2 items-center">
-                                      <button 
+                                      <button
                                         onClick={() => handleStatusUpdate(run.id, "PASSED")}
                                         className={`p-1.5 rounded-lg hover:bg-green-50 text-zinc-300 hover:text-green-600 transition-colors ${run.status === "PASSED" ? "text-green-600 bg-green-50 ring-1 ring-green-200" : ""}`}
                                         title="Mark as Passed"
                                       >
                                           <CheckCircle2 className="w-4 h-4" />
                                       </button>
-                                      <button 
+                                      <button
                                         onClick={() => handleStatusUpdate(run.id, "FAILED")}
                                         className={`p-1.5 rounded-lg hover:bg-red-50 text-zinc-300 hover:text-red-600 transition-colors ${run.status === "FAILED" ? "text-red-600 bg-red-50 ring-1 ring-red-200" : ""}`}
                                         title="Mark as Failed"
                                       >
                                           <XCircle className="w-4 h-4" />
                                       </button>
-                                      <button 
+                                      <button
                                         onClick={() => handleStatusUpdate(run.id, "BLOCKED")}
                                         className={`p-1.5 rounded-lg hover:bg-orange-50 text-zinc-300 hover:text-orange-600 transition-colors ${run.status === "BLOCKED" ? "text-orange-600 bg-orange-50 ring-1 ring-orange-200" : ""}`}
                                         title="Mark as Blocked"
                                       >
                                           <AlertCircle className="w-4 h-4" />
                                       </button>
-                                      
+
                                       <div className="w-px h-4 bg-zinc-200 mx-1"></div>
-                                      
-                                      <button 
+
+                                      <button
+                                          onClick={() => router.push(`/project/${projectId}/case/${run.testCaseId}`)}
+                                          className="p-1.5 rounded-lg hover:bg-blue-50 text-zinc-300 hover:text-blue-600 transition-colors"
+                                          title="View Details"
+                                      >
+                                          <Eye className="w-4 h-4" />
+                                      </button>
+
+                                      <button
                                           onClick={() => {
                                               if(confirm("Remove this case from the plan? Results will be lost.")) {
                                                   removeCaseFromPlan(planId, run.testCaseId);

@@ -1,15 +1,16 @@
 import { StateCreator } from 'zustand';
-import { TestCase, TestSuite, TestStatus, TestStep } from '@/types'; // Added TestStep
+import { TestCase, TestSuite, TestStatus, TestStep, ReviewStatus } from '@/types'; // Added TestStep
 import { generateImage } from '@/app/actions';
 
 export interface TestCaseSlice {
   testCases: TestCase[];
   suites: TestSuite[];
   
-  saveTestCase: (testCase: Partial<TestCase>) => Promise<void>;
+  saveTestCase: (testCase: Partial<TestCase>) => Promise<TestCase | null>; // Corrected return type
   deleteTestCase: (id: string) => Promise<void>;
   bulkDeleteTestCases: (ids: string[]) => Promise<void>;
   bulkUpdateStatus: (ids: string[], status: TestStatus) => Promise<void>;
+  bulkUpdateReviewStatus: (ids: string[], reviewStatus: ReviewStatus) => Promise<void>;
   bulkMoveTestCases: (ids: string[], targetSuiteId: string | null) => Promise<void>;
   
   createSuite: (projectId: string, parentId: string | null, name: string) => Promise<void>;
@@ -70,13 +71,24 @@ export const createTestCaseSlice: StateCreator<TestCaseSlice> = (set) => ({
       }));
   },
 
+  bulkUpdateReviewStatus: async (ids, reviewStatus) => {
+      const updates = { reviewStatus };
+      await fetch('/api/testcases', { 
+          method: 'PUT', 
+          body: JSON.stringify({ ids, updates }) 
+      });
+      set(state => ({
+          testCases: state.testCases.map(tc => ids.includes(tc.id) ? { ...tc, reviewStatus } : tc)
+      }));
+  },
+
   bulkMoveTestCases: async (ids, targetSuiteId) => {
       await fetch('/api/testcases', {
           method: 'PUT',
-          body: JSON.stringify({ ids, updates: { suiteId: targetSuiteId || undefined } })
+          body: JSON.stringify({ ids, updates: { suiteId: targetSuiteId } }) // Changed undefined to null
       });
       set(state => ({
-          testCases: state.testCases.map(tc => ids.includes(tc.id) ? { ...tc, suiteId: targetSuiteId || undefined } : tc)
+          testCases: state.testCases.map(tc => ids.includes(tc.id) ? { ...tc, suiteId: targetSuiteId } : tc)
       }));
   },
 

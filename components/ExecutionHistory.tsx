@@ -1,16 +1,19 @@
 import React from "react";
-import { TestCase, TestStep } from "@prisma/client";
-import { ExecutionRecord, TestStatus } from "../types";
+import { useRouter } from "next/navigation";
+import { TestCase, ExecutionRecord, TestStatus } from "../types";
+import { TestStep } from "@prisma/client";
 import { Bug, Calendar, History, User as UserIcon, ExternalLink, Monitor, Paperclip, Copy } from "lucide-react";
 import { formatBugReportMarkdown } from "../lib/formatters";
 
 interface ExecutionHistoryListProps {
   history?: ExecutionRecord[];
   defectTrackerUrl?: string;
-  testCase: TestCase & { steps: TestStep[] };
+  testCase: TestCase & { steps: TestStep[] }; // Use TestCase here
 }
 
 export function ExecutionHistoryList({ history, defectTrackerUrl, testCase }: ExecutionHistoryListProps) {
+  const router = useRouter();
+
   if (!history || history.length === 0) {
     return (
       <div className="p-8 text-center flex flex-col items-center justify-center text-gray-400 bg-gray-50/30 rounded-xl border border-dashed border-gray-200 mx-4 my-4">
@@ -116,13 +119,28 @@ export function ExecutionHistoryList({ history, defectTrackerUrl, testCase }: Ex
               {/* Defect Section */}
               {(record.defects && record.defects.length > 0) ? (
                   <div className="mt-3 flex flex-col gap-2">
-                      {record.defects.map(defect => (
-                          <a 
+                      {record.defects.map(defect => {
+                          const hasExternalUrl = !!defect.externalUrl;
+                          const handleDefectClick = (e: React.MouseEvent) => {
+                              if (hasExternalUrl) {
+                                  // External link - let the <a> handle it
+                                  return;
+                              }
+                              e.preventDefault();
+                              // Navigate to project page with defects tab and defectId param
+                              if (testCase.projectId) {
+                                  router.push(`/project/${testCase.projectId}?tab=defects&defectId=${defect.id}`);
+                              }
+                          };
+
+                          return (
+                          <a
                              key={defect.id}
-                             href={defect.externalUrl || '#'} 
-                             target="_blank" 
-                             rel="noreferrer"
-                             className="flex items-center gap-2 p-2 rounded-lg bg-white border border-red-100 hover:border-red-200 shadow-sm hover:shadow-md transition-all group/defect decoration-0"
+                             href={defect.externalUrl || '#'}
+                             target={hasExternalUrl ? "_blank" : undefined}
+                             rel={hasExternalUrl ? "noreferrer" : undefined}
+                             onClick={handleDefectClick}
+                             className="flex items-center gap-2 p-2 rounded-lg bg-white border border-red-100 hover:border-red-200 shadow-sm hover:shadow-md transition-all group/defect decoration-0 cursor-pointer"
                           >
                              <span className={`text-[10px] font-black px-1.5 py-0.5 rounded uppercase ${
                                  defect.severity === 'CRITICAL' ? 'bg-red-600 text-white' :
@@ -136,7 +154,7 @@ export function ExecutionHistoryList({ history, defectTrackerUrl, testCase }: Ex
                                  <div className="flex items-center gap-1.5">
                                      <span className="text-xs font-bold text-zinc-800 group-hover/defect:text-blue-600 transition-colors flex items-center">
                                          <Bug className="w-3 h-3 mr-1 text-red-500" />
-                                         {defect.title}
+                                         {defect.title || `#${defect.id.slice(-6)}`}
                                      </span>
                                      <span className="text-[10px] font-medium text-zinc-400 uppercase tracking-wide border border-zinc-100 px-1 rounded bg-zinc-50">
                                          {defect.status}
@@ -144,9 +162,10 @@ export function ExecutionHistoryList({ history, defectTrackerUrl, testCase }: Ex
                                  </div>
                                  {defect.externalIssueId && <span className="text-[10px] text-zinc-500 line-clamp-1 max-w-[200px]">External: {defect.externalIssueId}</span>}
                              </div>
-                             {defect.externalUrl && <ExternalLink className="w-3 h-3 ml-auto text-zinc-300 group-hover/defect:text-blue-400" />}
+                             {hasExternalUrl && <ExternalLink className="w-3 h-3 ml-auto text-zinc-300 group-hover/defect:text-blue-400" />}
                           </a>
-                      ))}
+                          );
+                      })}
                   </div>
               ) : record.bugId && (
                  <div className="mt-3 flex">

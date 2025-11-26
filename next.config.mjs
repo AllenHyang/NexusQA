@@ -2,7 +2,15 @@ const nextConfig = {
   experimental: {
     reactCompiler: true, // Enable the React Compiler
   },
-  /* config options here */
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'ui-avatars.com',
+        pathname: '/api/**',
+      },
+    ],
+  },
 };
 
 export default nextConfig;

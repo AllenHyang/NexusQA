@@ -1,6 +1,6 @@
-import React from "react";
-import { TestStatus, Defect } from "@/types";
-import { CheckCircle2, XCircle, AlertCircle, Monitor, Paperclip, Forward, Bug } from "lucide-react";
+import React, { useState } from "react";
+import { TestStatus, Defect, ReviewStatus } from "@/types";
+import { CheckCircle2, XCircle, AlertCircle, Monitor, Paperclip, Forward, Bug, Save } from "lucide-react";
 import { DefectSelector } from "@/components/DefectSelector";
 
 interface ExecutionPanelProps {
@@ -10,7 +10,7 @@ interface ExecutionPanelProps {
   setEvidence: (s: string) => void;
   note: string;
   setNote: (s: string) => void;
-  
+
   // New Defect Props
   projectDefects: Defect[];
   selectedDefectId: string | null;
@@ -19,15 +19,18 @@ interface ExecutionPanelProps {
   onNewDefectData: (data: Partial<Defect> | null) => void;
 
   onExecute: (status: TestStatus) => void;
-  reviewStatus?: string;
+  reviewStatus: ReviewStatus | null | undefined;
+  currentStatus?: TestStatus; // Current status of the test case
 }
 
-export function ExecutionPanel({ 
-  env, setEnv, evidence, setEvidence, note, setNote, 
+export function ExecutionPanel({
+  env, setEnv, evidence, setEvidence, note, setNote,
   projectDefects, selectedDefectId, onSelectDefectId, newDefectData, onNewDefectData,
-  onExecute, reviewStatus 
+  onExecute, reviewStatus, currentStatus
 }: ExecutionPanelProps) {
   const isApproved = reviewStatus === 'APPROVED';
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<TestStatus | null>(null);
 
   const handleCreateDefect = (data: Partial<Defect>) => {
       onNewDefectData(data);
@@ -37,6 +40,53 @@ export function ExecutionPanel({
   const handleSelectDefect = (defect: Defect) => {
       onSelectDefectId(defect.id);
       onNewDefectData(null); // Clear new
+  };
+
+  // Select status (does not submit yet)
+  const handleSelectStatus = (status: TestStatus) => {
+      setSelectedStatus(status);
+  };
+
+  // Confirm and submit the execution
+  const handleConfirmExecution = async () => {
+      if (!selectedStatus) return;
+      setIsExecuting(true);
+      try {
+          await onExecute(selectedStatus);
+          setSelectedStatus(null); // Reset selection after successful save
+      } finally {
+          setIsExecuting(false);
+      }
+  };
+
+  // Execution result statuses (subset of TestStatus that can be selected during execution)
+  type ExecutionStatus = "PASSED" | "FAILED" | "BLOCKED" | "SKIPPED";
+
+  // Get button styling based on whether it's selected
+  const getButtonClass = (status: ExecutionStatus) => {
+      const baseClass = "py-3.5 rounded-2xl font-bold text-sm border transition-all flex flex-col items-center justify-center gap-1";
+      const isSelected = selectedStatus === status;
+
+      const styles: Record<ExecutionStatus, { selected: string; normal: string }> = {
+          PASSED: {
+              selected: "bg-green-500 text-white border-green-600 ring-2 ring-green-300 shadow-lg scale-105",
+              normal: "bg-green-50 text-green-600 border-green-100 hover:bg-green-100 hover:border-green-200 hover:-translate-y-1 hover:shadow-md"
+          },
+          FAILED: {
+              selected: "bg-red-500 text-white border-red-600 ring-2 ring-red-300 shadow-lg scale-105",
+              normal: "bg-red-50 text-red-600 border-red-100 hover:bg-red-100 hover:border-red-200 hover:-translate-y-1 hover:shadow-md"
+          },
+          BLOCKED: {
+              selected: "bg-orange-500 text-white border-orange-600 ring-2 ring-orange-300 shadow-lg scale-105",
+              normal: "bg-orange-50 text-orange-600 border-orange-100 hover:bg-orange-100 hover:border-orange-200 hover:-translate-y-1 hover:shadow-md"
+          },
+          SKIPPED: {
+              selected: "bg-gray-500 text-white border-gray-600 ring-2 ring-gray-300 shadow-lg scale-105",
+              normal: "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100 hover:border-gray-300 hover:-translate-y-1 hover:shadow-md"
+          }
+      };
+
+      return `${baseClass} ${styles[status][isSelected ? 'selected' : 'normal']}`;
   };
 
   return (
@@ -115,32 +165,69 @@ export function ExecutionPanel({
           </div>
 
         </div>
-        <div className="grid grid-cols-4 gap-3">
-          <button 
-            onClick={() => onExecute("PASSED")}
-            className="py-3.5 rounded-2xl font-bold text-sm border transition-all flex flex-col items-center justify-center gap-1 bg-green-50 text-green-600 border-green-100 hover:bg-green-100 hover:border-green-200 hover:-translate-y-1 hover:shadow-md">
-            <CheckCircle2 className="w-5 h-5" />
-            Pass
-          </button>
-          <button 
-            onClick={() => onExecute("FAILED")}
-            className="py-3.5 rounded-2xl font-bold text-sm border transition-all flex flex-col items-center justify-center gap-1 bg-red-50 text-red-600 border-red-100 hover:bg-red-100 hover:border-red-200 hover:-translate-y-1 hover:shadow-md">
-            <XCircle className="w-5 h-5" />
-            Fail
-          </button>
-          <button 
-            onClick={() => onExecute("BLOCKED")}
-            className="py-3.5 rounded-2xl font-bold text-sm border transition-all flex flex-col items-center justify-center gap-1 bg-orange-50 text-orange-600 border-orange-100 hover:bg-orange-100 hover:border-orange-200 hover:-translate-y-1 hover:shadow-md">
-            <AlertCircle className="w-5 h-5" />
-            Block
-          </button>
-          <button 
-            onClick={() => onExecute("SKIPPED")}
-            className="py-3.5 rounded-2xl font-bold text-sm border transition-all flex flex-col items-center justify-center gap-1 bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100 hover:border-gray-300 hover:-translate-y-1 hover:shadow-md">
-            <Forward className="w-5 h-5" />
-            Skip
-          </button>
+        {/* Current status indicator */}
+        {currentStatus && currentStatus !== 'DRAFT' && currentStatus !== 'UNTESTED' && (
+          <div className="mb-4 p-3 bg-zinc-50 rounded-xl border border-zinc-200 flex items-center gap-2">
+            <span className="text-xs font-bold text-zinc-500">Last Result:</span>
+            <span className={`text-xs font-bold px-2 py-1 rounded-lg ${
+              currentStatus === 'PASSED' ? 'bg-green-100 text-green-700' :
+              currentStatus === 'FAILED' ? 'bg-red-100 text-red-700' :
+              currentStatus === 'BLOCKED' ? 'bg-orange-100 text-orange-700' :
+              'bg-gray-100 text-gray-700'
+            }`}>
+              {currentStatus}
+            </span>
+          </div>
+        )}
+
+        {/* Status selection buttons */}
+        <div className="mb-4">
+          <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3">Select Result</p>
+          <div className="grid grid-cols-4 gap-3">
+            <button
+              onClick={() => handleSelectStatus("PASSED")}
+              disabled={isExecuting}
+              className={`${getButtonClass("PASSED")} ${isExecuting ? 'opacity-50 cursor-wait' : ''}`}>
+              <CheckCircle2 className="w-5 h-5" />
+              Pass
+            </button>
+            <button
+              onClick={() => handleSelectStatus("FAILED")}
+              disabled={isExecuting}
+              className={`${getButtonClass("FAILED")} ${isExecuting ? 'opacity-50 cursor-wait' : ''}`}>
+              <XCircle className="w-5 h-5" />
+              Fail
+            </button>
+            <button
+              onClick={() => handleSelectStatus("BLOCKED")}
+              disabled={isExecuting}
+              className={`${getButtonClass("BLOCKED")} ${isExecuting ? 'opacity-50 cursor-wait' : ''}`}>
+              <AlertCircle className="w-5 h-5" />
+              Block
+            </button>
+            <button
+              onClick={() => handleSelectStatus("SKIPPED")}
+              disabled={isExecuting}
+              className={`${getButtonClass("SKIPPED")} ${isExecuting ? 'opacity-50 cursor-wait' : ''}`}>
+              <Forward className="w-5 h-5" />
+              Skip
+            </button>
+          </div>
         </div>
+
+        {/* Confirm button - only enabled when a status is selected */}
+        <button
+          onClick={handleConfirmExecution}
+          disabled={!selectedStatus || isExecuting}
+          className={`w-full py-3.5 rounded-2xl font-bold text-sm border transition-all flex items-center justify-center gap-2 ${
+            selectedStatus && !isExecuting
+              ? 'bg-zinc-900 text-white border-zinc-900 hover:bg-black shadow-lg hover:-translate-y-0.5'
+              : 'bg-zinc-100 text-zinc-400 border-zinc-200 cursor-not-allowed'
+          }`}
+        >
+          <Save className="w-5 h-5" />
+          {isExecuting ? 'Saving...' : 'Save Execution Result'}
+        </button>
       </div>
   );
 }

@@ -239,8 +239,19 @@ test.describe('Core Project Flows', () => {
     // Execution Modal
     await expect(page.getByText('Execute Test Case')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Pass' })).toBeVisible();
+
+    // Step 1: Select the status
     await page.getByRole('button', { name: 'Pass' }).click();
-    
+
+    // Step 2: Confirm by clicking Save button
+    await page.getByRole('button', { name: 'Save Execution Result' }).click();
+
+    // Wait for execution to complete (modal stays open with Last Result shown)
+    await expect(page.getByText('Last Result:')).toBeVisible({ timeout: 10000 });
+
+    // Close the modal manually
+    await page.getByRole('button', { name: 'Close' }).click();
+
     // Verify Status on Detail Page
     await expect(page.getByText('PASSED').first()).toBeVisible();
 

@@ -46,7 +46,9 @@ model TestCase {
   visualReference String?
   
   authorId        String?
+  author          User?    @relation("AuthoredTestCases", fields: [authorId], references: [id])
   assignedToId    String?
+  assignedTo      User?    @relation("AssignedTestCases", fields: [assignedToId], references: [id])
   
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId String
@@ -113,7 +115,9 @@ model Defect {
   project       Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
   
   authorId      String
+  author        User            @relation("AuthoredDefects", fields: [authorId], references: [id]) // Relation to User
   assigneeId    String?
+  assignee      User?           @relation("AssignedDefects", fields: [assigneeId], references: [id]) // Relation to User
   
   // External Link (Optional integration)
   externalIssueId String?
@@ -122,8 +126,37 @@ model Defect {
   // Many-to-Many relation
   executions    ExecutionRecord[]
   
+  comments      DefectComment[] // One-to-many
+  
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model DefectComment {
+  id        String   @id @default(cuid())
+  content   String
+  
+  defectId  String
+  defect    Defect   @relation(fields: [defectId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id              String          @id @default(cuid())
+  name            String
+  email           String          @unique
+  role            String          @default("TESTER") // ADMIN, QA_LEAD, TESTER
+  avatar          String?
+  authoredDefects Defect[]        @relation("AuthoredDefects")
+  assignedDefects Defect[]        @relation("AssignedDefects")
+  authoredTestCases TestCase[]    @relation("AuthoredTestCases")
+  assignedTestCases TestCase[]    @relation("AssignedTestCases")
+  comments        DefectComment[]
 }
 
 model TestPlan {

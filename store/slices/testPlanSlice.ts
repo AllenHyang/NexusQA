@@ -10,7 +10,8 @@ export interface TestPlanSlice {
   addCasesToPlan: (planId: string, caseIds: string[]) => Promise<void>;
   removeCaseFromPlan: (planId: string, caseId: string) => Promise<void>;
   updateRunStatus: (runId: string, status: string, notes?: string) => Promise<void>;
-  duplicateTestPlan: (planId: string) => Promise<void>; // Added duplicateTestPlan action
+  duplicateTestPlan: (planId: string) => Promise<void>;
+  deleteTestPlan: (planId: string) => Promise<boolean>;
 }
 
 export const createTestPlanSlice: StateCreator<TestPlanSlice, [], [], TestPlanSlice> = (set, get) => ({
@@ -97,13 +98,32 @@ export const createTestPlanSlice: StateCreator<TestPlanSlice, [], [], TestPlanSl
         });
         if (res.ok) {
             const newPlan = await res.json();
-            set(state => ({ plans: [newPlan, ...state.plans] })); // Add new plan to list
+            set(state => ({ plans: [newPlan, ...state.plans] }));
         } else {
             const errorData = await res.json();
             console.error("Failed to duplicate plan:", errorData.error);
         }
     } catch (error) {
         console.error("Error duplicating plan:", error);
+    }
+  },
+
+  deleteTestPlan: async (planId) => {
+    try {
+        const res = await fetch(`/api/plans/${planId}`, {
+            method: 'DELETE',
+        });
+        if (res.ok) {
+            set(state => ({ plans: state.plans.filter(p => p.id !== planId) }));
+            return true;
+        } else {
+            const errorData = await res.json();
+            console.error("Failed to delete plan:", errorData.error);
+            return false;
+        }
+    } catch (error) {
+        console.error("Error deleting plan:", error);
+        return false;
     }
   },
 });

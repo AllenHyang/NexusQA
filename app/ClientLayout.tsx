@@ -84,6 +84,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const handleSaveTestCaseWrapper = async () => {
     if (!editCase.title || !editCase.projectId) return;
 
+    const resolvedAuthorId = editCase.authorId || currentUser?.id;
+
     const frontendTestCase: Partial<TestCase> = {
       id: editCase.id,
       projectId: editCase.projectId,
@@ -97,15 +99,19 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       status: editCase.status as TestStatus,
       priority: editCase.priority as Priority,
       reviewStatus: (editCase.reviewStatus as ReviewStatus) || undefined, 
-      authorId: editCase.authorId || "",
+      authorId: resolvedAuthorId,
       assignedToId: editCase.assignedToId || undefined,
       visualReference: editCase.visualReference || undefined,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ...((editCase as any).imageFeedback !== undefined && { imageFeedback: (editCase as any).imageFeedback }),
       history: editCase.history,
-      steps: editCase.steps as TestStep[], 
-      createdAt: editCase.createdAt instanceof Date ? editCase.createdAt.toISOString() : editCase.createdAt as string | undefined,
-      updatedAt: editCase.updatedAt instanceof Date ? editCase.updatedAt.toISOString() : editCase.updatedAt as string | undefined,
+      steps: editCase.steps as TestStep[],
+      createdAt: editCase.createdAt && typeof editCase.createdAt !== "string" && editCase.createdAt instanceof Date
+        ? editCase.createdAt.toISOString()
+        : (editCase.createdAt as string | undefined),
+      updatedAt: editCase.updatedAt && typeof editCase.updatedAt !== "string" && editCase.updatedAt instanceof Date
+        ? editCase.updatedAt.toISOString()
+        : (editCase.updatedAt as string | undefined),
     };
 
     if (editCase.tags) {
@@ -118,14 +124,14 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   const handleGenerateSteps = async () => {
     setLoadingAI(true);
-    setEditCase(prev => ({ ...prev, steps: [] })); 
+    setEditCase((prev: Partial<TestCase>) => ({ ...prev, steps: [] })); 
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await generateStepsForCase(
         editCase.title || "", 
         editCase.description || "", 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (partial: any) => setEditCase(prev => ({ ...prev, ...partial })), 
+        (partial: Partial<TestCase>) => setEditCase((prev: Partial<TestCase>) => ({ ...prev, ...partial })), 
         showToast
       );
     } catch (error) {
@@ -139,18 +145,19 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const handleGenerateField = async (field: 'userStory' | 'acceptanceCriteria' | 'preconditions') => {
     if (!editCase.title) return;
     setLoadingAI(true);
-    setEditCase(prev => ({ ...prev, [field]: "" }));
+    setEditCase((prev: Partial<TestCase>) => ({ ...prev, [field]: "" }));
     try {
+      const relatedFields = { // Reintroduce relatedFields
+          userStory: editCase.userStory || "",
+          description: editCase.description || "",
+          acceptanceCriteria: editCase.acceptanceCriteria || ""
+      };
       await generateFieldForCase(
         editCase.title,
         field,
         editCase.description || "",
-        {
-            userStory: editCase.userStory || "",
-            description: editCase.description || "",
-            acceptanceCriteria: editCase.acceptanceCriteria || ""
-        },
-        (val) => setEditCase(prev => ({ ...prev, [field]: val })),
+        relatedFields,
+        (val: string) => setEditCase((prev: Partial<TestCase>) => ({ ...prev, [field]: val })),
         showToast
       );
     } catch (error) {
@@ -213,20 +220,24 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         setEditCase(resultCase); 
     }
     
-    // Reset form
+    // Reset form for next execution (but don't close modal)
     setExecutionNote("");
     setExecutionEnv("QA");
     setExecutionEvidence("");
     setExecutionSelectedDefectId(null);
     setExecutionNewDefectData(null);
-    
-    closeTestCaseModal();
+
+    // Show success feedback instead of closing
+    showToast(`Test case marked as ${status}`, 'success');
+
+    // Don't close modal - user can review history, re-execute, or manually close
+    // closeTestCaseModal();
   };
 
   const handleStepFeedback = (stepId: string, feedback: 'up' | 'down') => {
     if (!editCase || !editCase.steps) return;
 
-    const updatedSteps = editCase.steps.map(step => 
+    const updatedSteps = editCase.steps.map((step: TestStep) => 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       step.id === stepId ? { ...step, feedback: (step as any).feedback === feedback ? undefined : feedback } : step
     );

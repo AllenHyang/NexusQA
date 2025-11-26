@@ -5,6 +5,7 @@ export interface User {
   name: string;
   role: Role;
   avatar: string;
+  email?: string; // Added email field
 }
 
 export interface TestStep {
@@ -20,6 +21,20 @@ export type ReviewStatus = "PENDING" | "APPROVED" | "CHANGES_REQUESTED";
 export type Priority = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 export type DefectStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
 
+export interface DefectComment {
+  id: string;
+  content: string;
+  defectId: string;
+  userId: string;
+  user: {
+    id: string;
+    name: string;
+    avatar: string | null;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Defect {
   id: string;
   title: string;
@@ -34,6 +49,8 @@ export interface Defect {
   externalIssueId?: string;
   externalUrl?: string;
   
+  comments?: DefectComment[];
+
   createdAt?: string;
   updatedAt?: string;
 }
@@ -70,13 +87,13 @@ export interface TestSuite {
 export interface TestCase {
   id: string;
   projectId: string;
-  suiteId?: string; 
+  suiteId: string | null; // Changed to string | null
   
   title: string;
-  description: string;
+  description: string | null;
   
-  userStory?: string; 
-  requirementId?: string; 
+  userStory: string | null; 
+  requirementId: string | null; 
   requirements?: Requirement[];
   
   tags?: string[]; 
@@ -86,14 +103,14 @@ export interface TestCase {
   status: TestStatus;
   priority: Priority;
   authorId: string;
-  assignedToId?: string;
+  assignedToId: string | null;
   visualReference?: string; 
   imageFeedback?: 'up' | 'down'; 
   history?: ExecutionRecord[]; 
-  createdAt?: string;
-  updatedAt?: string;
-  acceptanceCriteria?: string;
-  reviewStatus?: ReviewStatus;
+  createdAt?: string | Date; // Allow Date objects
+  updatedAt?: string | Date; // Allow Date objects
+  acceptanceCriteria: string | null;
+  reviewStatus: ReviewStatus | null;
 }
 
 export interface Project {

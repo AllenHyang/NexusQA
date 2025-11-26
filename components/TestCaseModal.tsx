@@ -140,14 +140,14 @@ export function TestCaseModal({
             )}
 
             {(currentUser.role === "TESTER" || isRunMode) && (
-              <ExecutionPanel 
+              <ExecutionPanel
                 env={executionEnv}
                 setEnv={setExecutionEnv}
                 evidence={executionEvidence}
                 setEvidence={setExecutionEvidence}
                 note={executionNote}
                 setNote={setExecutionNote}
-                
+
                 projectDefects={defects}
                 selectedDefectId={executionSelectedDefectId}
                 onSelectDefectId={setExecutionSelectedDefectId}
@@ -156,6 +156,7 @@ export function TestCaseModal({
 
                 onExecute={onExecute}
                 reviewStatus={editCase.reviewStatus}
+                currentStatus={editCase.status}
               />
             )}
 

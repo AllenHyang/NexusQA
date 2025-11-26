@@ -1,8 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Project, Defect } from "@/types";
-import { TestCase as PrismaTestCase, TestStep as PrismaTestStep } from '@prisma/client';
+import { Project, Defect, TestCase, ExecutionRecord } from "@/types"; // Use TestCase from types.ts
+import { TestStep as PrismaTestStep } from '@prisma/client'; // Keep PrismaTestStep if needed for raw DB types
 
 interface UIContextType {
   // Project Modal
@@ -15,14 +15,15 @@ interface UIContextType {
   // Test Case Modal
   showCaseModal: boolean;
   modalMode: 'EDIT' | 'RUN';
-  editCase: Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }>;
-  openTestCaseModal: (testCase?: Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }>, mode?: 'EDIT' | 'RUN') => void;
+  editCase: Partial<TestCase>; // Use TestCase type here
+  openTestCaseModal: (testCase?: Partial<TestCase>, mode?: 'EDIT' | 'RUN') => void; // Use TestCase type here
   closeTestCaseModal: () => void;
-  setEditCase: React.Dispatch<React.SetStateAction<Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }>>>;
+  setEditCase: React.Dispatch<React.SetStateAction<Partial<TestCase>>>; // Use TestCase type here
+
 
   // History Modal
-  historyViewCase: (PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }) | null;
-  openHistoryModal: (testCase: PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }) => void;
+  historyViewCase: (TestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }) | null;
+  openHistoryModal: (testCase: TestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }) => void;
   closeHistoryModal: () => void;
 
   // Import Cases Modal
@@ -69,10 +70,11 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
   // Test Case Modal
   const [showCaseModal, setShowCaseModal] = useState(false);
   const [modalMode, setModalMode] = useState<'EDIT' | 'RUN'>('EDIT');
-  const [editCase, setEditCase] = useState<Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }>>({});
+  const [editCase, setEditCase] = useState<Partial<TestCase>>({}); // Use TestCase type here
+
 
   // History Modal
-  const [historyViewCase, setHistoryViewCase] = useState< (PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }) | null>(null);
+  const [historyViewCase, setHistoryViewCase] = useState< (TestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }) | null>(null);
 
   // Import Cases Modal
   const [showImportCasesModal, setShowImportCasesModal] = useState(false);
@@ -113,7 +115,7 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
     setEditingProject(null);
   };
 
-  const openTestCaseModal = (testCase: Partial<PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }> = {}, mode: 'EDIT' | 'RUN' = 'EDIT') => {
+  const openTestCaseModal = (testCase: Partial<TestCase> = {}, mode: 'EDIT' | 'RUN' = 'EDIT') => {
     setEditCase(testCase);
     setModalMode(mode);
     setExecutionNote("");
@@ -131,7 +133,7 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
     setModalMode('EDIT'); // Reset to default
   };
 
-  const openHistoryModal = (testCase: PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }) => {
+  const openHistoryModal = (testCase: TestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }) => {
     setHistoryViewCase(testCase);
   };
 

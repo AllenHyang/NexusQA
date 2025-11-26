@@ -44,6 +44,7 @@ describe('formatBugReportMarkdown', () => {
     const expectedMarkdown = `### Defect Report: User Login Failure
 **Status:** FAILED
 **Environment:** Staging - Chrome
+**Tags:** login, regression
 
 **Preconditions:**
 User has valid credentials.

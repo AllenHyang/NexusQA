@@ -1,12 +1,12 @@
 import React from "react";
 import { Modal } from "./ui";
 import { ExecutionHistoryList } from "./ExecutionHistory";
-import { TestCase as PrismaTestCase, TestStep as PrismaTestStep } from "@prisma/client";
+import { TestCase, ExecutionRecord } from "../types"; // Import TestCase from types.ts
+import { TestStep as PrismaTestStep } from "@prisma/client"; // Keep PrismaTestStep if still needed for raw DB types
 import { History } from "lucide-react";
-import { ExecutionRecord } from "../types";
 
 interface HistoryModalProps {
-  testCase: PrismaTestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] };
+  testCase: TestCase & { steps: PrismaTestStep[]; history: ExecutionRecord[] }; // Use TestCase here
   onClose: () => void;
   defectTrackerUrl?: string;
 }
