@@ -1,24 +1,25 @@
 import React from "react";
-import { TestCase, User, Project, ExecutionRecord, TestStep } from "../types";
+import { TestCase, User, Project } from "../types";
 import { StatusBadge, PriorityBadge, TagBadge } from "../components/ui";
 import { safeParseTags } from "../lib/formatters";
-import { 
-  ArrowLeft, 
-  BookOpen, 
-  CheckCircle2, 
-  XCircle, 
-  AlertCircle, 
-  Clock, 
-  User as UserIcon, 
-  Calendar, 
-  Hash, 
+import {
+  ArrowLeft,
+  BookOpen,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Clock,
+  User as UserIcon,
   Link as LinkIcon,
   Layers,
   History,
   PlayCircle,
   Image as ImageIcon,
-  MoreHorizontal
+  MoreHorizontal,
+  Bug,
+  ExternalLink
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface TestCaseDetailViewProps {
   projectId: string;
@@ -45,15 +46,25 @@ export function TestCaseDetailView({
   onRunTest,
   onDelete
 }: TestCaseDetailViewProps) {
+  const router = useRouter();
   const testCase = testCases.find(tc => tc.id === testCaseId && tc.projectId === projectId);
   const project = projects.find(p => p.id === projectId);
-  
+
   // Helper to get user details
-  const getUser = (userId?: string) => users.find(u => u.id === userId);
+  const getUser = (userId?: string | null) => users.find(u => u.id === userId);
   const assignee = getUser(testCase?.assignedToId);
   const author = getUser(testCase?.authorId);
-  
+
   const [showActions, setShowActions] = React.useState(false);
+
+  // Navigate to defect
+  const handleDefectClick = (defect: { id: string; externalUrl?: string | null }) => {
+    if (defect.externalUrl) {
+      window.open(defect.externalUrl, '_blank');
+    } else {
+      router.push(`/project/${projectId}?tab=defects&defectId=${defect.id}`);
+    }
+  };
 
   if (!testCase || !project) {
     return (
@@ -178,7 +189,7 @@ export function TestCaseDetailView({
                             <span className="text-xs font-black uppercase tracking-widest">User Story</span>
                         </div>
                         <p className="text-lg font-medium text-zinc-800 leading-relaxed italic">
-                            "{testCase.userStory}"
+                            &ldquo;{testCase.userStory}&rdquo;
                         </p>
                     </div>
                 </div>
@@ -258,6 +269,7 @@ export function TestCaseDetailView({
                                         <th className="px-6 py-3 font-bold text-zinc-400 text-xs uppercase tracking-wider">Date</th>
                                         <th className="px-6 py-3 font-bold text-zinc-400 text-xs uppercase tracking-wider">Status</th>
                                         <th className="px-6 py-3 font-bold text-zinc-400 text-xs uppercase tracking-wider">Executed By</th>
+                                        <th className="px-6 py-3 font-bold text-zinc-400 text-xs uppercase tracking-wider">Defects</th>
                                         <th className="px-6 py-3 font-bold text-zinc-400 text-xs uppercase tracking-wider">Notes</th>
                                     </tr>
                                 </thead>
@@ -272,6 +284,25 @@ export function TestCaseDetailView({
                                             </td>
                                             <td className="px-6 py-4 text-zinc-900 font-medium">
                                                 {record.executedBy}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {record.defects && record.defects.length > 0 ? (
+                                                    <div className="flex flex-col gap-1">
+                                                        {record.defects.map(defect => (
+                                                            <button
+                                                                key={defect.id}
+                                                                onClick={() => handleDefectClick(defect)}
+                                                                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 border border-red-100 text-xs font-bold transition-colors max-w-fit"
+                                                            >
+                                                                <Bug className="w-3 h-3" />
+                                                                <span className="truncate max-w-[120px]">{defect.title || `#${defect.id.slice(-6)}`}</span>
+                                                                {defect.externalUrl && <ExternalLink className="w-3 h-3 opacity-50" />}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-zinc-300">-</span>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 text-zinc-500 max-w-xs truncate" title={record.notes}>
                                                 {record.notes || "-"}
@@ -323,6 +354,7 @@ export function TestCaseDetailView({
                     <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-3">Assignee</h3>
                     {assignee ? (
                         <div className="flex items-center gap-3">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={assignee.avatar} alt={assignee.name} className="w-10 h-10 rounded-full border-2 border-white shadow-sm" />
                             <div>
                                 <p className="text-sm font-bold text-zinc-900">{assignee.name}</p>
@@ -345,6 +377,7 @@ export function TestCaseDetailView({
                     <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-3">Author</h3>
                     {author ? (
                         <div className="flex items-center gap-3">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={author.avatar} alt={author.name} className="w-8 h-8 rounded-full border-2 border-white shadow-sm" />
                             <div>
                                 <p className="text-sm font-bold text-zinc-700">{author.name}</p>
@@ -365,10 +398,11 @@ export function TestCaseDetailView({
                 
                 {testCase.visualReference ? (
                     <div className="group relative rounded-xl overflow-hidden border border-zinc-100 cursor-zoom-in bg-zinc-50">
-                        <img 
-                            src={testCase.visualReference} 
-                            alt="Visual Reference" 
-                            className="w-full h-auto object-cover hover:scale-105 transition-transform duration-500" 
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                            src={testCase.visualReference}
+                            alt="Visual Reference"
+                            className="w-full h-auto object-cover hover:scale-105 transition-transform duration-500"
                         />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
                     </div>

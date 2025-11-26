@@ -1,5 +1,5 @@
 import React from "react";
-import { TestCase, TestStatus, User, TestSuite } from "../types";
+import { TestCase, TestStatus, User, TestSuite, Defect } from "../types";
 import { StatusBadge } from "./ui";
 import { XCircle, CheckCircle2 } from "lucide-react";
 import { TestCaseForm } from "./TestCase/TestCaseForm";
@@ -19,16 +19,22 @@ interface TestCaseModalProps {
   currentUser: User;
   executionNote: string;
   setExecutionNote: (s: string) => void;
-  executionBugId: string;
-  setExecutionBugId: (s: string) => void;
   executionEnv: string;
   setExecutionEnv: (s: string) => void;
   executionEvidence: string;
   setExecutionEvidence: (s: string) => void;
+  
+  // New Defect Props
+  defects: Defect[];
+  executionSelectedDefectId: string | null;
+  setExecutionSelectedDefectId: (id: string | null) => void;
+  executionNewDefectData: Partial<Defect> | null;
+  setExecutionNewDefectData: (data: Partial<Defect> | null) => void;
+
   onExecute: (status: TestStatus) => void;
   suites: TestSuite[]; 
   onStepFeedback: (stepId: string, feedback: 'up' | 'down') => void;
-  onVisualFeedback: (feedback: 'up' | 'down') => void; // New prop
+  onVisualFeedback: (feedback: 'up' | 'down') => void; 
   onGenerateField: (field: 'userStory' | 'acceptanceCriteria' | 'preconditions') => void;
   mode?: 'EDIT' | 'RUN';
 }
@@ -44,16 +50,21 @@ export function TestCaseModal({
   currentUser,
   executionNote,
   setExecutionNote,
-  executionBugId,
-  setExecutionBugId,
   executionEnv,
   setExecutionEnv,
   executionEvidence,
   setExecutionEvidence,
+  
+  defects,
+  executionSelectedDefectId,
+  setExecutionSelectedDefectId,
+  executionNewDefectData,
+  setExecutionNewDefectData,
+
   onExecute,
   suites,
   onStepFeedback,
-  onVisualFeedback, // Destructure new prop
+  onVisualFeedback, 
   onGenerateField,
   mode = 'EDIT'
 }: TestCaseModalProps) {
@@ -129,17 +140,23 @@ export function TestCaseModal({
             )}
 
             {(currentUser.role === "TESTER" || isRunMode) && (
-              <ExecutionPanel 
+              <ExecutionPanel
                 env={executionEnv}
                 setEnv={setExecutionEnv}
                 evidence={executionEvidence}
                 setEvidence={setExecutionEvidence}
                 note={executionNote}
                 setNote={setExecutionNote}
-                bugId={executionBugId}
-                setBugId={setExecutionBugId}
+
+                projectDefects={defects}
+                selectedDefectId={executionSelectedDefectId}
+                onSelectDefectId={setExecutionSelectedDefectId}
+                newDefectData={executionNewDefectData}
+                onNewDefectData={setExecutionNewDefectData}
+
                 onExecute={onExecute}
                 reviewStatus={editCase.reviewStatus}
+                currentStatus={editCase.status}
               />
             )}
 

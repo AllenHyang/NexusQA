@@ -1,0 +1,14 @@
+{
+  "id": 17,
+  "title": "Implement Test Plan Duplication (Clone Feature)",
+  "description": "## Why need this feature? (Business Scenarios)\n1.  **Regression Testing Cycle**: When you release `v1.0`, you create a test plan with 500 test cases. When developing `v1.1`, you usually need to run the *exact same* 500 test cases again. Without a duplication feature, you would have to recreate a plan and manually add those 500 test cases back, which is very painful.\n2.  **Reusing Templates**: Teams might maintain a \"Standard Smoke Test Set\" plan. For each new release, simply duplicate this plan to start testing.\n\n## Best Practice Design Logic\nA good \"Duplicate Plan\" feature should follow these principles:\n1.  **Scope of Duplication**: Duplicate the basic information of the plan (name usually automatically appends `(Copy)` or asks the user for input, description remains consistent).\n2.  **Reset Status**: Most importantly - **all test case execution statuses must be reset to `UNTESTED`**. You are duplicating the \"scope of testing,\" not the \"testing results.\"\n3.  **Snapshot Handling**: \n    *   It is generally recommended to **re-fetch the latest state of the test cases** to generate new snapshots when duplicating (because you are testing for future versions and should test the latest test case logic).\n    *   If a test case referenced in the original plan has been deleted, it should be automatically skipped during duplication.\n\n## Suggested Action Plan (Task 15)\nThis will be implemented as Task 15.\n*   **API**: Add `POST /api/plans/[id]/duplicate` interface.\n    *   Logic: Create new Plan -> Retrieve all Case IDs from the original Plan -> Batch create new TestRuns (status reset to UNTESTED, regenerate Snapshot).\n*   **UI**:\n    *   Add \"Duplicate\" button on the card in `PlanList` (Plan list page).\n    *   (Optional) Add a duplicate button in the `PlanDetail` page header.",
+  "status": "completed",
+  "priority": "high",
+  "tags": [
+    "feature",
+    "test-plans",
+    "usability"
+  ],
+  "created_at": "2025-11-24T17:58:00.000Z",
+  "updated_at": "2025-11-25T05:00:00Z"
+}

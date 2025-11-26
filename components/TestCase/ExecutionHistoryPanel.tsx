@@ -1,11 +1,11 @@
-import { TestCase as PrismaTestCase, TestStep as PrismaTestStep } from "@prisma/client";
-import { ExecutionRecord } from "@/types";
+import { TestCase, ExecutionRecord } from "@/types"; // Import TestCase from types.ts
+import { TestStep as PrismaTestStep } from "@prisma/client"; // Keep PrismaTestStep if needed
 import { History } from "lucide-react";
 import { ExecutionHistoryList } from "../ExecutionHistory"; 
 
 interface ExecutionHistoryPanelProps {
   history: ExecutionRecord[];
-  testCase: PrismaTestCase & { steps: PrismaTestStep[] };
+  testCase: TestCase & { steps: PrismaTestStep[] }; // Use TestCase here
 }
 
 export function ExecutionHistoryPanel({ history, testCase }: ExecutionHistoryPanelProps) {

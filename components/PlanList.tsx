@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { TestPlan } from '@/types';
 import { useRouter } from 'next/navigation';
-import { Plus, Calendar, BarChart3 } from 'lucide-react';
+import { Plus, Calendar, BarChart3, Copy, Trash2 } from 'lucide-react';
 import { ProgressBar } from './ui';
 
 interface PlanListProps {
   projectId: string;
   plans: TestPlan[];
   onCreatePlan: (data: Partial<TestPlan>) => void;
+  onDuplicatePlan: (planId: string) => void;
+  onDeletePlan: (planId: string) => void;
 }
 
-export function PlanList({ projectId, plans, onCreatePlan }: PlanListProps) {
+export function PlanList({ projectId, plans, onCreatePlan, onDuplicatePlan, onDeletePlan }: PlanListProps) {
   const router = useRouter();
   const [isCreating, setIsCreating] = useState(false);
   const [newPlanName, setNewPlanName] = useState("");
@@ -64,8 +66,29 @@ export function PlanList({ projectId, plans, onCreatePlan }: PlanListProps) {
                             <h4 className="font-bold text-zinc-900 group-hover:text-blue-600 transition-colors">{plan.name}</h4>
                             <p className="text-xs text-zinc-500 mt-1 font-medium">{plan.status}</p>
                         </div>
-                        <div className="bg-zinc-50 p-2 rounded-lg text-zinc-400">
-                            <BarChart3 className="w-5 h-5" />
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onDuplicatePlan(plan.id); }}
+                                className="p-2 rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition-colors"
+                                title="Duplicate Plan"
+                            >
+                                <Copy className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (confirm(`Delete "${plan.name}"? This action cannot be undone.`)) {
+                                        onDeletePlan(plan.id);
+                                    }
+                                }}
+                                className="p-2 rounded-lg text-zinc-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                                title="Delete Plan"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                            <div className="bg-zinc-50 p-2 rounded-lg text-zinc-400">
+                                <BarChart3 className="w-4 h-4" />
+                            </div>
                         </div>
                     </div>
                     

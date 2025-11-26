@@ -8,6 +8,15 @@ interface StepPayload {
     expected: string;
 }
 
+interface DefectPayload {
+    id?: string;
+    title?: string;
+    severity?: string;
+    status?: string;
+    externalIssueId?: string;
+    externalUrl?: string;
+}
+
 interface HistoryPayload {
     date?: string;
     status: TestStatus;
@@ -17,6 +26,7 @@ interface HistoryPayload {
     environment?: string;
     env?: string;
     evidence?: string;
+    defects?: DefectPayload[];
 }
 
 const normalizePriority = (p: string) => {
@@ -49,20 +59,25 @@ export async function GET(request: Request) {
           where,
           include: {
             steps: { orderBy: { order: 'asc' } },
-            history: { orderBy: { date: 'desc' } }
+            // requirements: true, // <<< Temporarily commented out to debug defect-management.spec.ts failure
+            history: { 
+                orderBy: { date: 'desc' },
+                include: { defects: true }
+            },
           },
           orderBy: { createdAt: 'desc' }
       });
       
-      // Parse JSON tags and normalize priority
       const parsedCases = testCases.map(tc => ({
           ...tc,
           tags: safeParseTags(tc.tags),
           priority: normalizePriority(tc.priority),
           history: tc.history.map(h => ({
               ...h,
-              environment: h.env
+              environment: h.env,
+              defects: h.defects
           }))
+          // requirements: tc.requirements // <<< This was the problematic line for deletion
       }));
       
       return NextResponse.json(parsedCases);
@@ -135,7 +150,21 @@ export async function POST(request: Request) {
                                    notes: h.notes,
                                    bugId: h.bugId,
                                    env: h.environment || h.env, 
-                                   evidence: h.evidence
+                                   evidence: h.evidence,
+                                   defects: {
+                                       create: h.defects?.filter(d => !d.id).map((d: DefectPayload) => ({
+                                           title: d.title!,
+                                           severity: d.severity || "MEDIUM",
+                                           status: d.status || "OPEN",
+                                           projectId: body.projectId,
+                                           authorId: body.authorId,
+                                           externalIssueId: d.externalIssueId,
+                                           externalUrl: d.externalUrl
+                                       })) || [],
+                                       connect: h.defects?.filter(d => d.id).map((d: DefectPayload) => ({
+                                            id: d.id
+                                       })) || []
+                                   }
                                }
                            })
                        ));
@@ -144,7 +173,13 @@ export async function POST(request: Request) {
 
               return await tx.testCase.findUnique({
                   where: { id: body.id },
-                  include: { steps: { orderBy: { order: 'asc' } }, history: { orderBy: { date: 'desc' } } }
+                  include: { 
+                      steps: { orderBy: { order: 'asc' } }, 
+                      history: { 
+                          orderBy: { date: 'desc' },
+                          include: { defects: true }
+                      } 
+                  }
               });
           });
           
@@ -178,11 +213,30 @@ export async function POST(request: Request) {
                           notes: h.notes,
                           bugId: h.bugId,
                           env: h.environment || h.env,
-                          evidence: h.evidence
+                          evidence: h.evidence,
+                          defects: {
+                               create: h.defects?.filter(d => !d.id).map((d: DefectPayload) => ({
+                                   title: d.title!,
+                                   severity: d.severity || "MEDIUM",
+                                   status: d.status || "OPEN",
+                                   projectId: body.projectId,
+                                   authorId: body.authorId,
+                                   externalIssueId: d.externalIssueId,
+                                   externalUrl: d.externalUrl
+                               })) || [],
+                               connect: h.defects?.filter(d => d.id).map((d: DefectPayload) => ({
+                                    id: d.id
+                               })) || []
+                          }
                       })) || []
                   }
               },
-              include: { steps: true, history: true }
+              include: { 
+                  steps: true, 
+                  history: {
+                      include: { defects: true }
+                  } 
+              }
           });
           return NextResponse.json({
               ...created,
@@ -197,12 +251,10 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
-    // Bulk Update Handler (Status, Suite, etc.)
     try {
         const body = await request.json();
         const { ids, updates } = body;
         
-        // Prisma updateMany (works fine for top-level fields)
         await prisma.testCase.updateMany({
             where: { id: { in: ids } },
             data: updates
@@ -218,7 +270,7 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    const ids = searchParams.get('ids'); // Comma separated
+    const ids = searchParams.get('ids');
 
     try {
         if (id) {

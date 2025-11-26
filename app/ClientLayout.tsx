@@ -11,8 +11,8 @@ import { TestCaseModal } from "@/components/TestCaseModal";
 import { HistoryModal } from "@/components/HistoryModal";
 import { ImportCasesModal } from "@/components/ImportCasesModal";
 import { ImportProjectModal } from "@/components/ImportProjectModal";
-import { ExecutionRecord, Project, TestCase, TestStatus, Priority, TestStep, ReviewStatus } from "@/types";
-import { XCircle } from "lucide-react"; // Added XCircle for toast component
+import { ExecutionRecord, Project, TestCase, TestStatus, Priority, TestStep, ReviewStatus, Defect } from "@/types";
+import { XCircle } from "lucide-react"; 
 import { safeParseTags } from "@/lib/formatters";
 
 interface Toast {
@@ -31,13 +31,13 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     setToasts((prevToasts) => [...prevToasts, { id, message, type }]);
     setTimeout(() => {
       setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
-    }, 5000); // Toast disappears after 5 seconds
+    }, 5000); 
   };
   
   // Store
   const { 
     currentUser, users, login, logout,
-    projects, suites, refreshData,
+    projects, suites, defects, refreshData,
     createProject, updateProject,
     saveTestCase, 
     generateStepsForCase, generateMockupForCase, generateFieldForCase
@@ -61,9 +61,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     showImportProjectModal, closeImportProjectModal,
     loadingAI, setLoadingAI,
     executionNote, setExecutionNote,
-    executionBugId, setExecutionBugId,
     executionEnv, setExecutionEnv,
     executionEvidence, setExecutionEvidence,
+    
+    executionSelectedDefectId, setExecutionSelectedDefectId,
+    executionNewDefectData, setExecutionNewDefectData,
   } = useUI();
 
   // --- Handlers ---
@@ -82,6 +84,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const handleSaveTestCaseWrapper = async () => {
     if (!editCase.title || !editCase.projectId) return;
 
+    const resolvedAuthorId = editCase.authorId || currentUser?.id;
+
     const frontendTestCase: Partial<TestCase> = {
       id: editCase.id,
       projectId: editCase.projectId,
@@ -94,20 +98,22 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       preconditions: editCase.preconditions || "",
       status: editCase.status as TestStatus,
       priority: editCase.priority as Priority,
-      reviewStatus: (editCase.reviewStatus as ReviewStatus) || undefined, // Add reviewStatus
-      authorId: editCase.authorId || "",
+      reviewStatus: (editCase.reviewStatus as ReviewStatus) || undefined, 
+      authorId: resolvedAuthorId,
       assignedToId: editCase.assignedToId || undefined,
       visualReference: editCase.visualReference || undefined,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ...((editCase as any).imageFeedback !== undefined && { imageFeedback: (editCase as any).imageFeedback }),
       history: editCase.history,
-      steps: editCase.steps as TestStep[], // Cast steps as well
-      // tags and dates handled below
-      createdAt: editCase.createdAt instanceof Date ? editCase.createdAt.toISOString() : editCase.createdAt as string | undefined,
-      updatedAt: editCase.updatedAt instanceof Date ? editCase.updatedAt.toISOString() : editCase.updatedAt as string | undefined,
+      steps: editCase.steps as TestStep[],
+      createdAt: editCase.createdAt && typeof editCase.createdAt !== "string" && editCase.createdAt instanceof Date
+        ? editCase.createdAt.toISOString()
+        : (editCase.createdAt as string | undefined),
+      updatedAt: editCase.updatedAt && typeof editCase.updatedAt !== "string" && editCase.updatedAt instanceof Date
+        ? editCase.updatedAt.toISOString()
+        : (editCase.updatedAt as string | undefined),
     };
 
-    // Handle tags conversion
     if (editCase.tags) {
       frontendTestCase.tags = safeParseTags(editCase.tags);
     }
@@ -118,14 +124,14 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   const handleGenerateSteps = async () => {
     setLoadingAI(true);
-    setEditCase(prev => ({ ...prev, steps: [] })); // Clear steps but preserve other fields
+    setEditCase((prev: Partial<TestCase>) => ({ ...prev, steps: [] })); 
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await generateStepsForCase(
         editCase.title || "", 
         editCase.description || "", 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (partial: any) => setEditCase(prev => ({ ...prev, ...partial })), 
+        (partial: Partial<TestCase>) => setEditCase((prev: Partial<TestCase>) => ({ ...prev, ...partial })), 
         showToast
       );
     } catch (error) {
@@ -139,18 +145,19 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const handleGenerateField = async (field: 'userStory' | 'acceptanceCriteria' | 'preconditions') => {
     if (!editCase.title) return;
     setLoadingAI(true);
-    setEditCase(prev => ({ ...prev, [field]: "" }));
+    setEditCase((prev: Partial<TestCase>) => ({ ...prev, [field]: "" }));
     try {
+      const relatedFields = { // Reintroduce relatedFields
+          userStory: editCase.userStory || "",
+          description: editCase.description || "",
+          acceptanceCriteria: editCase.acceptanceCriteria || ""
+      };
       await generateFieldForCase(
         editCase.title,
         field,
         editCase.description || "",
-        {
-            userStory: editCase.userStory || "",
-            description: editCase.description || "",
-            acceptanceCriteria: editCase.acceptanceCriteria || ""
-        },
-        (val) => setEditCase(prev => ({ ...prev, [field]: val })),
+        relatedFields,
+        (val: string) => setEditCase((prev: Partial<TestCase>) => ({ ...prev, [field]: val })),
         showToast
       );
     } catch (error) {
@@ -171,10 +178,22 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const handleExecute = async (status: TestStatus) => {
     if (!editCase.id) return;
     
-    // Validation: Enforce Bug ID for FAILED status
-    if (status === "FAILED" && !executionBugId.trim()) {
-      showToast("Bug ID is required when marking a test as FAILED.", 'error');
+    // Validation: Enforce Bug Selection for FAILED
+    if (status === "FAILED" && !executionSelectedDefectId && !executionNewDefectData) {
+      showToast("Defect is required when marking a test as FAILED. Please select existing or create new.", 'error');
       return;
+    }
+
+    let defectPayload: Partial<Defect> | { id: string } | null = null;
+    if (status === "FAILED") {
+        if (executionSelectedDefectId) {
+            defectPayload = { id: executionSelectedDefectId };
+        } else if (executionNewDefectData) {
+            defectPayload = { 
+                title: executionNewDefectData.title,
+                severity: executionNewDefectData.severity,
+            };
+        }
     }
 
     const newRecord: ExecutionRecord = {
@@ -183,9 +202,10 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         status,
         executedBy: currentUser!.name,
         notes: executionNote,
-        bugId: status === "FAILED" ? executionBugId : undefined,
         environment: executionEnv,
-        evidence: executionEvidence
+        evidence: executionEvidence,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        defects: defectPayload ? [defectPayload as any] : []
     };
 
     const updatedCase: Partial<TestCase> = {
@@ -194,21 +214,30 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         history: [...(editCase.history || []), newRecord]
     };
 
-    await saveTestCase(updatedCase);
+    const resultCase = await saveTestCase(updatedCase);
+
+    if (resultCase) {
+        setEditCase(resultCase); 
+    }
     
-    // Reset form
+    // Reset form for next execution (but don't close modal)
     setExecutionNote("");
-    setExecutionBugId("");
     setExecutionEnv("QA");
     setExecutionEvidence("");
-    
-    closeTestCaseModal();
+    setExecutionSelectedDefectId(null);
+    setExecutionNewDefectData(null);
+
+    // Show success feedback instead of closing
+    showToast(`Test case marked as ${status}`, 'success');
+
+    // Don't close modal - user can review history, re-execute, or manually close
+    // closeTestCaseModal();
   };
 
   const handleStepFeedback = (stepId: string, feedback: 'up' | 'down') => {
     if (!editCase || !editCase.steps) return;
 
-    const updatedSteps = editCase.steps.map(step => 
+    const updatedSteps = editCase.steps.map((step: TestStep) => 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       step.id === stepId ? { ...step, feedback: (step as any).feedback === feedback ? undefined : feedback } : step
     );
@@ -224,11 +253,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     setEditCase({ ...editCase, imageFeedback: updatedFeedback } as any);
   };
 
-  // --- Render ---
-
   if (!currentUser) {
     return <LoginView users={users} onLogin={login} />;
   }
+
+  const projectDefects = defects.filter(d => d.projectId === editCase.projectId);
 
   return (
     <>
@@ -242,7 +271,6 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         {children}
       </MainLayout>
 
-      {/* Global Modals */}
       {showNewProjectModal && (
           <NewProjectModal 
             onClose={closeNewProjectModal}
@@ -266,12 +294,17 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             currentUser={currentUser}
             executionNote={executionNote}
             setExecutionNote={setExecutionNote}
-            executionBugId={executionBugId}
-            setExecutionBugId={setExecutionBugId}
             executionEnv={executionEnv}
             setExecutionEnv={setExecutionEnv}
             executionEvidence={executionEvidence}
             setExecutionEvidence={setExecutionEvidence}
+            
+            defects={projectDefects}
+            executionSelectedDefectId={executionSelectedDefectId}
+            setExecutionSelectedDefectId={setExecutionSelectedDefectId}
+            executionNewDefectData={executionNewDefectData}
+            setExecutionNewDefectData={setExecutionNewDefectData}
+            
             onExecute={handleExecute}
             suites={suites}
             onStepFeedback={handleStepFeedback}
@@ -285,7 +318,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           <HistoryModal 
             testCase={historyViewCase}
             onClose={closeHistoryModal}
-            defectTrackerUrl="" // TODO: Add global settings context for this
+            defectTrackerUrl="" 
           />
       )}
 
@@ -306,7 +339,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       
                     const result = await res.json();
                     showToast(`Successfully imported ${result.count} test cases.`, 'success');
-                    refreshData(); // Refresh the project data to show new cases
+                    refreshData(); 
                     closeImportCasesModal();
                   } catch (error) {
                     console.error("Import error:", error);
@@ -346,7 +379,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                     console.error("Import error:", error);
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     showToast((error as any).message || "Failed to import project.", 'error');
-                    throw error; // Propagate to modal
+                    throw error; 
                   } finally {
                     setLoadingAI(false);
                   }

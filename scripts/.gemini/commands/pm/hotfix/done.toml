@@ -1,0 +1,11 @@
+description = "Run hotfix/done workflow"
+prompt = """
+You are an expert Project Manager agent. Follow the strict workflow defined below.
+
+# Workflow Definition
+!{cat .agent/workflows/pm/hotfix/done.md}
+
+# User Request
+{{args}}
+"""
+

@@ -5,36 +5,81 @@ export interface User {
   name: string;
   role: Role;
   avatar: string;
+  email?: string; // Added email field
 }
 
 export interface TestStep {
   id: string;
   action: string;
   expected: string;
-  order: number; // Added order
-  feedback?: 'up' | 'down'; // Added for AI generation feedback
+  order: number; 
+  feedback?: 'up' | 'down'; 
 }
 
 export type TestStatus = "DRAFT" | "PASSED" | "FAILED" | "BLOCKED" | "UNTESTED" | "SKIPPED";
 export type ReviewStatus = "PENDING" | "APPROVED" | "CHANGES_REQUESTED";
 export type Priority = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+export type DefectStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
+
+export interface DefectComment {
+  id: string;
+  content: string;
+  defectId: string;
+  userId: string;
+  user: {
+    id: string;
+    name: string;
+    avatar: string | null;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Defect {
+  id: string;
+  title: string;
+  description?: string;
+  status: DefectStatus | string;
+  severity: Priority | string;
+  
+  projectId: string;
+  authorId: string;
+  assigneeId?: string;
+  
+  externalIssueId?: string;
+  externalUrl?: string;
+  
+  comments?: DefectComment[];
+
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Requirement {
+  id: string;
+  externalId: string;
+  tracker: string;
+  url: string;
+  description?: string;
+}
 
 export interface ExecutionRecord {
   id: string;
   date: string;
   status: TestStatus;
-  executedBy: string; // User Name
+  executedBy: string; 
   notes?: string;
-  bugId?: string;
-  environment?: string; // e.g., "Staging - Chrome", "Prod - iOS"
-  evidence?: string; // URL to screenshot or log
+  bugId?: string; 
+  defects?: Defect[];
+  environment?: string; 
+  evidence?: string; 
 }
 
 export interface TestSuite {
   id: string;
   projectId: string;
   name: string;
-  parentId?: string | null; // For nested folders
+  parentId?: string | null; 
   description?: string;
   createdAt: string;
 }
@@ -42,43 +87,44 @@ export interface TestSuite {
 export interface TestCase {
   id: string;
   projectId: string;
-  suiteId?: string; // Link to a TestSuite (Folder). If undefined, it's in the root.
+  suiteId: string | null; // Changed to string | null
   
   title: string;
-  description: string;
+  description: string | null;
   
-  // Use Case Driven Development Fields
-  userStory?: string; // "As a [user], I want to [action], so that [benefit]"
-  requirementId?: string; // Link to Jira Ticket / PRD (e.g., PROJ-123)
+  userStory: string | null; 
+  requirementId: string | null; 
+  requirements?: Requirement[];
   
-  tags?: string[]; // e.g., "Smoke", "Regression", "API"
+  tags?: string[]; 
 
   preconditions: string;
   steps: TestStep[];
   status: TestStatus;
   priority: Priority;
   authorId: string;
-  assignedToId?: string;
-  visualReference?: string; // Base64 image
-  imageFeedback?: 'up' | 'down'; // Added for AI image generation feedback
-  history?: ExecutionRecord[]; // Audit trail
-  createdAt?: string;
-  updatedAt?: string;
-  acceptanceCriteria?: string;
-  reviewStatus?: ReviewStatus;
+  assignedToId: string | null;
+  visualReference?: string; 
+  imageFeedback?: 'up' | 'down'; 
+  history?: ExecutionRecord[]; 
+  createdAt?: string | Date; // Allow Date objects
+  updatedAt?: string | Date; // Allow Date objects
+  acceptanceCriteria: string | null;
+  reviewStatus: ReviewStatus | null;
 }
 
 export interface Project {
   id: string;
   name: string;
   description: string;
-  coverImage?: string; // Base64 image
+  coverImage?: string; 
   createdAt: string;
   
-  // New fields for Project Management
-  repositoryUrl?: string; // e.g. GitHub/GitLab link
+  repositoryUrl?: string; 
   startDate?: string;
   dueDate?: string;
+  
+  defects?: Defect[];
 }
 
 export interface TestPlan {
@@ -104,6 +150,6 @@ export interface TestRun {
   executedBy?: string;
   notes?: string;
   executedAt?: string;
-  snapshot?: string; // JSON string of Test Case state
-  testCase?: TestCase; // for UI convenience
+  snapshot?: string; 
+  testCase?: TestCase; 
 }

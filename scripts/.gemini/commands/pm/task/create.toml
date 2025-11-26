@@ -1,0 +1,11 @@
+description = "Run task/create workflow"
+prompt = """
+You are an expert Project Manager agent. Follow the strict workflow defined below.
+
+# Workflow Definition
+!{cat .agent/workflows/pm/task/create.md}
+
+# User Request
+{{args}}
+"""
+

@@ -98,7 +98,7 @@ export function MainLayout({ currentUser, projects, onLogout, t, children }: Mai
                     <div className="my-4 border-t border-zinc-100"></div>
                     
                     {/* Quick Project Access */}
-                    {(isSidebarOpen || isMobileMenuOpen) && <p className="px-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">{t("app.recent")}</p>}
+                    {(isSidebarOpen || isMobileMenuOpen) && <p className="px-4 text-[10px] font-bold text-zinc-500 uppercase tracking-[0.12em] mb-3">{t("app.recent")}</p>}
                     {projects.slice(0, 5).map(p => (
                         <SidebarItem 
                             key={p.id}
@@ -113,19 +113,20 @@ export function MainLayout({ currentUser, projects, onLogout, t, children }: Mai
 
                 {/* User Profile */}
                 <div className="p-4 border-t border-zinc-100">
-                    <div 
+                    <div
                         onClick={() => router.push("/settings")}
                         className={`flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-50 transition-colors cursor-pointer group ${(!isSidebarOpen && !isMobileMenuOpen) && "justify-center"}`}
                     >
-                        <img src={currentUser.avatar} className="w-9 h-9 rounded-full border border-zinc-200 shadow-sm" alt="User" />
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={currentUser.avatar} className="w-9 h-9 rounded-full border border-zinc-200 shadow-sm flex-shrink-0" alt="User" />
                         {(isSidebarOpen || isMobileMenuOpen) && (
-                            <div className="flex-1 min-w-0">
+                            <div className="flex-1 min-w-0 mr-1">
                                 <p className="text-sm font-bold text-zinc-900 truncate">{currentUser.name}</p>
                                 <p className="text-xs text-zinc-500 truncate capitalize">{currentUser.role.replace('_', ' ').toLowerCase()}</p>
                             </div>
                         )}
                         {(isSidebarOpen || isMobileMenuOpen) && (
-                            <div className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 hover:bg-zinc-200 transition-colors">
+                            <div className="p-2 rounded-lg text-zinc-400 hover:text-zinc-900 hover:bg-zinc-200 transition-colors flex-shrink-0">
                                 <Settings className="w-4 h-4" />
                             </div>
                         )}
