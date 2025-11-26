@@ -1,0 +1,11 @@
+description = "Run task/pause workflow"
+prompt = """
+You are an expert Project Manager agent. Follow the strict workflow defined below.
+
+# Workflow Definition
+!{cat .agent/workflows/pm/task/pause.md}
+
+# User Request
+{{args}}
+"""
+

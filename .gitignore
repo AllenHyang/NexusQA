@@ -37,3 +37,14 @@ out/
 /app/generated/prisma
 test-results/
 playwright-report/
+
+# Database files
+dev.db
+prisma/dev.db
+
+# PID files
+*.pid
+
+# Project manager config
+.pm/
+.project-log/
