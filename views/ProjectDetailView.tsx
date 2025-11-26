@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react"; 
-import { usePathname } from "next/navigation";
+import React, { useState, useEffect, useCallback } from "react";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { Project, TestCase, User, TestSuite, TestPlan, TestStatus } from "../types";
 import { Download, Plus, ChevronDown, Trash2, Pencil, Github, BarChart3, Layout, ClipboardList, FolderInput, Bug } from "lucide-react";
 import { Tooltip } from "../components/ui";
-import { useAppStore } from "@/store/useAppStore"; 
+import { useAppStore } from "@/store/useAppStore";
 
 // Import the new sub-views
 import { ProjectCasesView } from "./ProjectCasesView";
@@ -68,16 +68,48 @@ export function ProjectDetailView({
   onCreatePlan,
   onAddToPlan
 }: ProjectDetailViewProps) {
-  const pathname = usePathname(); 
-  const { fetchPlans } = useAppStore(); 
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { fetchPlans, bulkUpdateReviewStatus } = useAppStore();
+
+  // Handle tab change - update state and URL
+  const handleTabChange = useCallback((tab: "CASES" | "PLANS" | "DEFECTS" | "ANALYTICS") => {
+    setActiveMainTab(tab);
+    // Update URL to reflect tab change (remove defectId if present)
+    const newParams = new URLSearchParams(searchParams.toString());
+    newParams.delete('defectId'); // Always clear defectId when changing tabs
+    if (tab === 'CASES') {
+      newParams.delete('tab'); // CASES is default, no need for tab param
+    } else {
+      newParams.set('tab', tab.toLowerCase());
+    }
+    const newUrl = newParams.toString() ? `${pathname}?${newParams.toString()}` : pathname;
+    router.replace(newUrl);
+  }, [pathname, searchParams, router]);
+
+  // Get tab from URL query param
+  const tabFromUrl = searchParams.get('tab');
 
   const [activeMainTab, setActiveMainTab] = useState<"CASES" | "PLANS" | "DEFECTS" | "ANALYTICS">(() => {
-    if (pathname.includes("/plans")) return "PLANS";
-    if (pathname.includes("/defects")) return "DEFECTS"; 
-    return "CASES"; 
+    if (tabFromUrl === 'defects') return "DEFECTS";
+    if (tabFromUrl === 'plans' || pathname.includes("/plans")) return "PLANS";
+    if (pathname.includes("/defects")) return "DEFECTS";
+    return "CASES";
   });
   const [showExportDropdown, setShowExportDropdown] = useState(false);
-  const [showMobileFolders, setShowMobileFolders] = useState(false); 
+  const [showMobileFolders, setShowMobileFolders] = useState(false);
+
+  // Update tab when URL param changes
+  useEffect(() => {
+    if (tabFromUrl === 'defects') {
+      setActiveMainTab("DEFECTS");
+    } else if (tabFromUrl === 'plans') {
+      setActiveMainTab("PLANS");
+    } else if (tabFromUrl === 'cases') {
+      setActiveMainTab("CASES");
+    }
+  }, [tabFromUrl]); 
 
   useEffect(() => {
     if (activeMainTab === "PLANS" && project?.id) {
@@ -90,12 +122,12 @@ export function ProjectDetailView({
       {/* Header - Non-scrolling */}
       <div className="flex-shrink-0 pt-4 px-4 md:pt-8 md:px-8 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-zinc-200 bg-[#F2F0E9]">
         <div>
-          <div className="flex items-center gap-3 mb-1">
+          <div className="flex items-center gap-3">
             <h1 className="text-2xl md:text-3xl font-black text-zinc-900 tracking-tight">{project.name}</h1>
             {project.repositoryUrl && (
-                <a 
-                    href={project.repositoryUrl} 
-                    target="_blank" 
+                <a
+                    href={project.repositoryUrl}
+                    target="_blank"
                     rel="noreferrer"
                     className="p-2 rounded-full bg-white hover:bg-zinc-100 text-zinc-400 hover:text-zinc-900 transition-colors border border-zinc-200 shadow-sm"
                     title="Go to Repository"
@@ -104,34 +136,34 @@ export function ProjectDetailView({
                 </a>
             )}
           </div>
-          <p className="text-zinc-500 max-w-2xl line-clamp-1 font-medium text-sm md:text-base">{project.description}</p>
+          <p className="text-zinc-500 max-w-2xl line-clamp-1 font-medium text-sm md:text-base mt-0.5">{project.description}</p>
         </div>
         <div className="flex flex-wrap gap-2 md:space-x-3">
           {/* New Top-Level Navigation Tabs */}
-          <div className="flex bg-white rounded-xl p-1 border border-zinc-200 shadow-sm">
-              <button 
-                onClick={() => setActiveMainTab("CASES")}
-                className={`px-3 md:px-4 py-2 rounded-lg text-xs font-bold flex items-center transition-all ${activeMainTab === "CASES" ? 'bg-zinc-900 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'}`}
+          <div className="flex bg-white rounded-xl p-1.5 border border-zinc-200 shadow-sm gap-1">
+              <button
+                onClick={() => handleTabChange("CASES")}
+                className={`px-3 md:px-4 py-2 rounded-lg text-xs font-bold flex items-center transition-all ${activeMainTab === "CASES" ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50'}`}
               >
-                <Layout className="w-3.5 h-3.5 mr-1.5" /> <span className="hidden sm:inline">Test Cases</span>
+                <Layout className={`w-3.5 h-3.5 mr-1.5 ${activeMainTab === "CASES" ? 'text-yellow-500' : ''}`} /> <span className="hidden sm:inline">Test Cases</span>
               </button>
-              <button 
-                onClick={() => setActiveMainTab("PLANS")}
-                className={`px-3 md:px-4 py-2 rounded-lg text-xs font-bold flex items-center transition-all ${activeMainTab === "PLANS" ? 'bg-zinc-900 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'}`}
+              <button
+                onClick={() => handleTabChange("PLANS")}
+                className={`px-3 md:px-4 py-2 rounded-lg text-xs font-bold flex items-center transition-all ${activeMainTab === "PLANS" ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50'}`}
               >
-                <ClipboardList className="w-3.5 h-3.5 mr-1.5" /> <span className="hidden sm:inline">Test Plans</span>
+                <ClipboardList className={`w-3.5 h-3.5 mr-1.5 ${activeMainTab === "PLANS" ? 'text-yellow-500' : ''}`} /> <span className="hidden sm:inline">Test Plans</span>
               </button>
-              <button 
-                onClick={() => setActiveMainTab("DEFECTS")}
-                className={`px-3 md:px-4 py-2 rounded-lg text-xs font-bold flex items-center transition-all ${activeMainTab === "DEFECTS" ? 'bg-zinc-900 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'}`}
+              <button
+                onClick={() => handleTabChange("DEFECTS")}
+                className={`px-3 md:px-4 py-2 rounded-lg text-xs font-bold flex items-center transition-all ${activeMainTab === "DEFECTS" ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50'}`}
               >
-                <Bug className="w-3.5 h-3.5 mr-1.5" /> <span className="hidden sm:inline">Defects</span>
+                <Bug className={`w-3.5 h-3.5 mr-1.5 ${activeMainTab === "DEFECTS" ? 'text-yellow-500' : ''}`} /> <span className="hidden sm:inline">Defects</span>
               </button>
-              <button 
-                onClick={() => setActiveMainTab("ANALYTICS")}
-                className={`px-3 md:px-4 py-2 rounded-lg text-xs font-bold flex items-center transition-all ${activeMainTab === "ANALYTICS" ? 'bg-zinc-900 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'}`}
+              <button
+                onClick={() => handleTabChange("ANALYTICS")}
+                className={`px-3 md:px-4 py-2 rounded-lg text-xs font-bold flex items-center transition-all ${activeMainTab === "ANALYTICS" ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50'}`}
               >
-                <BarChart3 className="w-3.5 h-3.5 mr-1.5" /> <span className="hidden sm:inline">Analytics</span>
+                <BarChart3 className={`w-3.5 h-3.5 mr-1.5 ${activeMainTab === "ANALYTICS" ? 'text-yellow-500' : ''}`} /> <span className="hidden sm:inline">Analytics</span>
               </button>
           </div>
           
@@ -156,7 +188,7 @@ export function ProjectDetailView({
               <div className="relative">
                 <button
                     onClick={() => setShowExportDropdown(!showExportDropdown)}
-                    className="glass-button px-4 py-2.5 rounded-xl text-sm font-bold flex items-center"
+                    className="px-4 py-2.5 rounded-xl text-sm font-bold flex items-center bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 hover:border-zinc-300 transition-all shadow-sm"
                 >
                     <Download className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">Export</span>
                     <ChevronDown className="w-4 h-4 ml-2 opacity-50" />
@@ -184,15 +216,15 @@ export function ProjectDetailView({
               {(currentUser.role === "ADMIN" || currentUser.role === "QA_LEAD") && (
                 <button
                   onClick={() => onImportCases()}
-                  className="glass-button px-4 py-2.5 rounded-xl text-sm font-bold flex items-center"
+                  className="px-4 py-2.5 rounded-xl text-sm font-bold flex items-center bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 hover:border-zinc-300 transition-all shadow-sm"
                 >
                   <FolderInput className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">Import</span>
                 </button>
               )}
               {(currentUser.role !== "TESTER") && (
-                <button 
-                  onClick={() => onCreateCase(null)} 
-                  className="bg-zinc-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center hover:bg-black shadow-lg hover:-translate-y-0.5 transition-all ml-auto md:ml-0">
+                <button
+                  onClick={() => onCreateCase(null)}
+                  className="bg-zinc-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center hover:bg-zinc-800 shadow-[0_4px_14px_-3px_rgba(39,39,42,0.4)] hover:shadow-[0_6px_20px_-3px_rgba(39,39,42,0.5)] hover:-translate-y-0.5 transition-all ml-auto md:ml-0">
                   <Plus className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">Create Case</span><span className="md:hidden">New</span>
                 </button>
               )}
@@ -216,6 +248,7 @@ export function ProjectDetailView({
             onDuplicateCase={onDuplicateCase}
             onBulkDelete={onBulkDelete}
             onBulkStatusUpdate={onBulkStatusUpdate}
+            onBulkReviewStatusUpdate={bulkUpdateReviewStatus}
             onBulkMove={onBulkMove}
             onViewCaseDetails={onViewCaseDetails}
             onCreateSuite={onCreateSuite}

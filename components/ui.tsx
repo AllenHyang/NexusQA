@@ -36,13 +36,19 @@ export const StatusBadge = ({ status, reviewStatus }: { status: TestStatus; revi
 };
 
 export const PriorityBadge = ({ priority }: { priority: Priority }) => {
-  const colors = {
-    LOW: "text-zinc-400",
-    MEDIUM: "text-blue-500",
-    HIGH: "text-orange-500",
-    CRITICAL: "text-red-600 font-black",
+  const configs = {
+    LOW: { color: "text-zinc-400", bg: "bg-zinc-100", dot: "bg-zinc-400" },
+    MEDIUM: { color: "text-blue-600", bg: "bg-blue-50", dot: "bg-blue-500" },
+    HIGH: { color: "text-orange-600", bg: "bg-orange-50", dot: "bg-orange-500" },
+    CRITICAL: { color: "text-red-600", bg: "bg-red-50", dot: "bg-red-500" },
   };
-  return <span className={`text-[10px] uppercase tracking-widest font-bold ${colors[priority]}`}>{priority}</span>;
+  const config = configs[priority] || configs.MEDIUM; // Default to MEDIUM if priority is invalid
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold ${config.color} ${config.bg} px-2 py-1 rounded-full`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`}></span>
+      {priority}
+    </span>
+  );
 };
 
 export const TagBadge: React.FC<{ label: string, onRemove?: () => void }> = ({ label, onRemove }) => (
@@ -301,44 +307,40 @@ interface SidebarItemProps {
 
 export function SidebarItem({ icon, label, active, collapsed, onClick }: SidebarItemProps) {
     return (
-        <button 
+        <button
             onClick={onClick}
             className={`
-                w-full flex items-center px-3 py-3.5 rounded-xl transition-all duration-300 mb-2 group relative overflow-hidden outline-none
-                ${active 
-                    ? "bg-zinc-900 text-white shadow-lg shadow-zinc-900/20 scale-[1.02]" 
-                    : "text-zinc-500 hover:bg-white hover:shadow-sm hover:shadow-zinc-200/50 hover:text-zinc-900"
+                w-full flex items-center px-3 py-3 rounded-xl transition-all duration-200 mb-1 group relative outline-none
+                ${active
+                    ? "bg-zinc-100/80 text-zinc-900"
+                    : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-800"
                 }
                 ${collapsed ? "justify-center" : ""}
-                active:scale-95 active:shadow-inner
+                active:scale-[0.98]
             `}
         >
-            {/* Animated Background Gradient for Active State */}
+            {/* Active Indicator - Left Yellow Bar */}
             {active && (
-                <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-black opacity-100 z-0"></div>
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-yellow-400 rounded-r-full"></div>
             )}
 
-            {/* Icon Wrapper with Animation */}
+            {/* Icon Wrapper */}
             <div className={`
-                relative z-10 transition-all duration-300 flex items-center justify-center
-                ${active ? "text-yellow-400 scale-110" : "text-zinc-400 group-hover:text-zinc-800 group-hover:scale-110"}
+                transition-all duration-200 flex items-center justify-center
+                ${active ? "text-zinc-900" : "text-zinc-500 group-hover:text-zinc-700"}
+                ${collapsed ? "" : "ml-1"}
             `}>
                 {icon}
             </div>
 
-            {/* Label with Slide Animation */}
+            {/* Label */}
             {!collapsed && (
                 <span className={`
-                    ml-3 text-sm font-bold relative z-10 tracking-wide transition-transform duration-300
-                    ${active ? "translate-x-1" : "group-hover:translate-x-1"}
+                    ml-3 text-sm tracking-wide transition-colors duration-200
+                    ${active ? "font-bold text-zinc-900" : "font-medium text-zinc-600 group-hover:text-zinc-800"}
                 `}>
                     {label}
                 </span>
-            )}
-            
-            {/* Active Glow Indicator (Right side) */}
-            {active && !collapsed && (
-                <div className="absolute right-3 w-1.5 h-1.5 rounded-full bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.8)] animate-in fade-in zoom-in duration-500 z-10"></div>
             )}
         </button>
     );

@@ -16,6 +16,10 @@ jest.mock('next/navigation', () => ({
   useParams: jest.fn(),
   useRouter: jest.fn(),
   usePathname: jest.fn().mockReturnValue('/project/p1'),
+  useSearchParams: jest.fn().mockReturnValue({
+    get: jest.fn().mockReturnValue(null),
+    toString: jest.fn().mockReturnValue(''),
+  }),
 }));
 
 // Mock global URL.createObjectURL inside describe or beforeAll to avoid top-level side effects if possible, 

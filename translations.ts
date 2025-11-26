@@ -6,6 +6,7 @@ export const translations = {
     "app.settings": "Settings",
     "app.logout": "Logout",
     "app.search": "Search...",
+    "app.search_placeholder": "Search test cases...",
     "app.system_online": "System Online",
     
     "settings.title": "Settings",
@@ -38,6 +39,7 @@ export const translations = {
     "app.settings": "设置",
     "app.logout": "退出登录",
     "app.search": "搜索...",
+    "app.search_placeholder": "搜索测试用例...",
     "app.system_online": "系统在线",
 
     "settings.title": "设置",
