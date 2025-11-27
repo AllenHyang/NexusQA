@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { Project, TestCase, User, TestSuite, TestPlan, TestStatus } from "../types";
-import { Download, Plus, ChevronDown, Trash2, Pencil, Github, BarChart3, Layout, ClipboardList, FolderInput, Bug } from "lucide-react";
+import { Download, Plus, ChevronDown, Trash2, Pencil, Github, BarChart3, Layout, ClipboardList, FolderInput, Bug, FileText } from "lucide-react";
 import { Tooltip } from "../components/ui";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -12,6 +12,7 @@ import { ProjectCasesView } from "./ProjectCasesView";
 import { ProjectDefectsView } from "./ProjectDefectsView";
 import { ProjectPlansView } from "./ProjectPlansView";
 import { ProjectAnalyticsView } from "./ProjectAnalyticsView";
+import { ProjectRequirementsView } from "./ProjectRequirementsView";
 
 interface ProjectDetailViewProps {
   project: Project;
@@ -74,13 +75,13 @@ export function ProjectDetailView({
   const { fetchPlans, bulkUpdateReviewStatus } = useAppStore();
 
   // Handle tab change - update state and URL
-  const handleTabChange = useCallback((tab: "CASES" | "PLANS" | "DEFECTS" | "ANALYTICS") => {
+  const handleTabChange = useCallback((tab: "CASES" | "PLANS" | "DEFECTS" | "REQUIREMENTS" | "ANALYTICS") => {
     setActiveMainTab(tab);
     // Update URL to reflect tab change (remove defectId if present)
     const newParams = new URLSearchParams(searchParams.toString());
     newParams.delete('defectId'); // Always clear defectId when changing tabs
-    if (tab === 'CASES') {
-      newParams.delete('tab'); // CASES is default, no need for tab param
+    if (tab === 'REQUIREMENTS') {
+      newParams.delete('tab'); // REQUIREMENTS is default, no need for tab param
     } else {
       newParams.set('tab', tab.toLowerCase());
     }
@@ -91,11 +92,13 @@ export function ProjectDetailView({
   // Get tab from URL query param
   const tabFromUrl = searchParams.get('tab');
 
-  const [activeMainTab, setActiveMainTab] = useState<"CASES" | "PLANS" | "DEFECTS" | "ANALYTICS">(() => {
+  const [activeMainTab, setActiveMainTab] = useState<"CASES" | "PLANS" | "DEFECTS" | "REQUIREMENTS" | "ANALYTICS">(() => {
+    if (tabFromUrl === 'cases') return "CASES";
     if (tabFromUrl === 'defects') return "DEFECTS";
     if (tabFromUrl === 'plans' || pathname.includes("/plans")) return "PLANS";
     if (pathname.includes("/defects")) return "DEFECTS";
-    return "CASES";
+    // Default to REQUIREMENTS (first tab)
+    return "REQUIREMENTS";
   });
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [showMobileFolders, setShowMobileFolders] = useState(false);
@@ -108,6 +111,11 @@ export function ProjectDetailView({
       setActiveMainTab("PLANS");
     } else if (tabFromUrl === 'cases') {
       setActiveMainTab("CASES");
+    } else if (tabFromUrl === 'analytics') {
+      setActiveMainTab("ANALYTICS");
+    } else if (!tabFromUrl) {
+      // Default to REQUIREMENTS when no tab param
+      setActiveMainTab("REQUIREMENTS");
     }
   }, [tabFromUrl]); 
 
@@ -141,6 +149,12 @@ export function ProjectDetailView({
         <div className="flex flex-wrap gap-2 md:space-x-3">
           {/* New Top-Level Navigation Tabs */}
           <div className="flex bg-white rounded-xl p-1.5 border border-zinc-200 shadow-sm gap-1">
+              <button
+                onClick={() => handleTabChange("REQUIREMENTS")}
+                className={`px-3 md:px-4 py-2 rounded-lg text-xs font-bold flex items-center transition-all ${activeMainTab === "REQUIREMENTS" ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50'}`}
+              >
+                <FileText className={`w-3.5 h-3.5 mr-1.5 ${activeMainTab === "REQUIREMENTS" ? 'text-yellow-500' : ''}`} /> <span className="hidden sm:inline">Requirements</span>
+              </button>
               <button
                 onClick={() => handleTabChange("CASES")}
                 className={`px-3 md:px-4 py-2 rounded-lg text-xs font-bold flex items-center transition-all ${activeMainTab === "CASES" ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50'}`}
@@ -269,6 +283,12 @@ export function ProjectDetailView({
         )}
         {activeMainTab === "DEFECTS" && (
           <ProjectDefectsView
+            project={project}
+            currentUser={currentUser}
+          />
+        )}
+        {activeMainTab === "REQUIREMENTS" && (
+          <ProjectRequirementsView
             project={project}
             currentUser={currentUser}
           />

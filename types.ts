@@ -1,4 +1,4 @@
-export type Role = "ADMIN" | "QA_LEAD" | "TESTER";
+export type Role = "ADMIN" | "QA_LEAD" | "TESTER" | "PM" | "DEVELOPER";
 
 export interface User {
   id: string;
@@ -150,6 +150,115 @@ export interface TestRun {
   executedBy?: string;
   notes?: string;
   executedAt?: string;
-  snapshot?: string; 
-  testCase?: TestCase; 
+  snapshot?: string;
+  testCase?: TestCase;
+}
+
+// Internal Requirement Types
+export type RequirementStatus = "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "IN_PROGRESS" | "COMPLETED";
+export type AcceptanceStatus = "PENDING" | "ACCEPTED" | "REJECTED";
+
+export interface AcceptanceCriteria {
+  id: string;
+  description: string;
+  testCaseIds: string[];
+  status: "PENDING" | "COVERED" | "PASSED" | "FAILED";
+}
+
+export interface BusinessRule {
+  id: string;
+  code: string; // e.g., "BR-001"
+  description: string;
+}
+
+export interface DesignReference {
+  id: string;
+  type: "image" | "link" | "figma";
+  url: string;
+  title: string;
+}
+
+export interface RelatedRequirement {
+  id: string;
+  type: "depends_on" | "blocks" | "related_to";
+}
+
+export interface UserStory {
+  id: string;
+  role: string;      // 作为[角色]
+  goal: string;      // 我希望[目标]
+  benefit: string;   // 以便[价值]
+}
+
+export interface InternalRequirement {
+  id: string;
+  title: string;
+  description?: string | null;
+
+  // User Stories (JSON array, BDD format)
+  userStories: string; // JSON array of UserStory
+
+  // Target Users/Personas (JSON array of role codes)
+  targetUsers: string; // JSON array: ["PM", "TESTER", "DEVELOPER"]
+
+  // Preconditions
+  preconditions?: string | null;
+
+  // Business Rules (JSON array)
+  businessRules: string; // JSON array of BusinessRule
+
+  // Design References (JSON array)
+  designReferences: string; // JSON array of DesignReference
+
+  // Version/Sprint Planning
+  targetVersion?: string | null;
+  estimatedEffort?: string | null;
+
+  // Owner
+  ownerId?: string | null;
+  owner?: {
+    id: string;
+    name: string;
+    avatar?: string | null;
+  };
+
+  // Related Requirements (JSON array)
+  relatedRequirements: string; // JSON array of RelatedRequirement
+
+  // Status Management
+  status: RequirementStatus;
+  acceptanceStatus: AcceptanceStatus;
+
+  priority: string;
+  tags: string; // JSON array string
+  acceptanceCriteria: string; // JSON array string of AcceptanceCriteria
+
+  // Acceptance Records
+  acceptedBy?: string | null;
+  acceptedAt?: string | null;
+  acceptanceNotes?: string | null;
+
+  // Relations
+  projectId: string;
+  authorId: string;
+  author?: {
+    id: string;
+    name: string;
+    email?: string;
+    avatar?: string | null;
+  };
+
+  testCases?: TestCase[];
+
+  stats?: {
+    totalCases: number;
+    passedCases: number;
+    failedCases: number;
+    untestedCases?: number;
+    coverageRate: number;
+    passRate: number;
+  };
+
+  createdAt?: string;
+  updatedAt?: string;
 }

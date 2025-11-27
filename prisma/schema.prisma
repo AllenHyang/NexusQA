@@ -19,6 +19,7 @@ model Project {
   testCases     TestCase[]
   testPlans     TestPlan[]
   defects       Defect[]
+  internalRequirements InternalRequirement[]
 }
 
 model TestSuite {
@@ -59,6 +60,7 @@ model TestCase {
   steps     TestStep[]
   history   ExecutionRecord[]
   requirements Requirement[]
+  internalRequirements InternalRequirement[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -150,13 +152,14 @@ model User {
   id              String          @id @default(cuid())
   name            String
   email           String          @unique
-  role            String          @default("TESTER") // ADMIN, QA_LEAD, TESTER
+  role            String          @default("TESTER") // ADMIN, QA_LEAD, TESTER, PM, DEVELOPER
   avatar          String?
   authoredDefects Defect[]        @relation("AuthoredDefects")
   assignedDefects Defect[]        @relation("AssignedDefects")
   authoredTestCases TestCase[]    @relation("AuthoredTestCases")
   assignedTestCases TestCase[]    @relation("AssignedTestCases")
   comments        DefectComment[]
+  authoredRequirements InternalRequirement[] @relation("AuthoredRequirements")
 }
 
 model TestPlan {
@@ -194,4 +197,70 @@ model TestRun {
   updatedAt   DateTime  @updatedAt
 
   @@unique([testPlanId, testCaseId])
+}
+
+// Internal Requirement Management (PRD v2)
+model InternalRequirement {
+  id                 String    @id @default(cuid())
+  title              String
+  description        String?   // Supports Markdown
+
+  // User Stories (JSON array, BDD format: As a..., I want..., So that...)
+  // Structure: [{ id, role, goal, benefit }]
+  userStories        String    @default("[]")
+
+  // Target Users/Personas (JSON array of role codes)
+  // e.g., ["PM", "TESTER", "DEVELOPER"]
+  targetUsers        String    @default("[]")
+
+  // Preconditions (requirements that must be met before this feature)
+  preconditions      String?   // Supports Markdown
+
+  // Business Rules (JSON array)
+  // Structure: [{ id, code, description }]
+  businessRules      String    @default("[]")
+
+  // Design/Prototype References (JSON array)
+  // Structure: [{ id, type: 'image'|'link'|'figma', url, title }]
+  designReferences   String    @default("[]")
+
+  // Version/Sprint Planning
+  targetVersion      String?   // e.g., "v1.0.0", "Sprint 23"
+  estimatedEffort    String?   // e.g., "3d", "5 story points"
+
+  // Owner/Assignee
+  ownerId            String?   // Product owner responsible for this requirement
+
+  // Related Requirements (JSON array of requirement IDs)
+  // Structure: [{ id, type: 'depends_on'|'blocks'|'related_to' }]
+  relatedRequirements String   @default("[]")
+
+  // Status Management
+  status             String    @default("DRAFT") // DRAFT, PENDING_REVIEW, APPROVED, IN_PROGRESS, COMPLETED
+  acceptanceStatus   String    @default("PENDING") // PENDING, ACCEPTED, REJECTED
+
+  priority           String    @default("P2") // P0, P1, P2, P3
+  tags               String    @default("[]") // JSON array of tags
+
+  // Acceptance Criteria (JSON array)
+  // Structure: [{ id, description, testCaseIds[], status }]
+  acceptanceCriteria String    @default("[]")
+
+  // Acceptance Records
+  acceptedBy         String?
+  acceptedAt         DateTime?
+  acceptanceNotes    String?
+
+  // Relations
+  projectId          String
+  project            Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  authorId           String
+  author             User      @relation("AuthoredRequirements", fields: [authorId], references: [id])
+
+  // Many-to-Many with TestCase (implicit)
+  testCases          TestCase[]
+
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }
