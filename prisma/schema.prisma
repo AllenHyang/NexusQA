@@ -20,6 +20,7 @@ model Project {
   testPlans     TestPlan[]
   defects       Defect[]
   internalRequirements InternalRequirement[]
+  requirementFolders   RequirementFolder[]
 }
 
 model TestSuite {
@@ -160,6 +161,7 @@ model User {
   assignedTestCases TestCase[]    @relation("AssignedTestCases")
   comments        DefectComment[]
   authoredRequirements InternalRequirement[] @relation("AuthoredRequirements")
+  requirementReviews RequirementReview[]
 }
 
 model TestPlan {
@@ -204,6 +206,11 @@ model InternalRequirement {
   id                 String    @id @default(cuid())
   title              String
   description        String?   // Supports Markdown
+
+  // Folder Hierarchy (F-RQ-011, F-RQ-012)
+  folderId           String?   // Parent folder ID
+  folder             RequirementFolder? @relation(fields: [folderId], references: [id])
+  order              Int       @default(0) // Order within folder
 
   // User Stories (JSON array, BDD format: As a..., I want..., So that...)
   // Structure: [{ id, role, goal, benefit }]
@@ -251,6 +258,11 @@ model InternalRequirement {
   acceptedAt         DateTime?
   acceptanceNotes    String?
 
+  // Review Records
+  reviewerId         String?   // Assigned reviewer
+  reviewedAt         DateTime?
+  reviewNotes        String?   // Latest review notes
+
   // Relations
   projectId          String
   project            Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -261,6 +273,58 @@ model InternalRequirement {
   // Many-to-Many with TestCase (implicit)
   testCases          TestCase[]
 
+  // Review History
+  reviews            RequirementReview[]
+
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
+}
+
+// Requirement Review History
+model RequirementReview {
+  id              String    @id @default(cuid())
+
+  action          String    // SUBMIT, APPROVE, REJECT, REQUEST_CHANGES
+  comment         String?   // Review comment/feedback
+
+  // Previous and new status for tracking
+  fromStatus      String?
+  toStatus        String
+
+  requirementId   String
+  requirement     InternalRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+
+  reviewerId      String
+  reviewer        User      @relation(fields: [reviewerId], references: [id])
+
+  createdAt       DateTime  @default(now())
+}
+
+// Requirement Folder Hierarchy (F-RQ-011, F-RQ-012)
+// Supports Epic -> Feature -> Requirement structure
+model RequirementFolder {
+  id              String    @id @default(cuid())
+  name            String
+  description     String?
+
+  // Folder type: EPIC, FEATURE, or FOLDER (generic)
+  type            String    @default("FOLDER") // EPIC, FEATURE, FOLDER
+
+  // Self-referential hierarchy (supports unlimited nesting)
+  parentId        String?
+  parent          RequirementFolder?  @relation("FolderHierarchy", fields: [parentId], references: [id])
+  children        RequirementFolder[] @relation("FolderHierarchy")
+
+  // Ordering within parent
+  order           Int       @default(0)
+
+  // Project association
+  projectId       String
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Requirements in this folder
+  requirements    InternalRequirement[]
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }

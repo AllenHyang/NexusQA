@@ -7,7 +7,8 @@ import {
   DesignReference,
   RelatedRequirement,
   UserStory,
-  User
+  User,
+  RequirementReview
 } from "@/types";
 import {
   XCircle,
@@ -40,6 +41,14 @@ import {
   Sparkles,
   Lightbulb,
   RefreshCw,
+  Send,
+  ThumbsUp,
+  ThumbsDown,
+  MessageSquare,
+  History,
+  ArrowRight,
+  Play,
+  RotateCcw,
 } from "lucide-react";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -86,7 +95,7 @@ const RELATION_TYPE_OPTIONS = [
   { value: "related_to", label: "关联" },
 ];
 
-type TabType = "BASIC" | "USER_STORY" | "DESIGN" | "ACCEPTANCE_CRITERIA" | "TEST_CASES" | "ACCEPTANCE";
+type TabType = "BASIC" | "USER_STORY" | "DESIGN" | "ACCEPTANCE_CRITERIA" | "TEST_CASES" | "REVIEW" | "ACCEPTANCE";
 
 export function RequirementModal({
   isOpen,
@@ -103,7 +112,13 @@ export function RequirementModal({
     acceptRequirement,
     rejectRequirement,
     loadRequirement,
-    requirements
+    requirements,
+    submitForReview,
+    approveReview,
+    rejectReview,
+    requestChanges,
+    loadReviewHistory,
+    performReviewAction
   } = useAppStore();
 
   const [activeTab, setActiveTab] = useState<TabType>("BASIC");
@@ -142,6 +157,12 @@ export function RequirementModal({
   // Test Case Linking State
   const [showTestCaseSelector, setShowTestCaseSelector] = useState(false);
   const [selectedTestCaseIds, setSelectedTestCaseIds] = useState<string[]>([]);
+
+  // Review State
+  const [reviewHistory, setReviewHistory] = useState<RequirementReview[]>([]);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   // Memoize linked test cases to avoid dependency issues
   const linkedTestCases = useMemo(() => {
@@ -255,7 +276,26 @@ export function RequirementModal({
     });
   }, [acceptanceCriteria, linkedTestCases]);
 
+  // Load review history when switching to review tab
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (requirement && isOpen && activeTab === "REVIEW") {
+        const reviews = await loadReviewHistory(requirement.id);
+        setReviewHistory(reviews);
+      }
+    };
+    fetchReviews();
+  }, [requirement?.id, isOpen, activeTab, loadReviewHistory]);
+
   if (!isOpen) return null;
+
+  // Helper to refresh reviews
+  const refreshReviews = async () => {
+    if (requirement) {
+      const reviews = await loadReviewHistory(requirement.id);
+      setReviewHistory(reviews);
+    }
+  };
 
   const handleSubmit = async () => {
     const data: Partial<InternalRequirement> = {
@@ -397,6 +437,139 @@ export function RequirementModal({
   };
 
   const canAccept = currentUser.role === "ADMIN" || currentUser.role === "PM" || currentUser.role === "QA_LEAD";
+
+  // Review handlers
+  const canReview = currentUser.role === "ADMIN" || currentUser.role === "PM" || currentUser.role === "QA_LEAD";
+  const isAuthor = requirement?.authorId === currentUser.id;
+
+  const handleSubmitForReview = async () => {
+    if (!requirement) return;
+    setReviewLoading(true);
+    setReviewError(null);
+    const result = await submitForReview(requirement.id, currentUser.id);
+    setReviewLoading(false);
+    if (!result.success) {
+      setReviewError(result.error || "提交评审失败");
+    } else {
+      refreshReviews();
+    }
+  };
+
+  const handleApproveReview = async () => {
+    if (!requirement) return;
+    setReviewLoading(true);
+    setReviewError(null);
+    const result = await approveReview(requirement.id, currentUser.id, reviewComment);
+    setReviewLoading(false);
+    if (!result.success) {
+      setReviewError(result.error || "批准失败");
+    } else {
+      setReviewComment("");
+      refreshReviews();
+    }
+  };
+
+  const handleRejectReview = async () => {
+    if (!requirement) return;
+    if (!reviewComment.trim()) {
+      setReviewError("请填写拒绝原因");
+      return;
+    }
+    setReviewLoading(true);
+    setReviewError(null);
+    const result = await rejectReview(requirement.id, currentUser.id, reviewComment);
+    setReviewLoading(false);
+    if (!result.success) {
+      setReviewError(result.error || "拒绝失败");
+    } else {
+      setReviewComment("");
+      refreshReviews();
+    }
+  };
+
+  const handleRequestChanges = async () => {
+    if (!requirement) return;
+    if (!reviewComment.trim()) {
+      setReviewError("请填写修改意见");
+      return;
+    }
+    setReviewLoading(true);
+    setReviewError(null);
+    const result = await requestChanges(requirement.id, currentUser.id, reviewComment);
+    setReviewLoading(false);
+    if (!result.success) {
+      setReviewError(result.error || "操作失败");
+    } else {
+      setReviewComment("");
+      refreshReviews();
+    }
+  };
+
+  const handleStartImplementation = async () => {
+    if (!requirement) return;
+    setReviewLoading(true);
+    setReviewError(null);
+    const result = await performReviewAction(requirement.id, "START", currentUser.id);
+    setReviewLoading(false);
+    if (!result.success) {
+      setReviewError(result.error || "操作失败");
+    } else {
+      refreshReviews();
+    }
+  };
+
+  const handleCompleteImplementation = async () => {
+    if (!requirement) return;
+    setReviewLoading(true);
+    setReviewError(null);
+    const result = await performReviewAction(requirement.id, "COMPLETE", currentUser.id);
+    setReviewLoading(false);
+    if (!result.success) {
+      setReviewError(result.error || "操作失败");
+    } else {
+      refreshReviews();
+    }
+  };
+
+  const handleReopen = async () => {
+    if (!requirement) return;
+    setReviewLoading(true);
+    setReviewError(null);
+    const result = await performReviewAction(requirement.id, "REOPEN", currentUser.id, reviewComment);
+    setReviewLoading(false);
+    if (!result.success) {
+      setReviewError(result.error || "操作失败");
+    } else {
+      setReviewComment("");
+      refreshReviews();
+    }
+  };
+
+  const getReviewActionLabel = (action: string) => {
+    switch (action) {
+      case "SUBMIT": return "提交评审";
+      case "APPROVE": return "批准";
+      case "REJECT": return "拒绝";
+      case "REQUEST_CHANGES": return "要求修改";
+      case "START": return "开始实现";
+      case "COMPLETE": return "标记完成";
+      case "REOPEN": return "重新打开";
+      default: return action;
+    }
+  };
+
+  const getReviewActionColor = (action: string) => {
+    switch (action) {
+      case "SUBMIT": return "bg-blue-100 text-blue-700";
+      case "APPROVE": return "bg-green-100 text-green-700";
+      case "REJECT": return "bg-red-100 text-red-700";
+      case "REQUEST_CHANGES": return "bg-yellow-100 text-yellow-700";
+      case "START": return "bg-purple-100 text-purple-700";
+      case "COMPLETE": return "bg-emerald-100 text-emerald-700";
+      case "REOPEN": return "bg-orange-100 text-orange-700";
+      default: return "bg-zinc-100 text-zinc-600";
+    }
+  };
 
   // AI Generation handler
   const handleAIGenerate = async (fieldType: string) => {
@@ -547,6 +720,7 @@ export function RequirementModal({
     { id: "DESIGN", label: "设计参考", icon: <Palette className="w-3.5 h-3.5" />, showForNew: true },
     { id: "ACCEPTANCE_CRITERIA", label: "验收标准", icon: <Target className="w-3.5 h-3.5" />, showForNew: true },
     { id: "TEST_CASES", label: "关联用例", icon: <Link2 className="w-3.5 h-3.5" /> },
+    { id: "REVIEW", label: "评审", icon: <MessageSquare className="w-3.5 h-3.5" /> },
     ...(canAccept ? [{ id: "ACCEPTANCE" as TabType, label: "验收", icon: <CheckCircle2 className="w-3.5 h-3.5" /> }] : [])
   ];
 
@@ -1753,6 +1927,291 @@ export function RequirementModal({
                       </button>
                     </div>
                   ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* REVIEW TAB */}
+          {activeTab === "REVIEW" && requirement && (
+            <div className="space-y-6">
+              {/* Current Status */}
+              <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm text-zinc-500 mb-1">当前状态</div>
+                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold ${
+                      status === "DRAFT" ? "bg-zinc-100 text-zinc-600" :
+                      status === "PENDING_REVIEW" ? "bg-yellow-100 text-yellow-700" :
+                      status === "APPROVED" ? "bg-blue-100 text-blue-700" :
+                      status === "IN_PROGRESS" ? "bg-purple-100 text-purple-700" :
+                      "bg-green-100 text-green-700"
+                    }`}>
+                      {status === "DRAFT" && <FileText className="w-4 h-4" />}
+                      {status === "PENDING_REVIEW" && <Clock className="w-4 h-4" />}
+                      {status === "APPROVED" && <ThumbsUp className="w-4 h-4" />}
+                      {status === "IN_PROGRESS" && <Play className="w-4 h-4" />}
+                      {status === "COMPLETED" && <CheckCircle2 className="w-4 h-4" />}
+                      {STATUS_OPTIONS.find(s => s.value === status)?.label}
+                    </div>
+                  </div>
+                  {requirement.reviewedAt && (
+                    <div className="text-right">
+                      <div className="text-xs text-zinc-400">最后评审时间</div>
+                      <div className="text-sm text-zinc-600">{new Date(requirement.reviewedAt).toLocaleString()}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Status Flow Diagram */}
+              <div className="p-4 bg-white border border-zinc-200 rounded-xl">
+                <div className="text-sm font-bold text-zinc-700 mb-3 flex items-center gap-2">
+                  <GitBranch className="w-4 h-4" /> 评审流程
+                </div>
+                <div className="flex items-center justify-between px-4">
+                  <div className={`flex flex-col items-center ${status === "DRAFT" ? "opacity-100" : "opacity-40"}`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${status === "DRAFT" ? "bg-zinc-900 text-white" : "bg-zinc-200 text-zinc-500"}`}>
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs mt-1 font-medium">草稿</span>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-zinc-300" />
+                  <div className={`flex flex-col items-center ${status === "PENDING_REVIEW" ? "opacity-100" : "opacity-40"}`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${status === "PENDING_REVIEW" ? "bg-yellow-500 text-white" : "bg-zinc-200 text-zinc-500"}`}>
+                      <Clock className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs mt-1 font-medium">待评审</span>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-zinc-300" />
+                  <div className={`flex flex-col items-center ${status === "APPROVED" ? "opacity-100" : "opacity-40"}`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${status === "APPROVED" ? "bg-blue-500 text-white" : "bg-zinc-200 text-zinc-500"}`}>
+                      <ThumbsUp className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs mt-1 font-medium">已批准</span>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-zinc-300" />
+                  <div className={`flex flex-col items-center ${status === "IN_PROGRESS" ? "opacity-100" : "opacity-40"}`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${status === "IN_PROGRESS" ? "bg-purple-500 text-white" : "bg-zinc-200 text-zinc-500"}`}>
+                      <Play className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs mt-1 font-medium">进行中</span>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-zinc-300" />
+                  <div className={`flex flex-col items-center ${status === "COMPLETED" ? "opacity-100" : "opacity-40"}`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${status === "COMPLETED" ? "bg-green-500 text-white" : "bg-zinc-200 text-zinc-500"}`}>
+                      <CheckCircle2 className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs mt-1 font-medium">已完成</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Error Message */}
+              {reviewError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-700 text-sm">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  {reviewError}
+                </div>
+              )}
+
+              {/* Actions based on status */}
+              <div className="p-4 bg-white border border-zinc-200 rounded-xl space-y-4">
+                <div className="text-sm font-bold text-zinc-700 flex items-center gap-2">
+                  <Activity className="w-4 h-4" /> 可用操作
+                </div>
+
+                {/* DRAFT state - Author can submit for review */}
+                {status === "DRAFT" && isAuthor && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-zinc-500">需求编写完成后，可以提交给评审人进行评审。</p>
+                    <button
+                      onClick={handleSubmitForReview}
+                      disabled={reviewLoading}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-xl font-medium"
+                    >
+                      <Send className="w-4 h-4" />
+                      {reviewLoading ? "提交中..." : "提交评审"}
+                    </button>
+                  </div>
+                )}
+
+                {status === "DRAFT" && !isAuthor && (
+                  <p className="text-sm text-zinc-500">等待作者提交评审。只有作者可以提交评审。</p>
+                )}
+
+                {/* PENDING_REVIEW state - Reviewer can approve/reject */}
+                {status === "PENDING_REVIEW" && (
+                  <div className="space-y-4">
+                    {canReview ? (
+                      <>
+                        <p className="text-sm text-zinc-500">请审阅需求内容，并选择批准或打回修改。</p>
+                        <div>
+                          <label className="block text-xs font-bold text-zinc-500 uppercase mb-1.5">
+                            评审意见
+                          </label>
+                          <textarea
+                            className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-zinc-50 text-zinc-900 focus:ring-2 focus:ring-zinc-900/5 outline-none min-h-[80px]"
+                            value={reviewComment}
+                            onChange={e => setReviewComment(e.target.value)}
+                            placeholder="填写评审意见（拒绝或要求修改时必填）..."
+                          />
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                          <button
+                            onClick={handleRejectReview}
+                            disabled={reviewLoading}
+                            className="flex items-center justify-center gap-2 px-4 py-3 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl font-medium disabled:opacity-50"
+                          >
+                            <ThumbsDown className="w-4 h-4" />
+                            拒绝
+                          </button>
+                          <button
+                            onClick={handleRequestChanges}
+                            disabled={reviewLoading}
+                            className="flex items-center justify-center gap-2 px-4 py-3 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-xl font-medium disabled:opacity-50"
+                          >
+                            <RotateCcw className="w-4 h-4" />
+                            要求修改
+                          </button>
+                          <button
+                            onClick={handleApproveReview}
+                            disabled={reviewLoading}
+                            className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium disabled:opacity-50"
+                          >
+                            <ThumbsUp className="w-4 h-4" />
+                            批准
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-sm text-zinc-500">等待评审人审批。只有管理员、产品经理或测试负责人可以评审。</p>
+                    )}
+                  </div>
+                )}
+
+                {/* APPROVED state - Can start implementation */}
+                {status === "APPROVED" && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-zinc-500">需求已批准，可以开始实现。</p>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleStartImplementation}
+                        disabled={reviewLoading}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium disabled:opacity-50"
+                      >
+                        <Play className="w-4 h-4" />
+                        开始实现
+                      </button>
+                      {canReview && (
+                        <button
+                          onClick={handleReopen}
+                          disabled={reviewLoading}
+                          className="flex items-center justify-center gap-2 px-4 py-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border border-zinc-200 rounded-xl font-medium disabled:opacity-50"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                          重新打开
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* IN_PROGRESS state - Can complete */}
+                {status === "IN_PROGRESS" && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-zinc-500">需求正在实现中，完成后可标记为已完成。</p>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleCompleteImplementation}
+                        disabled={reviewLoading}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium disabled:opacity-50"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        标记完成
+                      </button>
+                      {canReview && (
+                        <button
+                          onClick={handleReopen}
+                          disabled={reviewLoading}
+                          className="flex items-center justify-center gap-2 px-4 py-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border border-zinc-200 rounded-xl font-medium disabled:opacity-50"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                          重新打开
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* COMPLETED state */}
+                {status === "COMPLETED" && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-green-600 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4" />
+                      需求已完成实现
+                    </p>
+                    {canReview && (
+                      <button
+                        onClick={handleReopen}
+                        disabled={reviewLoading}
+                        className="flex items-center justify-center gap-2 px-4 py-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border border-zinc-200 rounded-xl font-medium disabled:opacity-50"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        重新打开
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Review History */}
+              <div className="p-4 bg-white border border-zinc-200 rounded-xl">
+                <div className="text-sm font-bold text-zinc-700 mb-4 flex items-center gap-2">
+                  <History className="w-4 h-4" /> 评审历史
+                </div>
+                {reviewHistory.length === 0 ? (
+                  <div className="text-center py-8 text-zinc-400">
+                    <History className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">暂无评审记录</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {reviewHistory.map((review) => (
+                      <div key={review.id} className="flex items-start gap-3 p-3 bg-zinc-50 rounded-lg">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${getReviewActionColor(review.action)}`}>
+                          {review.action === "SUBMIT" && <Send className="w-4 h-4" />}
+                          {review.action === "APPROVE" && <ThumbsUp className="w-4 h-4" />}
+                          {review.action === "REJECT" && <ThumbsDown className="w-4 h-4" />}
+                          {review.action === "REQUEST_CHANGES" && <RotateCcw className="w-4 h-4" />}
+                          {review.action === "START" && <Play className="w-4 h-4" />}
+                          {review.action === "COMPLETE" && <CheckCircle2 className="w-4 h-4" />}
+                          {review.action === "REOPEN" && <RotateCcw className="w-4 h-4" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-medium text-zinc-900 text-sm">{review.reviewer?.name || "Unknown"}</span>
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getReviewActionColor(review.action)}`}>
+                              {getReviewActionLabel(review.action)}
+                            </span>
+                            <span className="text-xs text-zinc-400">
+                              {new Date(review.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                          {review.comment && (
+                            <p className="text-sm text-zinc-600 mt-1">{review.comment}</p>
+                          )}
+                          {review.fromStatus && review.toStatus && (
+                            <div className="text-xs text-zinc-400 mt-1 flex items-center gap-1">
+                              <span>{STATUS_OPTIONS.find(s => s.value === review.fromStatus)?.label || review.fromStatus}</span>
+                              <ArrowRight className="w-3 h-3" />
+                              <span>{STATUS_OPTIONS.find(s => s.value === review.toStatus)?.label || review.toStatus}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>

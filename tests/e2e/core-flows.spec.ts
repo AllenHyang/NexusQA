@@ -127,6 +127,10 @@ test.describe('Core Project Flows', () => {
     await page.getByRole('heading', { name: projectName }).click();
     await expect(page.getByRole('heading', { name: projectName })).toBeVisible();
 
+    // 2.5. Navigate to Test Cases tab
+    await page.getByText('Test Cases', { exact: true }).click();
+    await page.waitForTimeout(500); // Wait for tab content to load
+
     // 3. Create Suite (Folder)
     // Locate the button with FolderPlus icon
     await page.locator('button:has(svg.lucide-folder-plus)').click();
@@ -282,6 +286,10 @@ test.describe('Core Project Flows', () => {
     await page.getByRole('button', { name: 'Create Project' }).click();
     await createProjectPromise;
     await page.getByRole('heading', { name: projectName }).click();
+
+    // 1.5. Navigate to Test Cases tab
+    await page.getByText('Test Cases', { exact: true }).click();
+    await page.waitForTimeout(500); // Wait for tab content to load
 
     // 2. Create Test Case
     await page.getByRole('button', { name: 'Create Case' }).first().click();

@@ -22,6 +22,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ requ
         },
         project: {
           select: { id: true, name: true }
+        },
+        reviews: {
+          include: {
+            reviewer: {
+              select: { id: true, name: true, email: true, avatar: true, role: true }
+            }
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 10
         }
       }
     });
@@ -148,6 +157,29 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ re
         include: {
           author: {
             select: { id: true, name: true, email: true, avatar: true }
+          }
+        }
+      });
+
+      return NextResponse.json(updated);
+    }
+
+    // Handle move to folder action
+    if (body.action === 'MOVE_TO_FOLDER') {
+      const { folderId, order } = body;
+
+      const updated = await prisma.internalRequirement.update({
+        where: { id: requirementId },
+        data: {
+          folderId: folderId || null,
+          order: order ?? 0
+        },
+        include: {
+          author: {
+            select: { id: true, name: true, email: true, avatar: true }
+          },
+          folder: {
+            select: { id: true, name: true, type: true }
           }
         }
       });

@@ -80,6 +80,10 @@ describe('ProjectDetailPage - Export Functionality', () => {
       requirementsLoading: false,
       bulkDeleteRequirements: jest.fn(),
       loadRequirement: jest.fn(),
+      // Folder slice mocks
+      folders: [],
+      loadFolders: jest.fn(),
+      foldersLoading: false,
     });
     (useUI as unknown as jest.Mock).mockReturnValue({
       openTestCaseModal: jest.fn(),

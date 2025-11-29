@@ -195,6 +195,11 @@ export interface InternalRequirement {
   title: string;
   description?: string | null;
 
+  // Folder Hierarchy (F-RQ-011, F-RQ-012)
+  folderId?: string | null;
+  folder?: RequirementFolder | null;
+  order?: number;
+
   // User Stories (JSON array, BDD format)
   userStories: string; // JSON array of UserStory
 
@@ -238,6 +243,11 @@ export interface InternalRequirement {
   acceptedAt?: string | null;
   acceptanceNotes?: string | null;
 
+  // Review Records
+  reviewerId?: string | null;
+  reviewedAt?: string | null;
+  reviewNotes?: string | null;
+
   // Relations
   projectId: string;
   authorId: string;
@@ -249,6 +259,7 @@ export interface InternalRequirement {
   };
 
   testCases?: TestCase[];
+  reviews?: RequirementReview[];
 
   stats?: {
     totalCases: number;
@@ -261,4 +272,43 @@ export interface InternalRequirement {
 
   createdAt?: string;
   updatedAt?: string;
+}
+
+// Requirement Folder Types (F-RQ-011, F-RQ-012)
+export type FolderType = "EPIC" | "FEATURE" | "FOLDER";
+
+export interface RequirementFolder {
+  id: string;
+  name: string;
+  description?: string | null;
+  type: FolderType;
+  parentId?: string | null;
+  parent?: RequirementFolder | null;
+  children?: RequirementFolder[];
+  order: number;
+  projectId: string;
+  requirements?: InternalRequirement[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Requirement Review Types
+export type ReviewAction = "SUBMIT" | "APPROVE" | "REJECT" | "REQUEST_CHANGES" | "START" | "COMPLETE" | "REOPEN";
+
+export interface RequirementReview {
+  id: string;
+  action: ReviewAction;
+  comment?: string | null;
+  fromStatus?: string | null;
+  toStatus: string;
+  requirementId: string;
+  reviewerId: string;
+  reviewer?: {
+    id: string;
+    name: string;
+    email?: string;
+    avatar?: string | null;
+    role?: string;
+  };
+  createdAt: string;
 }

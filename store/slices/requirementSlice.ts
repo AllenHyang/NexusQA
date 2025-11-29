@@ -1,5 +1,5 @@
 import { StateCreator } from 'zustand';
-import { InternalRequirement, RequirementStatus } from '@/types';
+import { InternalRequirement, RequirementStatus, ReviewAction, RequirementReview } from '@/types';
 
 export interface RequirementSlice {
   requirements: InternalRequirement[];
@@ -15,6 +15,14 @@ export interface RequirementSlice {
   updateRequirementStatus: (requirementId: string, status: RequirementStatus) => Promise<void>;
   acceptRequirement: (requirementId: string, userId: string, notes?: string) => Promise<void>;
   rejectRequirement: (requirementId: string, userId: string, notes: string) => Promise<void>;
+
+  // Review methods
+  submitForReview: (requirementId: string, userId: string) => Promise<{ success: boolean; error?: string }>;
+  approveReview: (requirementId: string, reviewerId: string, comment?: string) => Promise<{ success: boolean; error?: string }>;
+  rejectReview: (requirementId: string, reviewerId: string, comment: string) => Promise<{ success: boolean; error?: string }>;
+  requestChanges: (requirementId: string, reviewerId: string, comment: string) => Promise<{ success: boolean; error?: string }>;
+  loadReviewHistory: (requirementId: string) => Promise<RequirementReview[]>;
+  performReviewAction: (requirementId: string, action: ReviewAction, reviewerId: string, comment?: string) => Promise<{ success: boolean; error?: string }>;
 
   linkTestCases: (requirementId: string, testCaseIds: string[]) => Promise<void>;
   unlinkTestCase: (requirementId: string, testCaseId: string) => Promise<void>;
@@ -236,6 +244,160 @@ export const createRequirementSlice: StateCreator<RequirementSlice> = (set) => (
     } catch (error) {
       console.error("Failed to unlink test case", error);
     }
+  },
+
+  // Review actions
+  performReviewAction: async (requirementId, action, reviewerId, comment) => {
+    try {
+      const res = await fetch(`/api/requirements/${requirementId}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, reviewerId, comment })
+      });
+
+      if (res.ok) {
+        const { requirement: updated } = await res.json();
+        set(state => ({
+          requirements: state.requirements.map(r =>
+            r.id === requirementId ? { ...r, ...updated } : r
+          ),
+          selectedRequirement: state.selectedRequirement?.id === requirementId
+            ? { ...state.selectedRequirement, ...updated }
+            : state.selectedRequirement
+        }));
+        return { success: true };
+      } else {
+        const error = await res.json();
+        return { success: false, error: error.error || '操作失败' };
+      }
+    } catch (error) {
+      console.error("Failed to perform review action", error);
+      return { success: false, error: '网络错误' };
+    }
+  },
+
+  submitForReview: async (requirementId, userId) => {
+    try {
+      const res = await fetch(`/api/requirements/${requirementId}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'SUBMIT', reviewerId: userId })
+      });
+      if (res.ok) {
+        const { requirement: updated } = await res.json();
+        set(state => ({
+          requirements: state.requirements.map(r =>
+            r.id === requirementId ? { ...r, ...updated } : r
+          ),
+          selectedRequirement: state.selectedRequirement?.id === requirementId
+            ? { ...state.selectedRequirement, ...updated }
+            : state.selectedRequirement
+        }));
+        return { success: true };
+      } else {
+        const error = await res.json();
+        return { success: false, error: error.error || '操作失败' };
+      }
+    } catch (error) {
+      console.error("Failed to submit for review", error);
+      return { success: false, error: '网络错误' };
+    }
+  },
+
+  approveReview: async (requirementId, reviewerId, comment) => {
+    try {
+      const res = await fetch(`/api/requirements/${requirementId}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'APPROVE', reviewerId, comment })
+      });
+      if (res.ok) {
+        const { requirement: updated } = await res.json();
+        set(state => ({
+          requirements: state.requirements.map(r =>
+            r.id === requirementId ? { ...r, ...updated } : r
+          ),
+          selectedRequirement: state.selectedRequirement?.id === requirementId
+            ? { ...state.selectedRequirement, ...updated }
+            : state.selectedRequirement
+        }));
+        return { success: true };
+      } else {
+        const error = await res.json();
+        return { success: false, error: error.error || '操作失败' };
+      }
+    } catch (error) {
+      console.error("Failed to approve review", error);
+      return { success: false, error: '网络错误' };
+    }
+  },
+
+  rejectReview: async (requirementId, reviewerId, comment) => {
+    try {
+      const res = await fetch(`/api/requirements/${requirementId}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'REJECT', reviewerId, comment })
+      });
+      if (res.ok) {
+        const { requirement: updated } = await res.json();
+        set(state => ({
+          requirements: state.requirements.map(r =>
+            r.id === requirementId ? { ...r, ...updated } : r
+          ),
+          selectedRequirement: state.selectedRequirement?.id === requirementId
+            ? { ...state.selectedRequirement, ...updated }
+            : state.selectedRequirement
+        }));
+        return { success: true };
+      } else {
+        const error = await res.json();
+        return { success: false, error: error.error || '操作失败' };
+      }
+    } catch (error) {
+      console.error("Failed to reject review", error);
+      return { success: false, error: '网络错误' };
+    }
+  },
+
+  requestChanges: async (requirementId, reviewerId, comment) => {
+    try {
+      const res = await fetch(`/api/requirements/${requirementId}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'REQUEST_CHANGES', reviewerId, comment })
+      });
+      if (res.ok) {
+        const { requirement: updated } = await res.json();
+        set(state => ({
+          requirements: state.requirements.map(r =>
+            r.id === requirementId ? { ...r, ...updated } : r
+          ),
+          selectedRequirement: state.selectedRequirement?.id === requirementId
+            ? { ...state.selectedRequirement, ...updated }
+            : state.selectedRequirement
+        }));
+        return { success: true };
+      } else {
+        const error = await res.json();
+        return { success: false, error: error.error || '操作失败' };
+      }
+    } catch (error) {
+      console.error("Failed to request changes", error);
+      return { success: false, error: '网络错误' };
+    }
+  },
+
+  loadReviewHistory: async (requirementId) => {
+    try {
+      const res = await fetch(`/api/requirements/${requirementId}/review`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (error) {
+      console.error("Failed to load review history", error);
+    }
+    return [];
   },
 
   setSelectedRequirement: (requirement) => {
