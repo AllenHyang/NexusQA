@@ -1772,4 +1772,134 @@ DRAFT → PENDING_REVIEW → APPROVED → IN_PROGRESS → COMPLETED`,
       { description: '包含覆盖率统计', status: 'PENDING' },
     ]
   },
+  {
+    title: 'F-RQ-010 需求评审',
+    description: `## 功能说明
+需求评审工作流，支持提交评审、批准、拒绝、要求修改等操作。
+
+## 评审操作
+| 操作 | 说明 | 前置状态 | 后续状态 |
+|------|------|---------|---------|
+| SUBMIT | 提交评审 | DRAFT | PENDING_REVIEW |
+| APPROVE | 批准通过 | PENDING_REVIEW | APPROVED |
+| REJECT | 拒绝 | PENDING_REVIEW | DRAFT |
+| REQUEST_CHANGES | 要求修改 | PENDING_REVIEW | DRAFT |
+| START | 开始实现 | APPROVED | IN_PROGRESS |
+| COMPLETE | 标记完成 | IN_PROGRESS | COMPLETED |
+| REOPEN | 重新打开 | APPROVED/IN_PROGRESS/COMPLETED | DRAFT |`,
+    userStories: [
+      { role: '产品经理', goal: '提交需求评审', benefit: '确保需求质量和团队共识' },
+      { role: '测试负责人', goal: '评审需求并给出意见', benefit: '确保需求可测试性' },
+    ],
+    targetUsers: ['PM', 'QA_LEAD', 'ADMIN'],
+    preconditions: '- 用户已登录系统\n- 存在待评审的需求\n- 用户有评审权限',
+    businessRules: [
+      { code: 'BR-RQ-010-1', description: '只有 ADMIN/PM/QA_LEAD 角色可以执行评审操作（APPROVE/REJECT/REQUEST_CHANGES）' },
+      { code: 'BR-RQ-010-2', description: 'REJECT 和 REQUEST_CHANGES 必须填写评审意见' },
+      { code: 'BR-RQ-010-3', description: '评审历史完整记录，包括操作人、时间、意见、状态变化' },
+    ],
+    designReferences: [
+      { type: 'link', url: '/prd/requirement-review-flow', title: '需求评审状态流转图' },
+    ],
+    targetVersion: 'v1.0.0',
+    estimatedEffort: '3d',
+    tags: ['需求管理', 'P1', '已完成', '评审工作流'],
+    priority: 'P1',
+    acceptanceCriteria: [
+      { description: '支持 7 种评审操作：SUBMIT, APPROVE, REJECT, REQUEST_CHANGES, START, COMPLETE, REOPEN', status: 'PASSED' },
+      { description: '状态转换有严格的前置条件校验', status: 'PASSED' },
+      { description: 'REJECT 和 REQUEST_CHANGES 必须填写评审意见', status: 'PASSED' },
+      { description: '评审历史完整记录（操作人、时间、意见、状态变化）', status: 'PASSED' },
+      { description: '权限控制：评审人必须是 ADMIN/PM/QA_LEAD 角色', status: 'PASSED' },
+      { description: '需求详情页提供"评审"Tab，展示状态流程图、操作按钮、评审历史', status: 'PASSED' },
+    ]
+  },
+  {
+    title: 'F-RQ-011 需求层级结构',
+    description: `## 功能说明
+支持 Epic → Feature → Requirement 三层结构，实现需求的层级化管理。
+
+## 层级定义
+- **Epic（史诗）**：高层级业务目标，如"测试管理平台"
+- **Feature（特性）**：可交付的功能集，如"用例管理模块"
+- **Requirement（需求）**：具体功能需求，如"创建测试用例"
+
+## 主要功能
+1. 左侧树形导航展示文件夹层级
+2. 点击文件夹时，右侧列表筛选显示该文件夹下的需求
+3. 支持展开/折叠文件夹
+4. 显示每个文件夹下的需求统计数量`,
+    userStories: [
+      { role: '产品经理', goal: '按层级组织需求', benefit: '更好地管理复杂项目的需求结构' },
+      { role: '测试负责人', goal: '按功能模块查看需求', benefit: '快速定位和筛选相关需求' },
+    ],
+    targetUsers: ['PM', 'QA_LEAD', 'TESTER'],
+    preconditions: '- 用户已登录系统\n- 已存在项目',
+    businessRules: [
+      { code: 'BR-RQ-011-1', description: '支持无限层级嵌套' },
+      { code: 'BR-RQ-011-2', description: '需求可以不属于任何文件夹（显示在"未分类"中）' },
+    ],
+    designReferences: [
+      { type: 'link', url: '/prd/requirement-tree-layout', title: '需求树形布局原型' },
+    ],
+    targetVersion: 'v1.1.0',
+    estimatedEffort: '5d',
+    tags: ['需求管理', 'P1', '待开发', '层级结构'],
+    priority: 'P1',
+    acceptanceCriteria: [
+      { description: '支持 Epic → Feature → Requirement 三层结构', status: 'PENDING' },
+      { description: '左侧树形导航展示文件夹层级', status: 'PASSED' },
+      { description: '点击文件夹时，右侧列表筛选显示该文件夹下的需求', status: 'PASSED' },
+      { description: '支持展开/折叠文件夹', status: 'PASSED' },
+      { description: '显示每个文件夹下的需求统计数量', status: 'PENDING' },
+      { description: '支持"未分类需求"显示所有未归属文件夹的需求', status: 'PASSED' },
+    ]
+  },
+  {
+    title: 'F-RQ-012 需求文件夹管理',
+    description: `## 功能说明
+需求文件夹的创建、编辑、删除和拖拽管理功能。
+
+## 主要功能
+1. 创建/编辑/删除文件夹
+2. 设置文件夹类型（Epic/Feature/Folder）
+3. 拖拽调整文件夹层级和顺序
+4. 拖拽需求到目标文件夹
+5. 批量移动需求到文件夹
+
+## API 接口
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | /api/requirements/folders?projectId=xxx | 获取文件夹树 |
+| POST | /api/requirements/folders | 创建文件夹 |
+| PUT | /api/requirements/folders/{id} | 更新文件夹 |
+| DELETE | /api/requirements/folders/{id} | 删除文件夹 |
+| PATCH | /api/requirements/{id}/folder | 移动需求到文件夹 |
+| PATCH | /api/requirements/batch/folder | 批量移动需求 |`,
+    userStories: [
+      { role: '产品经理', goal: '管理需求文件夹结构', benefit: '灵活组织需求层级' },
+      { role: '测试负责人', goal: '批量移动需求到文件夹', benefit: '快速整理需求归属' },
+    ],
+    targetUsers: ['PM', 'QA_LEAD', 'ADMIN'],
+    preconditions: '- 用户已登录系统\n- 已存在项目\n- 用户有需求管理权限',
+    businessRules: [
+      { code: 'BR-RQ-012-1', description: '删除文件夹时，子需求移动到"未分类"' },
+      { code: 'BR-RQ-012-2', description: '文件夹可以嵌套，支持无限层级' },
+    ],
+    designReferences: [
+      { type: 'link', url: '/prd/folder-management', title: '文件夹管理交互原型' },
+    ],
+    targetVersion: 'v1.1.0',
+    estimatedEffort: '5d',
+    tags: ['需求管理', 'P1', '待开发', '文件夹管理'],
+    priority: 'P1',
+    acceptanceCriteria: [
+      { description: '支持创建/编辑/删除文件夹', status: 'PASSED' },
+      { description: '支持设置文件夹类型（Epic/Feature/Folder）', status: 'PASSED' },
+      { description: '支持拖拽调整文件夹层级和顺序', status: 'PENDING' },
+      { description: '支持拖拽需求到目标文件夹', status: 'PENDING' },
+      { description: '支持批量移动需求到文件夹', status: 'PASSED' },
+      { description: '删除文件夹时，子需求移动到"未分类"', status: 'PENDING' },
+    ]
+  },
 ];

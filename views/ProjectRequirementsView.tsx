@@ -28,6 +28,9 @@ import {
   PanelLeftClose,
   PanelLeft,
   GripVertical,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { RequirementModal } from "@/components/RequirementModal";
 import { RequirementFolderTree } from "@/components/RequirementFolderTree";
@@ -90,6 +93,9 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
   const [viewMode, setViewMode] = useState<"list" | "traceability" | "matrix">("list");
   const [selectedTraceRequirement, setSelectedTraceRequirement] = useState<InternalRequirement | null>(null);
 
+  // Traceability view sorting
+  const [traceSortOrder, setTraceSortOrder] = useState<"asc" | "desc" | "none">("none");
+
   // Folder state
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -148,6 +154,24 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
       return matchesSearch && matchesStatus && matchesPriority && matchesAcceptance && matchesFolder;
     });
   }, [requirements, searchQuery, selectedStatusFilter, selectedPriorityFilter, selectedAcceptanceFilter, selectedFolderId]);
+
+  // Traceability view sorted requirements (uses shared filters from filteredRequirements)
+  const traceabilityRequirements = useMemo(() => {
+    // Start with filtered requirements (already filtered by search, status, priority, folder)
+    const result = [...filteredRequirements];
+
+    // Apply priority sorting
+    if (traceSortOrder !== "none") {
+      const priorityOrder = { P0: 0, P1: 1, P2: 2, P3: 3 };
+      result.sort((a, b) => {
+        const orderA = priorityOrder[a.priority as keyof typeof priorityOrder] ?? 4;
+        const orderB = priorityOrder[b.priority as keyof typeof priorityOrder] ?? 4;
+        return traceSortOrder === "asc" ? orderA - orderB : orderB - orderA;
+      });
+    }
+
+    return result;
+  }, [filteredRequirements, traceSortOrder]);
 
   // Pagination
   const totalPages = Math.ceil(filteredRequirements.length / PAGE_SIZE);
@@ -595,6 +619,54 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
             <p className="text-xs text-zinc-500 mt-1">查看需求到测试用例的完整追溯链路</p>
           </div>
 
+          {/* Toolbar - same as list view */}
+          {!selectedTraceRequirement && (
+            <div className="p-4 border-b border-zinc-100 flex gap-4 flex-wrap">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="w-4 h-4 absolute left-3 top-3 text-zinc-400" />
+                <input
+                  className="w-full pl-10 pr-4 py-2 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900/5"
+                  placeholder="搜索需求..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              <select
+                className="px-3 py-2 border border-zinc-200 rounded-xl text-zinc-600 hover:bg-zinc-50 flex items-center text-sm font-medium bg-white"
+                value={selectedStatusFilter}
+                onChange={e => setSelectedStatusFilter(e.target.value)}
+              >
+                <option value="ALL">所有状态</option>
+                {Object.entries(STATUS_CONFIG).map(([key, { labelZh }]) => (
+                  <option key={key} value={key}>{labelZh}</option>
+                ))}
+              </select>
+
+              <select
+                className="px-3 py-2 border border-zinc-200 rounded-xl text-zinc-600 hover:bg-zinc-50 flex items-center text-sm font-medium bg-white"
+                value={selectedPriorityFilter}
+                onChange={e => setSelectedPriorityFilter(e.target.value)}
+              >
+                <option value="ALL">所有优先级</option>
+                {Object.entries(PRIORITY_CONFIG).map(([key, { label }]) => (
+                  <option key={key} value={key}>{label}</option>
+                ))}
+              </select>
+
+              <select
+                className="px-3 py-2 border border-zinc-200 rounded-xl text-zinc-600 hover:bg-zinc-50 flex items-center text-sm font-medium bg-white"
+                value={selectedAcceptanceFilter}
+                onChange={e => setSelectedAcceptanceFilter(e.target.value)}
+              >
+                <option value="ALL">所有验收状态</option>
+                {Object.entries(ACCEPTANCE_STATUS_CONFIG).map(([key, { labelZh }]) => (
+                  <option key={key} value={key}>{labelZh}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {selectedTraceRequirement ? (
             <div className="p-6">
               {/* Selected Requirement Detail */}
@@ -696,9 +768,32 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
             </div>
           ) : (
             <div>
-              {/* List Header */}
+              {/* List Header with Sortable Priority Column */}
               <div className="px-4 py-2 bg-zinc-50 border-b border-zinc-100 flex items-center gap-4 text-xs font-bold text-zinc-400 uppercase tracking-wider">
-                <div className="w-12">优先级</div>
+                <button
+                  onClick={() => {
+                    if (traceSortOrder === "none") setTraceSortOrder("asc");
+                    else if (traceSortOrder === "asc") setTraceSortOrder("desc");
+                    else setTraceSortOrder("none");
+                  }}
+                  className={`w-12 flex items-center gap-1 hover:text-zinc-600 transition-colors ${
+                    traceSortOrder !== "none" ? "text-zinc-900" : ""
+                  }`}
+                  title={
+                    traceSortOrder === "none" ? "点击按优先级排序" :
+                    traceSortOrder === "asc" ? "当前: P0→P3 (高到低)" :
+                    "当前: P3→P0 (低到高)"
+                  }
+                >
+                  优先级
+                  {traceSortOrder === "none" ? (
+                    <ArrowUpDown className="w-3 h-3" />
+                  ) : traceSortOrder === "asc" ? (
+                    <ArrowUp className="w-3 h-3" />
+                  ) : (
+                    <ArrowDown className="w-3 h-3" />
+                  )}
+                </button>
                 <div className="flex-1">需求</div>
                 <div className="w-24">状态</div>
                 <div className="w-24">关联用例</div>
@@ -706,14 +801,14 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
               </div>
 
               {/* Requirements List */}
-              {filteredRequirements.length === 0 ? (
+              {traceabilityRequirements.length === 0 ? (
                 <div className="p-12 text-center text-zinc-400">
                   <FileText className="w-12 h-12 mx-auto mb-3 opacity-20" />
                   <p>暂无需求</p>
                 </div>
               ) : (
                 <div className="divide-y divide-zinc-50">
-                  {filteredRequirements.map(req => {
+                  {traceabilityRequirements.map(req => {
                     const statusConfig = STATUS_CONFIG[req.status];
                     const priorityConfig = PRIORITY_CONFIG[req.priority] || PRIORITY_CONFIG.P2;
                     const testCaseCount = req.testCases?.length || 0;
