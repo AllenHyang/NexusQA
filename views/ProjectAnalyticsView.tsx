@@ -1,9 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Project, TestCase } from "../types";
 import { ProgressBar } from "../components/ui";
-import { Info, Bug, Activity, BookOpen, Sparkles, PlayCircle, ArrowRight, Calendar } from "lucide-react";
+import { Info, Bug, Activity, BookOpen, Sparkles, PlayCircle, ArrowRight, Calendar, Download, FileJson, FileSpreadsheet, FileText, X } from "lucide-react";
+import { useAppStore } from "@/store/useAppStore";
+import { generateReportData, exportReportAsJSON, exportReportAsCSV, exportReportAsHTML } from "@/lib/reportGenerator";
 
 interface WorkflowStepProps {
     icon: React.ElementType;
@@ -43,6 +45,31 @@ interface ProjectAnalyticsViewProps {
 }
 
 export function ProjectAnalyticsView({ project, testCases }: ProjectAnalyticsViewProps) {
+  const { defects, loadDefects } = useAppStore();
+  const [showExportModal, setShowExportModal] = useState(false);
+
+  // Load defects for report generation
+  useEffect(() => {
+    loadDefects(project.id);
+  }, [project.id, loadDefects]);
+
+  // Export handlers
+  const handleExport = (format: 'json' | 'csv' | 'html') => {
+    const reportData = generateReportData(project, testCases, defects);
+    switch (format) {
+      case 'json':
+        exportReportAsJSON(reportData);
+        break;
+      case 'csv':
+        exportReportAsCSV(reportData);
+        break;
+      case 'html':
+        exportReportAsHTML(reportData);
+        break;
+    }
+    setShowExportModal(false);
+  };
+
   // Analytics Calculations
   const failedCases = testCases.filter(tc => tc.status === "FAILED");
   const defectCount = failedCases.length;
@@ -86,9 +113,18 @@ export function ProjectAnalyticsView({ project, testCases }: ProjectAnalyticsVie
         {/* Workflow Section */}
         <div className="animate-in slide-in-from-top-2 fade-in duration-300 mb-6">
             <div className="glass-panel rounded-[2rem] p-4 md:p-8 bg-white">
-                <div className="flex items-center mb-6">
-                    <Info className="w-4 h-4 text-yellow-500 mr-2" />
-                    <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Use Case Driven Workflow</h3>
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center">
+                        <Info className="w-4 h-4 text-yellow-500 mr-2" />
+                        <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Use Case Driven Workflow</h3>
+                    </div>
+                    <button
+                        onClick={() => setShowExportModal(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white rounded-xl text-xs font-bold hover:bg-black transition-colors shadow-sm"
+                    >
+                        <Download className="w-4 h-4" />
+                        Export Report
+                    </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                     <WorkflowStep stepNumber={1} icon={BookOpen} title="User Story" description="Define the 'Who', 'What', and 'Why' in the User Story field to set the context." color="text-blue-500" />
@@ -185,6 +221,75 @@ export function ProjectAnalyticsView({ project, testCases }: ProjectAnalyticsVie
                 </div>
             </div>
         </div>
+
+        {/* Export Modal */}
+        {showExportModal && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-in fade-in duration-200">
+                <div className="bg-white rounded-3xl p-6 w-full max-w-md mx-4 shadow-2xl animate-in zoom-in-95 duration-200">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-bold text-zinc-800">Export Report</h3>
+                        <button
+                            onClick={() => setShowExportModal(false)}
+                            className="p-2 hover:bg-zinc-100 rounded-xl transition-colors"
+                        >
+                            <X className="w-5 h-5 text-zinc-500" />
+                        </button>
+                    </div>
+
+                    <p className="text-sm text-zinc-500 mb-6">
+                        Choose a format to export your project test report.
+                    </p>
+
+                    <div className="space-y-3">
+                        <button
+                            onClick={() => handleExport('json')}
+                            className="w-full flex items-center gap-4 p-4 border border-zinc-200 rounded-2xl hover:bg-zinc-50 hover:border-zinc-300 transition-all group"
+                        >
+                            <div className="p-3 bg-blue-100 rounded-xl text-blue-600 group-hover:scale-110 transition-transform">
+                                <FileJson className="w-5 h-5" />
+                            </div>
+                            <div className="text-left">
+                                <p className="font-bold text-zinc-800">JSON</p>
+                                <p className="text-xs text-zinc-500">Structured data for integrations</p>
+                            </div>
+                        </button>
+
+                        <button
+                            onClick={() => handleExport('csv')}
+                            className="w-full flex items-center gap-4 p-4 border border-zinc-200 rounded-2xl hover:bg-zinc-50 hover:border-zinc-300 transition-all group"
+                        >
+                            <div className="p-3 bg-green-100 rounded-xl text-green-600 group-hover:scale-110 transition-transform">
+                                <FileSpreadsheet className="w-5 h-5" />
+                            </div>
+                            <div className="text-left">
+                                <p className="font-bold text-zinc-800">CSV</p>
+                                <p className="text-xs text-zinc-500">Spreadsheet compatible format</p>
+                            </div>
+                        </button>
+
+                        <button
+                            onClick={() => handleExport('html')}
+                            className="w-full flex items-center gap-4 p-4 border border-zinc-200 rounded-2xl hover:bg-zinc-50 hover:border-zinc-300 transition-all group"
+                        >
+                            <div className="p-3 bg-purple-100 rounded-xl text-purple-600 group-hover:scale-110 transition-transform">
+                                <FileText className="w-5 h-5" />
+                            </div>
+                            <div className="text-left">
+                                <p className="font-bold text-zinc-800">HTML</p>
+                                <p className="text-xs text-zinc-500">Styled report for sharing</p>
+                            </div>
+                        </button>
+                    </div>
+
+                    <button
+                        onClick={() => setShowExportModal(false)}
+                        className="w-full mt-6 py-3 text-sm font-bold text-zinc-500 hover:text-zinc-800 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        )}
     </div>
   );
 }
