@@ -35,6 +35,7 @@ import {
 import { RequirementModal } from "@/components/RequirementModal";
 import { RequirementFolderTree } from "@/components/RequirementFolderTree";
 import { MatrixView } from "@/components/MatrixView";
+import * as XLSX from "xlsx";
 
 interface ProjectRequirementsViewProps {
   project: Project;
@@ -376,16 +377,19 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
     link.click();
   };
 
-  // Export detailed traceability matrix (exports filtered data)
+  // Export detailed traceability matrix as Excel (F-RQ-009)
   const handleExportMatrix = () => {
     const { testCases } = matrixData;
 
-    // Header row: empty cell + all test case titles
-    const headers = ['需求 \\ 用例', ...testCases.map(tc => tc.title)];
+    // Header row: requirement info + test case titles
+    const headers = ['需求标题', '优先级', '状态', '覆盖率', ...testCases.map(tc => tc.title)];
 
-    // Data rows: requirement title + coverage markers
-    const rows = filteredRequirements.map(req => {
+    // Data rows: requirement info + coverage markers
+    const data = filteredRequirements.map(req => {
       const linkedIds = new Set(req.testCases?.map(tc => tc.id) || []);
+      const linkedCount = req.testCases?.length || 0;
+      const coverage = testCases.length > 0 ? Math.round((linkedCount / testCases.length) * 100) : 0;
+
       const cells = testCases.map(tc => {
         if (linkedIds.has(tc.id)) {
           const linkedTc = req.testCases?.find(t => t.id === tc.id);
@@ -395,15 +399,54 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
         }
         return '';
       });
-      return [`"${req.title.replace(/"/g, '""')}"`, ...cells.map(c => `"${c}"`)].join(',');
+
+      return [
+        req.title,
+        req.priority || 'P2',
+        STATUS_CONFIG[req.status]?.labelZh || req.status,
+        `${coverage}%`,
+        ...cells
+      ];
     });
 
-    const csvContent = '\uFEFF' + [headers.map(h => `"${h.replace(/"/g, '""')}"`).join(','), ...rows].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `${project.name}-追溯矩阵-${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
+    // Create workbook with multiple sheets
+    const wb = XLSX.utils.book_new();
+
+    // Sheet 1: Traceability Matrix
+    const matrixWs = XLSX.utils.aoa_to_sheet([headers, ...data]);
+    // Set column widths
+    matrixWs['!cols'] = [
+      { wch: 30 }, // 需求标题
+      { wch: 8 },  // 优先级
+      { wch: 10 }, // 状态
+      { wch: 8 },  // 覆盖率
+      ...testCases.map(() => ({ wch: 15 })) // 用例列
+    ];
+    XLSX.utils.book_append_sheet(wb, matrixWs, '追溯矩阵');
+
+    // Sheet 2: Summary Statistics
+    const summaryData = [
+      ['追溯矩阵统计报告'],
+      [''],
+      ['项目名称', project.name],
+      ['导出时间', new Date().toLocaleString('zh-CN')],
+      [''],
+      ['统计指标', '数值'],
+      ['需求总数', filteredRequirements.length],
+      ['测试用例总数', testCases.length],
+      ['已覆盖需求', filteredRequirements.filter(r => (r.testCases?.length || 0) > 0).length],
+      ['未覆盖需求', filteredRequirements.filter(r => (r.testCases?.length || 0) === 0).length],
+      ['平均覆盖率', `${Math.round(filteredRequirements.reduce((sum, r) => {
+        const linked = r.testCases?.length || 0;
+        return sum + (testCases.length > 0 ? (linked / testCases.length) * 100 : 0);
+      }, 0) / (filteredRequirements.length || 1))}%`],
+    ];
+    const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+    summaryWs['!cols'] = [{ wch: 20 }, { wch: 30 }];
+    XLSX.utils.book_append_sheet(wb, summaryWs, '统计汇总');
+
+    // Export as xlsx
+    XLSX.writeFile(wb, `${project.name}-追溯矩阵-${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   return (
