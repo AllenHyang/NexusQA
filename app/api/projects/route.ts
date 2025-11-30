@@ -16,20 +16,37 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    
+
     if (!body.name) {
       return NextResponse.json({ error: "Project name is required" }, { status: 400 });
     }
 
-    const newProject = await prisma.project.create({
-      data: {
-        name: body.name,
-        description: body.description,
-        coverImage: body.coverImage,
-        repositoryUrl: body.repositoryUrl,
+    // Use transaction to create project and add creator as OWNER (AC6)
+    const result = await prisma.$transaction(async (tx) => {
+      const newProject = await tx.project.create({
+        data: {
+          name: body.name,
+          description: body.description,
+          coverImage: body.coverImage,
+          repositoryUrl: body.repositoryUrl,
+        }
+      });
+
+      // If creatorId is provided, add creator as OWNER
+      if (body.creatorId) {
+        await tx.projectMember.create({
+          data: {
+            projectId: newProject.id,
+            userId: body.creatorId,
+            role: 'OWNER'
+          }
+        });
       }
+
+      return newProject;
     });
-    return NextResponse.json(newProject, { status: 201 });
+
+    return NextResponse.json(result, { status: 201 });
   } catch (e) {
     console.error("Error creating project:", e);
     return NextResponse.json({ error: "Failed to create project" }, { status: 500 });

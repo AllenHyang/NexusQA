@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { Project, TestCase, User, TestSuite, TestPlan, TestStatus } from "../types";
-import { Download, Plus, ChevronDown, Trash2, Pencil, Github, BarChart3, Layout, ClipboardList, FolderInput, Bug, FileText } from "lucide-react";
+import { Download, Plus, ChevronDown, Trash2, Pencil, Github, BarChart3, Layout, ClipboardList, FolderInput, Bug, FileText, Users } from "lucide-react";
 import { Tooltip } from "../components/ui";
 import { useAppStore } from "@/store/useAppStore";
+import { ProjectMembersPanel } from "@/components/ProjectMembersPanel";
 
 // Import the new sub-views
 import { ProjectCasesView } from "./ProjectCasesView";
@@ -102,6 +103,7 @@ export function ProjectDetailView({
   });
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [showMobileFolders, setShowMobileFolders] = useState(false);
+  const [showMembersPanel, setShowMembersPanel] = useState(false);
 
   // Update tab when URL param changes
   useEffect(() => {
@@ -143,6 +145,13 @@ export function ProjectDetailView({
                     <Github className="w-5 h-5" />
                 </a>
             )}
+            <button
+                onClick={() => setShowMembersPanel(true)}
+                className="p-2 rounded-full bg-white hover:bg-zinc-100 text-zinc-400 hover:text-zinc-900 transition-colors border border-zinc-200 shadow-sm"
+                title="Manage Members"
+            >
+                <Users className="w-5 h-5" />
+            </button>
           </div>
           <p className="text-zinc-500 max-w-2xl line-clamp-1 font-medium text-sm md:text-base mt-0.5">{project.description}</p>
         </div>
@@ -300,6 +309,14 @@ export function ProjectDetailView({
           />
         )}
       </div>
+
+      {/* Members Panel */}
+      <ProjectMembersPanel
+        projectId={project.id}
+        currentUserId={currentUser.id}
+        isOpen={showMembersPanel}
+        onClose={() => setShowMembersPanel(false)}
+      />
     </div>
   );
 }

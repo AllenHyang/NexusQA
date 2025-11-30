@@ -21,6 +21,7 @@ model Project {
   defects       Defect[]
   internalRequirements InternalRequirement[]
   requirementFolders   RequirementFolder[]
+  members       ProjectMember[]
 }
 
 model TestSuite {
@@ -162,6 +163,30 @@ model User {
   comments        DefectComment[]
   authoredRequirements InternalRequirement[] @relation("AuthoredRequirements")
   requirementReviews RequirementReview[]
+  projectMemberships ProjectMember[]
+}
+
+// Project Member Management (F-PM-006)
+model ProjectMember {
+  id        String   @id @default(cuid())
+
+  // Relations
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Role: OWNER, ADMIN, MEMBER, VIEWER
+  role      String   @default("MEMBER")
+
+  // Invitation info
+  invitedBy String?  // Inviter user ID
+  invitedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, userId])
 }
 
 model TestPlan {
