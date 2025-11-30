@@ -99,12 +99,35 @@ model ExecutionRecord {
   notes      String?
   bugId      String? // Legacy
   env        String?
-  evidence   String?
-  
+  evidence   String? // Legacy URL field, replaced by attachments
+
   testCase   TestCase @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
   testCaseId String
-  
+
   defects    Defect[] // Implicit Many-to-Many
+  attachments Attachment[] // New: File attachments for evidence
+}
+
+// Evidence Attachment (F-TE-005)
+model Attachment {
+  id           String   @id @default(cuid())
+  filename     String   // Original filename
+  storedName   String   // Unique stored filename (UUID-based)
+  mimeType     String   // e.g., "image/png", "video/mp4"
+  size         Int      // File size in bytes
+  url          String   // Relative URL path to access the file
+
+  // Optional metadata
+  description  String?  // User-provided description
+
+  // Relation to ExecutionRecord
+  executionId  String
+  execution    ExecutionRecord @relation(fields: [executionId], references: [id], onDelete: Cascade)
+
+  // Upload info
+  uploadedBy   String   // User ID who uploaded
+
+  createdAt    DateTime @default(now())
 }
 
 model Defect {

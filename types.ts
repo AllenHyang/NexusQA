@@ -63,16 +63,30 @@ export interface Requirement {
   description?: string;
 }
 
+// Evidence Attachment (F-TE-005)
+export interface Attachment {
+  id: string;
+  filename: string;
+  storedName: string;
+  mimeType: string;
+  size: number;
+  url: string;
+  description?: string;
+  uploadedBy: string;
+  createdAt: string;
+}
+
 export interface ExecutionRecord {
   id: string;
   date: string;
   status: TestStatus;
-  executedBy: string; 
+  executedBy: string;
   notes?: string;
-  bugId?: string; 
+  bugId?: string;
   defects?: Defect[];
-  environment?: string; 
-  evidence?: string; 
+  environment?: string;
+  evidence?: string; // Legacy
+  attachments?: Attachment[]; // New: File attachments
 }
 
 export interface TestSuite {

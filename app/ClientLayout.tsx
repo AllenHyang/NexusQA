@@ -66,6 +66,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     
     executionSelectedDefectId, setExecutionSelectedDefectId,
     executionNewDefectData, setExecutionNewDefectData,
+    executionStagedFiles, setExecutionStagedFiles,
   } = useUI();
 
   // --- Handlers ---
@@ -177,7 +178,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   const handleExecute = async (status: TestStatus) => {
     if (!editCase.id) return;
-    
+
     // Validation: Enforce Bug Selection for FAILED
     if (status === "FAILED" && !executionSelectedDefectId && !executionNewDefectData) {
       showToast("Defect is required when marking a test as FAILED. Please select existing or create new.", 'error');
@@ -189,7 +190,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         if (executionSelectedDefectId) {
             defectPayload = { id: executionSelectedDefectId };
         } else if (executionNewDefectData) {
-            defectPayload = { 
+            defectPayload = {
                 title: executionNewDefectData.title,
                 severity: executionNewDefectData.severity,
             };
@@ -217,15 +218,48 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     const resultCase = await saveTestCase(updatedCase);
 
     if (resultCase) {
-        setEditCase(resultCase); 
+        // Upload staged files to the newly created execution record
+        if (executionStagedFiles.length > 0 && resultCase.history && resultCase.history.length > 0) {
+            // Get the latest execution record (which we just created)
+            const latestExecution = resultCase.history[resultCase.history.length - 1];
+
+            try {
+                const formData = new FormData();
+                formData.append('executionId', latestExecution.id);
+                formData.append('uploadedBy', currentUser!.id);
+                executionStagedFiles.forEach(file => {
+                    formData.append('files', file);
+                });
+
+                const uploadRes = await fetch('/api/attachments', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!uploadRes.ok) {
+                    const errData = await uploadRes.json();
+                    showToast(`Warning: ${errData.error || 'Failed to upload some attachments'}`, 'error');
+                } else {
+                    const uploadData = await uploadRes.json();
+                    // Update the execution record with attachments
+                    latestExecution.attachments = uploadData.attachments;
+                }
+            } catch (uploadError) {
+                console.error('Attachment upload error:', uploadError);
+                showToast('Warning: Failed to upload attachments', 'error');
+            }
+        }
+
+        setEditCase(resultCase);
     }
-    
+
     // Reset form for next execution (but don't close modal)
     setExecutionNote("");
     setExecutionEnv("QA");
     setExecutionEvidence("");
     setExecutionSelectedDefectId(null);
     setExecutionNewDefectData(null);
+    setExecutionStagedFiles([]);
 
     // Show success feedback instead of closing
     showToast(`Test case marked as ${status}`, 'success');
@@ -298,7 +332,10 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             setExecutionEnv={setExecutionEnv}
             executionEvidence={executionEvidence}
             setExecutionEvidence={setExecutionEvidence}
-            
+
+            executionStagedFiles={executionStagedFiles}
+            setExecutionStagedFiles={setExecutionStagedFiles}
+
             defects={projectDefects}
             executionSelectedDefectId={executionSelectedDefectId}
             setExecutionSelectedDefectId={setExecutionSelectedDefectId}

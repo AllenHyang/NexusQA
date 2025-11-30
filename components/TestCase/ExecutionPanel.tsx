@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { TestStatus, Defect, ReviewStatus } from "@/types";
-import { CheckCircle2, XCircle, AlertCircle, Monitor, Paperclip, Forward, Bug, Save } from "lucide-react";
+import { CheckCircle2, XCircle, AlertCircle, Monitor, Paperclip, Forward, Bug, Save, Upload, X, FileImage, FileVideo, FileText, File } from "lucide-react";
 import { DefectSelector } from "@/components/DefectSelector";
 
 interface ExecutionPanelProps {
@@ -10,6 +10,10 @@ interface ExecutionPanelProps {
   setEvidence: (s: string) => void;
   note: string;
   setNote: (s: string) => void;
+
+  // File upload props
+  stagedFiles: File[];
+  onStagedFilesChange: (files: File[]) => void;
 
   // New Defect Props
   projectDefects: Defect[];
@@ -23,14 +27,67 @@ interface ExecutionPanelProps {
   currentStatus?: TestStatus; // Current status of the test case
 }
 
+// Helper to get icon based on mime type
+function getFileIcon(mimeType: string) {
+  if (mimeType.startsWith('image/')) return <FileImage className="w-4 h-4" />;
+  if (mimeType.startsWith('video/')) return <FileVideo className="w-4 h-4" />;
+  if (mimeType === 'application/pdf' || mimeType.startsWith('text/')) return <FileText className="w-4 h-4" />;
+  return <File className="w-4 h-4" />;
+}
+
+// Format file size for display
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export function ExecutionPanel({
   env, setEnv, evidence, setEvidence, note, setNote,
+  stagedFiles, onStagedFilesChange,
   projectDefects, selectedDefectId, onSelectDefectId, newDefectData, onNewDefectData,
   onExecute, reviewStatus, currentStatus
 }: ExecutionPanelProps) {
   const isApproved = reviewStatus === 'APPROVED';
   const [isExecuting, setIsExecuting] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<TestStatus | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // File drag and drop handlers
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      onStagedFilesChange([...stagedFiles, ...files]);
+    }
+  }, [stagedFiles, onStagedFilesChange]);
+
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      onStagedFilesChange([...stagedFiles, ...files]);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, [stagedFiles, onStagedFilesChange]);
+
+  const removeFile = useCallback((index: number) => {
+    const newFiles = stagedFiles.filter((_, i) => i !== index);
+    onStagedFilesChange(newFiles);
+  }, [stagedFiles, onStagedFilesChange]);
 
   const handleCreateDefect = (data: Partial<Defect>) => {
       onNewDefectData(data);
@@ -108,27 +165,100 @@ export function ExecutionPanel({
                    ⚠️ This test case has not been approved yet. Execution is discouraged.
                </div>
            )}
-           <div className="flex gap-4">
-               <div className="flex-1 relative group">
-                  <Monitor className="w-4 h-4 text-zinc-400 absolute left-3 top-3 group-focus-within:text-zinc-800 transition-colors" />
-                  <input 
+           {/* Environment input */}
+           <div className="relative group">
+              <Monitor className="w-4 h-4 text-zinc-400 absolute left-3 top-3 group-focus-within:text-zinc-800 transition-colors" />
+              <input
+                type="text"
+                className="w-full pl-10 pr-4 py-2.5 border border-zinc-200 rounded-xl text-sm bg-zinc-50 focus:bg-white outline-none focus:ring-2 focus:ring-zinc-900/5 transition-all font-medium placeholder-zinc-400 text-zinc-800"
+                placeholder="Environment (e.g. Chrome, QA Server)"
+                value={env}
+                onChange={e => setEnv(e.target.value)}
+              />
+           </div>
+
+           {/* Evidence Attachments */}
+           <div className="p-4 border border-zinc-200 rounded-xl bg-zinc-50/50 space-y-3">
+              <div className="flex items-center gap-2 mb-1">
+                  <Paperclip className="w-4 h-4 text-zinc-500" />
+                  <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Evidence Attachments</span>
+              </div>
+
+              {/* Drop zone */}
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+                className={`
+                  relative border-2 border-dashed rounded-xl p-3 text-center cursor-pointer transition-all
+                  ${isDragging ? 'border-blue-400 bg-blue-50' : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'}
+                `}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*,video/mp4,video/webm,application/pdf,text/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <Upload className={`w-5 h-5 mx-auto mb-1 ${isDragging ? 'text-blue-500' : 'text-zinc-400'}`} />
+                <p className="text-xs font-medium text-zinc-600">
+                  Drop files or <span className="text-blue-600">browse</span>
+                </p>
+                <p className="text-[10px] text-zinc-400 mt-0.5">
+                  Images, videos, PDFs (max 10MB each)
+                </p>
+              </div>
+
+              {/* Staged files list */}
+              {stagedFiles.length > 0 && (
+                <div className="space-y-2 mt-2">
+                  {stagedFiles.map((file, index) => (
+                    <div
+                      key={`${file.name}-${index}`}
+                      className="flex items-center gap-2 p-2 bg-white rounded-lg border border-zinc-100 group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center flex-shrink-0 text-zinc-500">
+                        {getFileIcon(file.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-zinc-700 truncate" title={file.name}>
+                          {file.name}
+                        </p>
+                        <p className="text-[10px] text-zinc-400">
+                          {formatFileSize(file.size)}
+                        </p>
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); removeFile(index); }}
+                        className="p-1 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Remove"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Legacy URL input (collapsible) */}
+              <details className="mt-2">
+                <summary className="text-[10px] text-zinc-400 cursor-pointer hover:text-zinc-600">
+                  Or enter URL manually...
+                </summary>
+                <div className="mt-2 relative group">
+                  <Paperclip className="w-4 h-4 text-zinc-400 absolute left-3 top-2.5 group-focus-within:text-zinc-800 transition-colors" />
+                  <input
                     type="text"
-                    className="w-full pl-10 pr-4 py-2.5 border border-zinc-200 rounded-xl text-sm bg-zinc-50 focus:bg-white outline-none focus:ring-2 focus:ring-zinc-900/5 transition-all font-medium placeholder-zinc-400 text-zinc-800"
-                    placeholder="Env (e.g. Chrome)"
-                    value={env}
-                    onChange={e => setEnv(e.target.value)}
-                  />
-               </div>
-               <div className="flex-1 relative group">
-                  <Paperclip className="w-4 h-4 text-zinc-400 absolute left-3 top-3 group-focus-within:text-zinc-800 transition-colors" />
-                  <input 
-                    type="text"
-                    className="w-full pl-10 pr-4 py-2.5 border border-zinc-200 rounded-xl text-sm bg-zinc-50 focus:bg-white outline-none focus:ring-2 focus:ring-zinc-900/5 transition-all font-medium placeholder-zinc-400 text-zinc-800"
-                    placeholder="Evidence URL"
+                    className="w-full pl-10 pr-4 py-2 border border-zinc-200 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-zinc-900/5 transition-all font-medium placeholder-zinc-400 text-zinc-800"
+                    placeholder="Evidence URL (legacy)"
                     value={evidence}
                     onChange={e => setEvidence(e.target.value)}
                   />
-               </div>
+                </div>
+              </details>
            </div>
           <textarea 
             className="w-full px-4 py-3 border border-zinc-200 rounded-xl text-sm bg-zinc-50 focus:bg-white outline-none focus:ring-2 focus:ring-zinc-900/5 transition-all font-medium placeholder-zinc-400 min-h-[80px] text-zinc-800"

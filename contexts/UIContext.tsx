@@ -54,6 +54,10 @@ interface UIContextType {
   setExecutionSelectedDefectId: (id: string | null) => void;
   executionNewDefectData: Partial<Defect> | null;
   setExecutionNewDefectData: (data: Partial<Defect> | null) => void;
+
+  // Evidence Attachments (F-TE-005)
+  executionStagedFiles: File[];
+  setExecutionStagedFiles: (files: File[]) => void;
   
   // Global Search
   searchQuery: string;
@@ -94,7 +98,10 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
   // Defect Selection
   const [executionSelectedDefectId, setExecutionSelectedDefectId] = useState<string | null>(null);
   const [executionNewDefectData, setExecutionNewDefectData] = useState<Partial<Defect> | null>(null);
-  
+
+  // Evidence Attachments (F-TE-005)
+  const [executionStagedFiles, setExecutionStagedFiles] = useState<File[]>([]);
+
   // Search
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -124,6 +131,8 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
     // Reset defect fields
     setExecutionSelectedDefectId(null);
     setExecutionNewDefectData(null);
+    // Reset staged files
+    setExecutionStagedFiles([]);
     setShowCaseModal(true);
   };
 
@@ -172,6 +181,7 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
       executionEvidence, setExecutionEvidence,
       executionSelectedDefectId, setExecutionSelectedDefectId,
       executionNewDefectData, setExecutionNewDefectData,
+      executionStagedFiles, setExecutionStagedFiles,
       searchQuery, setSearchQuery
     }}>
       {children}
