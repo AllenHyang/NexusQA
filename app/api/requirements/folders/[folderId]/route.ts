@@ -121,17 +121,17 @@ export async function DELETE(
       // Cascade delete: delete folder and all descendants
       await deleteRecursive(folderId);
     } else {
-      // Move children and requirements to parent folder
+      // Move children to parent folder, but requirements to uncategorized (null)
       await prisma.$transaction([
         // Move child folders to parent
         prisma.requirementFolder.updateMany({
           where: { parentId: folderId },
           data: { parentId: folder.parentId }
         }),
-        // Move requirements to parent folder
+        // Move requirements to uncategorized (folderId = null)
         prisma.internalRequirement.updateMany({
           where: { folderId },
-          data: { folderId: folder.parentId }
+          data: { folderId: null }
         }),
         // Delete the folder
         prisma.requirementFolder.delete({
