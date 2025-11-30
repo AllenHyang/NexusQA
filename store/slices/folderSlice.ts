@@ -6,6 +6,7 @@ export interface FolderSlice {
   selectedFolder: RequirementFolder | null;
   foldersLoading: boolean;
   rootRequirementsCount: number;
+  uncategorizedCount: number;
 
   loadFolders: (projectId: string) => Promise<void>;
   loadFolder: (folderId: string) => Promise<RequirementFolder | null>;
@@ -29,6 +30,7 @@ export const createFolderSlice: StateCreator<FolderSlice> = (set) => ({
   selectedFolder: null,
   foldersLoading: false,
   rootRequirementsCount: 0,
+  uncategorizedCount: 0,
 
   loadFolders: async (projectId) => {
     set({ foldersLoading: true });
@@ -39,6 +41,7 @@ export const createFolderSlice: StateCreator<FolderSlice> = (set) => ({
         set({
           folders: data.folders,
           rootRequirementsCount: data.rootRequirementsCount,
+          uncategorizedCount: data.uncategorizedCount || 0,
           foldersLoading: false
         });
       } else {
@@ -79,7 +82,8 @@ export const createFolderSlice: StateCreator<FolderSlice> = (set) => ({
           const data = await foldersRes.json();
           set({
             folders: data.folders,
-            rootRequirementsCount: data.rootRequirementsCount
+            rootRequirementsCount: data.rootRequirementsCount,
+            uncategorizedCount: data.uncategorizedCount || 0
           });
         }
         return created;

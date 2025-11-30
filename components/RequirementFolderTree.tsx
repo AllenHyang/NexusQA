@@ -17,7 +17,11 @@ import {
   Trash2,
   FolderPlus,
   GripVertical,
+  FolderX,
 } from "lucide-react";
+
+// Special ID for uncategorized filter
+export const UNCATEGORIZED_FOLDER_ID = "__UNCATEGORIZED__";
 
 interface RequirementFolderTreeProps {
   projectId: string;
@@ -344,6 +348,7 @@ export function RequirementFolderTree({
     folders,
     foldersLoading,
     rootRequirementsCount,
+    uncategorizedCount,
     loadFolders,
     updateFolder,
     deleteFolder,
@@ -552,6 +557,40 @@ export function RequirementFolderTree({
             }`}
           >
             {rootRequirementsCount}
+          </span>
+        </div>
+
+        {/* Uncategorized Requirements */}
+        <div
+          className={`flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer transition-all mt-1 ${
+            selectedFolderId === UNCATEGORIZED_FOLDER_ID
+              ? "bg-zinc-900 text-white"
+              : "hover:bg-zinc-100 text-zinc-700"
+          }`}
+          onClick={() => onSelectFolder(UNCATEGORIZED_FOLDER_ID)}
+        >
+          <div
+            className={`p-1 rounded ${
+              selectedFolderId === UNCATEGORIZED_FOLDER_ID ? "bg-white/20" : "bg-amber-100"
+            }`}
+          >
+            <FolderX
+              className={`w-3.5 h-3.5 ${
+                selectedFolderId === UNCATEGORIZED_FOLDER_ID ? "text-white" : "text-amber-600"
+              }`}
+            />
+          </div>
+          <span className="flex-1 text-sm font-medium">
+            未分类需求
+          </span>
+          <span
+            className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+              selectedFolderId === UNCATEGORIZED_FOLDER_ID
+                ? "bg-white/20 text-white"
+                : "bg-amber-100 text-amber-700"
+            }`}
+          >
+            {uncategorizedCount}
           </span>
         </div>
 

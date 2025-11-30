@@ -33,7 +33,7 @@ import {
   ArrowDown,
 } from "lucide-react";
 import { RequirementModal } from "@/components/RequirementModal";
-import { RequirementFolderTree } from "@/components/RequirementFolderTree";
+import { RequirementFolderTree, UNCATEGORIZED_FOLDER_ID } from "@/components/RequirementFolderTree";
 import { MatrixView } from "@/components/MatrixView";
 import * as XLSX from "xlsx";
 
@@ -174,8 +174,10 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
       // Tag filter
       const reqTags = parseTags(req.tags);
       const matchesTags = selectedTagFilter === "ALL" || reqTags.includes(selectedTagFilter);
-      // Folder filter: null means show all, otherwise filter by folderId
-      const matchesFolder = selectedFolderId === null || req.folderId === selectedFolderId;
+      // Folder filter: null means show all, UNCATEGORIZED_FOLDER_ID means only folderId is null
+      const matchesFolder = selectedFolderId === null
+        || (selectedFolderId === UNCATEGORIZED_FOLDER_ID && !req.folderId)
+        || req.folderId === selectedFolderId;
       return matchesSearch && matchesStatus && matchesPriority && matchesAcceptance && matchesTags && matchesFolder;
     });
   }, [requirements, searchQuery, selectedStatusFilter, selectedPriorityFilter, selectedAcceptanceFilter, selectedTagFilter, selectedFolderId, parseTags]);
