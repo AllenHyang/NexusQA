@@ -2,7 +2,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { TestCase, ExecutionRecord, TestStatus } from "../types";
 import { TestStep } from "@prisma/client";
-import { Bug, Calendar, History, User as UserIcon, ExternalLink, Monitor, Paperclip, Copy } from "lucide-react";
+import { Bug, Calendar, History, User as UserIcon, ExternalLink, Monitor, Paperclip, Copy, FileImage, FileVideo, FileText, File } from "lucide-react";
 import { formatBugReportMarkdown } from "../lib/formatters";
 
 interface ExecutionHistoryListProps {
@@ -52,6 +52,19 @@ export function ExecutionHistoryList({ history, defectTrackerUrl, testCase }: Ex
       .catch((err) => console.error('Failed to copy bug report: ', err));
   };
 
+  // Helper to get icon based on mime type
+  const getFileIcon = (mimeType: string) => {
+    if (mimeType.startsWith('image/')) return <FileImage className="w-3 h-3" />;
+    if (mimeType.startsWith('video/')) return <FileVideo className="w-3 h-3" />;
+    if (mimeType === 'application/pdf' || mimeType.startsWith('text/')) return <FileText className="w-3 h-3" />;
+    return <File className="w-3 h-3" />;
+  };
+
+  // Check if file is previewable image
+  const isPreviewableImage = (mimeType: string): boolean => {
+    return ['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(mimeType);
+  };
+
   return (
     <div className="relative pl-6 pr-4 py-6">
       {/* Connector Line */}
@@ -92,7 +105,7 @@ export function ExecutionHistoryList({ history, defectTrackerUrl, testCase }: Ex
                 </time>
               </div>
 
-              {/* Meta Info Row (Environment & Evidence) */}
+              {/* Meta Info Row (Environment & Legacy Evidence URL) */}
               {(record.environment || record.evidence) && (
                   <div className="flex gap-3 mb-2 text-xs text-gray-500">
                       {record.environment && (
@@ -102,12 +115,54 @@ export function ExecutionHistoryList({ history, defectTrackerUrl, testCase }: Ex
                       )}
                       {record.evidence && (
                           <a href={record.evidence} target="_blank" rel="noreferrer" className="flex items-center text-indigo-600 hover:underline">
-                              <Paperclip className="w-3 h-3 mr-1" /> Evidence
+                              <Paperclip className="w-3 h-3 mr-1" /> Evidence Link
                           </a>
                       )}
                   </div>
               )}
-              
+
+              {/* Attachments Grid (F-TE-005) */}
+              {record.attachments && record.attachments.length > 0 && (
+                  <div className="mb-3">
+                      <div className="flex items-center gap-1.5 mb-2">
+                          <Paperclip className="w-3 h-3 text-gray-400" />
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                              Attachments ({record.attachments.length})
+                          </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                          {record.attachments.map((attachment) => (
+                              <a
+                                  key={attachment.id}
+                                  href={attachment.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="group flex items-center gap-2 p-1.5 bg-white rounded-lg border border-gray-100 hover:border-blue-200 hover:shadow-sm transition-all"
+                                  title={attachment.filename}
+                              >
+                                  {isPreviewableImage(attachment.mimeType) ? (
+                                      <div className="w-8 h-8 rounded overflow-hidden bg-gray-100 flex-shrink-0">
+                                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                                          <img
+                                              src={attachment.url}
+                                              alt={attachment.filename}
+                                              className="w-full h-full object-cover"
+                                          />
+                                      </div>
+                                  ) : (
+                                      <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center flex-shrink-0 text-gray-500">
+                                          {getFileIcon(attachment.mimeType)}
+                                      </div>
+                                  )}
+                                  <span className="text-[10px] font-medium text-gray-600 group-hover:text-blue-600 truncate max-w-[80px]">
+                                      {attachment.filename}
+                                  </span>
+                              </a>
+                          ))}
+                      </div>
+                  </div>
+              )}
+
               <div className="text-sm text-gray-700">
                  {record.notes ? (
                     <p className="leading-relaxed">{record.notes}</p>

@@ -11,6 +11,7 @@ describe('ExecutionPanel', () => {
   const mockOnSelectDefectId = jest.fn();
   const mockOnNewDefectData = jest.fn();
   const mockOnExecute = jest.fn().mockResolvedValue(undefined);
+  const mockOnStagedFilesChange = jest.fn();
 
   const defaultProps = {
     env: 'QA',
@@ -19,6 +20,9 @@ describe('ExecutionPanel', () => {
     setEvidence: mockSetEvidence,
     note: '',
     setNote: mockSetNote,
+
+    stagedFiles: [] as File[],
+    onStagedFilesChange: mockOnStagedFilesChange,
 
     projectDefects: [],
     selectedDefectId: null,
@@ -37,8 +41,7 @@ describe('ExecutionPanel', () => {
   it('renders all fields correctly including DefectSelector', () => {
     render(<ExecutionPanel {...defaultProps} />);
 
-    expect(screen.getByPlaceholderText('Env (e.g. Chrome)')).toHaveValue('QA');
-    expect(screen.getByPlaceholderText('Evidence URL')).toHaveValue('');
+    expect(screen.getByPlaceholderText('Environment (e.g. Chrome, QA Server)')).toHaveValue('QA');
     expect(screen.getByPlaceholderText('Execution Notes...')).toHaveValue('');
 
     // Check DefectSelector presence

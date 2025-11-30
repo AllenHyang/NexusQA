@@ -23,7 +23,11 @@ interface TestCaseModalProps {
   setExecutionEnv: (s: string) => void;
   executionEvidence: string;
   setExecutionEvidence: (s: string) => void;
-  
+
+  // Evidence Attachments (F-TE-005)
+  executionStagedFiles: File[];
+  setExecutionStagedFiles: (files: File[]) => void;
+
   // New Defect Props
   defects: Defect[];
   executionSelectedDefectId: string | null;
@@ -32,9 +36,9 @@ interface TestCaseModalProps {
   setExecutionNewDefectData: (data: Partial<Defect> | null) => void;
 
   onExecute: (status: TestStatus) => void;
-  suites: TestSuite[]; 
+  suites: TestSuite[];
   onStepFeedback: (stepId: string, feedback: 'up' | 'down') => void;
-  onVisualFeedback: (feedback: 'up' | 'down') => void; 
+  onVisualFeedback: (feedback: 'up' | 'down') => void;
   onGenerateField: (field: 'userStory' | 'acceptanceCriteria' | 'preconditions') => void;
   mode?: 'EDIT' | 'RUN';
 }
@@ -54,7 +58,9 @@ export function TestCaseModal({
   setExecutionEnv,
   executionEvidence,
   setExecutionEvidence,
-  
+  executionStagedFiles,
+  setExecutionStagedFiles,
+
   defects,
   executionSelectedDefectId,
   setExecutionSelectedDefectId,
@@ -64,7 +70,7 @@ export function TestCaseModal({
   onExecute,
   suites,
   onStepFeedback,
-  onVisualFeedback, 
+  onVisualFeedback,
   onGenerateField,
   mode = 'EDIT'
 }: TestCaseModalProps) {
@@ -147,6 +153,9 @@ export function TestCaseModal({
                 setEvidence={setExecutionEvidence}
                 note={executionNote}
                 setNote={setExecutionNote}
+
+                stagedFiles={executionStagedFiles}
+                onStagedFilesChange={setExecutionStagedFiles}
 
                 projectDefects={defects}
                 selectedDefectId={executionSelectedDefectId}

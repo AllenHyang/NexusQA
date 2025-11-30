@@ -60,9 +60,9 @@ export async function GET(request: Request) {
           include: {
             steps: { orderBy: { order: 'asc' } },
             // requirements: true, // <<< Temporarily commented out to debug defect-management.spec.ts failure
-            history: { 
+            history: {
                 orderBy: { date: 'desc' },
-                include: { defects: true }
+                include: { defects: true, attachments: true }
             },
           },
           orderBy: { createdAt: 'desc' }
@@ -75,7 +75,8 @@ export async function GET(request: Request) {
           history: tc.history.map(h => ({
               ...h,
               environment: h.env,
-              defects: h.defects
+              defects: h.defects,
+              attachments: h.attachments
           }))
           // requirements: tc.requirements // <<< This was the problematic line for deletion
       }));
@@ -177,7 +178,7 @@ export async function POST(request: Request) {
                       steps: { orderBy: { order: 'asc' } }, 
                       history: { 
                           orderBy: { date: 'desc' },
-                          include: { defects: true }
+                          include: { defects: true, attachments: true }
                       } 
                   }
               });
@@ -234,7 +235,7 @@ export async function POST(request: Request) {
               include: { 
                   steps: true, 
                   history: {
-                      include: { defects: true }
+                      include: { defects: true, attachments: true }
                   } 
               }
           });
