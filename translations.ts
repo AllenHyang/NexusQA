@@ -26,9 +26,14 @@ export const translations = {
     "settings.preferences_desc": "Customize your workspace experience.",
     "settings.language": "Language",
     "settings.language_desc": "Select your preferred language for the interface.",
+    "settings.theme": "Theme",
+    "settings.theme_desc": "Choose your preferred color theme.",
+    "settings.theme_light": "Light",
+    "settings.theme_dark": "Dark",
+    "settings.theme_system": "System",
     "settings.email_notifications": "Email Notifications",
     "settings.email_notifications_desc": "Receive daily summaries of test execution results.",
-    
+
     "role.ADMIN": "Admin",
     "role.QA_LEAD": "QA Lead",
     "role.TESTER": "Tester"
@@ -60,6 +65,11 @@ export const translations = {
     "settings.preferences_desc": "自定义您的工作区体验。",
     "settings.language": "语言",
     "settings.language_desc": "选择界面的首选语言。",
+    "settings.theme": "主题",
+    "settings.theme_desc": "选择您喜欢的颜色主题。",
+    "settings.theme_light": "浅色",
+    "settings.theme_dark": "深色",
+    "settings.theme_system": "跟随系统",
     "settings.email_notifications": "邮件通知",
     "settings.email_notifications_desc": "接收测试执行结果的每日摘要。",
 

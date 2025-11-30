@@ -2,16 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { /* Changed from @theme */
+:root, .light { /* Light theme (default) */
   --font-sans: 'Plus Jakarta Sans', sans-serif;
-  
+
   --color-background: #F2F0E9;
   --color-surface: #FFFFFF;
+  --color-surface-elevated: #FFFFFF;
   --color-primary: #FCD34D;
   --color-dark: #18181B;
   --color-subtle: #A1A1AA;
-  
+  --color-border: #E4E4E7;
+  --color-border-light: #F4F4F5;
+  --color-text-primary: #18181B;
+  --color-text-secondary: #52525B;
+  --color-text-muted: #A1A1AA;
+
   --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.dark { /* Dark theme */
+  --color-background: #09090B;
+  --color-surface: #18181B;
+  --color-surface-elevated: #27272A;
+  --color-primary: #FCD34D;
+  --color-dark: #FAFAFA;
+  --color-subtle: #71717A;
+  --color-border: #27272A;
+  --color-border-light: #3F3F46;
+  --color-text-primary: #FAFAFA;
+  --color-text-secondary: #A1A1AA;
+  --color-text-muted: #71717A;
 }
 
 /* Re-adding custom utility classes that might be missing */

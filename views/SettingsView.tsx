@@ -1,7 +1,8 @@
 import React from "react";
 import { User } from "../types";
-import { User as UserIcon, Settings, Link2, Globe } from "lucide-react";
+import { User as UserIcon, Settings, Link2, Globe, Sun, Moon, Monitor } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useTheme, Theme } from "../contexts/ThemeContext";
 
 interface SettingsViewProps {
     currentUser: User;
@@ -11,6 +12,15 @@ interface SettingsViewProps {
 
 export function SettingsView({ currentUser, jiraUrl, setJiraUrl }: SettingsViewProps) {
   const { t, language, setLanguage } = useLanguage();
+  const { theme, setTheme } = useTheme();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const tAny = t as (key: string) => string;
+  const themeOptions: { value: Theme; label: string; icon: React.ReactNode }[] = [
+    { value: 'light', label: tAny("settings.theme_light"), icon: <Sun className="w-4 h-4" /> },
+    { value: 'dark', label: tAny("settings.theme_dark"), icon: <Moon className="w-4 h-4" /> },
+    { value: 'system', label: tAny("settings.theme_system"), icon: <Monitor className="w-4 h-4" /> },
+  ];
 
   return (
     <div className="p-4 md:p-8 max-w-3xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -49,7 +59,7 @@ export function SettingsView({ currentUser, jiraUrl, setJiraUrl }: SettingsViewP
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t("settings.role")}</label>
                 <div className="px-4 py-2.5 bg-indigo-50 border border-indigo-100 text-indigo-700 rounded-xl font-medium text-sm inline-flex items-center">
-                  {t(`role.${currentUser.role}` as any)}
+                  {tAny(`role.${currentUser.role}`)}
                 </div>
               </div>
             </div>
@@ -99,27 +109,56 @@ export function SettingsView({ currentUser, jiraUrl, setJiraUrl }: SettingsViewP
         </div>
         <div className="divide-y divide-gray-100">
           {/* Language Selection */}
-          <div className="p-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
+          <div className="p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
             <div className="flex items-center gap-3">
-                <div className="p-2 bg-gray-100 rounded-lg text-gray-600">
+                <div className="p-2 bg-gray-100 dark:bg-zinc-700 rounded-lg text-gray-600 dark:text-gray-300">
                     <Globe className="w-4 h-4" />
                 </div>
                 <div>
-                    <h4 className="text-sm font-semibold text-gray-900">{t("settings.language")}</h4>
-                    <p className="text-xs text-gray-500 mt-1">{t("settings.language_desc")}</p>
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("settings.language")}</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t("settings.language_desc")}</p>
                 </div>
             </div>
-            <select 
+            <select
                 value={language}
-                onChange={(e) => setLanguage(e.target.value as any)}
-                className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500/20"
+                onChange={(e) => setLanguage(e.target.value as 'en' | 'zh')}
+                className="px-3 py-2 bg-white dark:bg-zinc-700 border border-gray-200 dark:border-zinc-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-indigo-500/20"
             >
                 <option value="en">English</option>
                 <option value="zh">中文 (Chinese)</option>
             </select>
           </div>
 
-          <div className="p-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
+          {/* Theme Selection */}
+          <div className="p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
+            <div className="flex items-center gap-3">
+                <div className="p-2 bg-gray-100 dark:bg-zinc-700 rounded-lg text-gray-600 dark:text-gray-300">
+                    <Sun className="w-4 h-4" />
+                </div>
+                <div>
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{tAny("settings.theme")}</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{tAny("settings.theme_desc")}</p>
+                </div>
+            </div>
+            <div className="flex gap-1 p-1 bg-gray-100 dark:bg-zinc-700 rounded-lg">
+                {themeOptions.map((option) => (
+                    <button
+                        key={option.value}
+                        onClick={() => setTheme(option.value)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                            theme === option.value
+                                ? 'bg-white dark:bg-zinc-600 text-gray-900 dark:text-gray-100 shadow-sm'
+                                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+                        }`}
+                    >
+                        {option.icon}
+                        <span className="hidden sm:inline">{option.label}</span>
+                    </button>
+                ))}
+            </div>
+          </div>
+
+          <div className="p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
             <div>
               <h4 className="text-sm font-semibold text-gray-900">{t("settings.email_notifications")}</h4>
               <p className="text-xs text-gray-500 mt-1">{t("settings.email_notifications_desc")}</p>
