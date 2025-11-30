@@ -774,7 +774,7 @@ PENDING ──▶ APPROVED
 | F-PM-003 | 项目详情 | P0 | ✅ 已完成 | - |
 | F-PM-004 | 编辑项目 | P1 | ✅ 已完成 | - |
 | F-PM-005 | 删除项目 | P1 | ✅ 已完成 | - |
-| F-PM-006 | 项目成员管理 | P2 | 待开发 | - |
+| F-PM-006 | 项目成员管理 | P2 | 开发中 | - |
 
 **F-PM-001: 创建项目**
 
@@ -788,6 +788,66 @@ PENDING ──▶ APPROVED
 - [ ] 项目名称必填，1-100 字符
 - [ ] 名称不允许重复（同一用户下）
 - [ ] 创建成功后跳转到项目详情页
+
+**F-PM-006: 项目成员管理**
+
+> **设计说明**：支持项目级别的成员管理，实现团队协作。
+> 成员角色分为：Owner（所有者）、Admin（管理员）、Member（成员）、Viewer（观察者）。
+
+**数据模型设计**
+
+```prisma
+// 项目成员表
+model ProjectMember {
+  id        String   @id @default(cuid())
+
+  // 关联
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 角色：OWNER, ADMIN, MEMBER, VIEWER
+  role      String   @default("MEMBER")
+
+  // 邀请信息
+  invitedBy String?  // 邀请人 ID
+  invitedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, userId])
+}
+```
+
+**角色权限矩阵**
+
+| 权限 | Owner | Admin | Member | Viewer |
+|------|-------|-------|--------|--------|
+| 查看项目 | ✅ | ✅ | ✅ | ✅ |
+| 编辑项目信息 | ✅ | ✅ | ❌ | ❌ |
+| 删除项目 | ✅ | ❌ | ❌ | ❌ |
+| 管理成员 | ✅ | ✅ | ❌ | ❌ |
+| 创建/编辑用例 | ✅ | ✅ | ✅ | ❌ |
+| 执行测试 | ✅ | ✅ | ✅ | ❌ |
+| 查看报告 | ✅ | ✅ | ✅ | ✅ |
+
+验收标准：
+- [ ] AC1: 项目详情页显示成员列表（头像、名称、角色）
+- [ ] AC2: Owner/Admin 可以添加成员（从系统用户中选择）
+- [ ] AC3: Owner/Admin 可以移除成员（Owner 不可被移除）
+- [ ] AC4: Owner/Admin 可以修改成员角色（Owner 不可被降级）
+- [ ] AC5: 成员列表支持搜索过滤
+- [ ] AC6: 项目创建者自动成为 Owner
+
+API 接口：
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/projects/{id}/members` | 获取成员列表 |
+| POST | `/api/projects/{id}/members` | 添加成员 |
+| PUT | `/api/projects/{id}/members/{memberId}` | 更新成员角色 |
+| DELETE | `/api/projects/{id}/members/{memberId}` | 移除成员 |
 
 ---
 

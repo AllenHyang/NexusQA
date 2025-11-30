@@ -312,3 +312,24 @@ export interface RequirementReview {
   };
   createdAt: string;
 }
+
+// Project Member Types (F-PM-006)
+export type MemberRole = "OWNER" | "ADMIN" | "MEMBER" | "VIEWER";
+
+export interface ProjectMember {
+  id: string;
+  projectId: string;
+  userId: string;
+  role: MemberRole;
+  invitedBy?: string | null;
+  invitedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    avatar?: string | null;
+    role?: string;
+  };
+}
