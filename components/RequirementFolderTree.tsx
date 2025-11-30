@@ -18,6 +18,8 @@ import {
   FolderPlus,
   GripVertical,
   FolderX,
+  Settings,
+  Check,
 } from "lucide-react";
 
 // Special ID for uncategorized filter
@@ -39,6 +41,7 @@ interface FolderItemProps {
   onCreateSubFolder?: (parentId: string) => void;
   onRename?: (folderId: string, newName: string) => void;
   onDelete?: (folderId: string) => void;
+  onChangeType?: (folderId: string, type: FolderType) => void;
   onDropRequirement?: (requirementIds: string[], folderId: string) => void;
   onMoveFolder?: (folderId: string, targetParentId: string | null) => void;
   dragOverFolderId: string | null;
@@ -61,6 +64,7 @@ function FolderItem({
   onCreateSubFolder,
   onRename,
   onDelete,
+  onChangeType,
   onDropRequirement,
   onMoveFolder,
   dragOverFolderId,
@@ -70,6 +74,7 @@ function FolderItem({
 }: FolderItemProps) {
   const [isExpanded, setIsExpanded] = useState(level < 2);
   const [showMenu, setShowMenu] = useState(false);
+  const [showTypeSubmenu, setShowTypeSubmenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(folder.name);
 
@@ -267,7 +272,7 @@ function FolderItem({
             <>
               <div
                 className="fixed inset-0 z-10"
-                onClick={() => setShowMenu(false)}
+                onClick={() => { setShowMenu(false); setShowTypeSubmenu(false); }}
               />
               <div className="absolute right-0 top-full mt-1 w-36 bg-white border border-zinc-200 rounded-lg shadow-lg z-20 py-1">
                 {folder.type !== "FOLDER" && (
@@ -292,10 +297,52 @@ function FolderItem({
                 >
                   <Pencil className="w-3.5 h-3.5" /> 重命名
                 </button>
+                {/* Type change submenu */}
+                <div className="relative">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowTypeSubmenu(!showTypeSubmenu);
+                    }}
+                    className="w-full px-3 py-1.5 text-left text-xs hover:bg-zinc-50 flex items-center gap-2 text-zinc-700"
+                  >
+                    <Settings className="w-3.5 h-3.5" /> 更改类型
+                    <ChevronRight className="w-3 h-3 ml-auto" />
+                  </button>
+                  {showTypeSubmenu && (
+                    <div className="absolute left-full top-0 ml-1 w-28 bg-white border border-zinc-200 rounded-lg shadow-lg py-1">
+                      {(["EPIC", "FEATURE", "FOLDER"] as FolderType[]).map((type) => {
+                        const typeConfig = FOLDER_TYPE_CONFIG[type];
+                        const TypeIcon = typeConfig.icon;
+                        const isCurrentType = folder.type === type;
+                        return (
+                          <button
+                            key={type}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!isCurrentType) {
+                                onChangeType?.(folder.id, type);
+                              }
+                              setShowMenu(false);
+                              setShowTypeSubmenu(false);
+                            }}
+                            className={`w-full px-3 py-1.5 text-left text-xs hover:bg-zinc-50 flex items-center gap-2 ${
+                              isCurrentType ? "bg-zinc-100 font-medium" : "text-zinc-700"
+                            }`}
+                          >
+                            <TypeIcon className={`w-3.5 h-3.5 ${typeConfig.color}`} />
+                            {type === "EPIC" ? "Epic" : type === "FEATURE" ? "Feature" : "文件夹"}
+                            {isCurrentType && <Check className="w-3 h-3 ml-auto text-green-600" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (confirm(`确定要删除文件夹「${folder.name}」吗？`)) {
+                    if (confirm(`确定要删除文件夹「${folder.name}」吗？\n删除后，该文件夹下的需求将移至"未分类"。`)) {
                       onDelete?.(folder.id);
                     }
                     setShowMenu(false);
@@ -323,6 +370,7 @@ function FolderItem({
               onCreateSubFolder={onCreateSubFolder}
               onRename={onRename}
               onDelete={onDelete}
+              onChangeType={onChangeType}
               onDropRequirement={onDropRequirement}
               onMoveFolder={onMoveFolder}
               dragOverFolderId={dragOverFolderId}
@@ -388,6 +436,11 @@ export function RequirementFolderTree({
     if (success) {
       loadFolders(projectId);
     }
+  };
+
+  const handleChangeType = async (folderId: string, type: FolderType) => {
+    await updateFolder(folderId, { type });
+    loadFolders(projectId);
   };
 
   // Root drop handlers
@@ -607,6 +660,7 @@ export function RequirementFolderTree({
                 onCreateSubFolder={handleCreateSubFolder}
                 onRename={handleRename}
                 onDelete={handleDelete}
+                onChangeType={handleChangeType}
                 onDropRequirement={onDropRequirement}
                 onMoveFolder={handleMoveFolder}
                 dragOverFolderId={dragOverFolderId}
