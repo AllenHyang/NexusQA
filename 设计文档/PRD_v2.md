@@ -1701,7 +1701,7 @@ API 接口：
 | F-SY-001 | 用户列表 | P0 | ✅ 已完成 | - |
 | F-SY-002 | 语言切换 | P1 | ✅ 已完成 | - |
 | F-SY-003 | 用户管理（增删改） | P2 | ✅ 已完成 | views/UserManagementView.tsx, app/api/users/route.ts |
-| F-SY-004 | 主题切换 | P3 | 待开发 | - |
+| F-SY-004 | 主题切换 | P3 | ✅ 已完成 | contexts/ThemeContext.tsx, views/SettingsView.tsx |
 
 ---
 
