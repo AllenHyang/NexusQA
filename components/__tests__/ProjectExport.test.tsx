@@ -53,7 +53,7 @@ describe('ProjectDetailPage - Export Functionality', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useParams as jest.Mock).mockReturnValue({ projectId: 'p1' });
-    (useRouter as jest.Mock).mockReturnValue({ push: jest.fn() });
+    (useRouter as jest.Mock).mockReturnValue({ push: jest.fn(), replace: jest.fn() });
     (useAppStore as unknown as jest.Mock).mockReturnValue({
       projects: [mockProject],
       testCases: mockTestCases,
@@ -73,6 +73,17 @@ describe('ProjectDetailPage - Export Functionality', () => {
       createPlan: jest.fn(),
       addCasesToPlan: jest.fn(),
       deleteProject: jest.fn(),
+      bulkUpdateReviewStatus: jest.fn(),
+      // Requirement slice mocks
+      requirements: [],
+      loadRequirements: jest.fn(),
+      requirementsLoading: false,
+      bulkDeleteRequirements: jest.fn(),
+      loadRequirement: jest.fn(),
+      // Folder slice mocks
+      folders: [],
+      loadFolders: jest.fn(),
+      foldersLoading: false,
     });
     (useUI as unknown as jest.Mock).mockReturnValue({
       openTestCaseModal: jest.fn(),
@@ -107,6 +118,10 @@ describe('ProjectDetailPage - Export Functionality', () => {
 
   it('triggers file download with correct data on export', async () => {
     render(<ProjectDetailPage />);
+
+    // Switch to Test Cases tab first (default is now Requirements)
+    const testCasesTab = screen.getByText('Test Cases');
+    fireEvent.click(testCasesTab);
 
     const exportButton = screen.getByText('Export');
     fireEvent.click(exportButton); // Open the dropdown

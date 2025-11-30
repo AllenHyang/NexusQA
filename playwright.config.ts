@@ -6,7 +6,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: 0,
   workers: 1, // Force 1 worker to avoid SQLite locks
-  timeout: 120000, // Global timeout for each test
+  timeout: 60000, // Global timeout for each test (60s)
   expect: {
     timeout: 5000, // Expectation timeout
   },
@@ -26,7 +26,7 @@ export default defineConfig({
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000, // 2 minutes for startup
+    reuseExistingServer: true, // Always reuse if available
+    timeout: 30 * 1000, // 30 seconds for startup
   },
 });
