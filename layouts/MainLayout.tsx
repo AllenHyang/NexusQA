@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { SidebarItem } from "@/components/ui";
-import { LayoutDashboard, Briefcase, Menu, LogOut, Search, Settings, X } from "lucide-react";
+import { LayoutDashboard, Briefcase, Menu, LogOut, Search, Settings, X, Users } from "lucide-react";
 import { User, Project } from "@/types";
 import { useUI } from "@/contexts/UIContext";
 
@@ -87,14 +87,21 @@ export function MainLayout({ currentUser, projects, onLogout, t, children }: Mai
                         collapsed={!isSidebarOpen && !isMobileMenuOpen}
                         onClick={() => router.push("/")}
                     />
-                    <SidebarItem 
-                        icon={<Briefcase className="w-5 h-5" />} 
-                        label={t("app.projects")} 
-                        active={pathname?.startsWith("/projects") || pathname?.startsWith("/project/")} 
+                    <SidebarItem
+                        icon={<Briefcase className="w-5 h-5" />}
+                        label={t("app.projects")}
+                        active={pathname?.startsWith("/projects") || pathname?.startsWith("/project/")}
                         collapsed={!isSidebarOpen && !isMobileMenuOpen}
                         onClick={() => router.push("/projects")}
                     />
-                    
+                    <SidebarItem
+                        icon={<Users className="w-5 h-5" />}
+                        label={t("app.users")}
+                        active={pathname === "/users"}
+                        collapsed={!isSidebarOpen && !isMobileMenuOpen}
+                        onClick={() => router.push("/users")}
+                    />
+
                     <div className="my-4 border-t border-zinc-100"></div>
                     
                     {/* Quick Project Access */}

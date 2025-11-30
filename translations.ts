@@ -2,6 +2,7 @@ export const translations = {
   en: {
     "app.dashboard": "Dashboard",
     "app.projects": "Projects",
+    "app.users": "Users",
     "app.recent": "Recent",
     "app.settings": "Settings",
     "app.logout": "Logout",
@@ -35,6 +36,7 @@ export const translations = {
   zh: {
     "app.dashboard": "仪表盘",
     "app.projects": "项目列表",
+    "app.users": "用户管理",
     "app.recent": "最近访问",
     "app.settings": "设置",
     "app.logout": "退出登录",
