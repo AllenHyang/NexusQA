@@ -88,6 +88,7 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>("ALL");
   const [selectedPriorityFilter, setSelectedPriorityFilter] = useState<string>("ALL");
   const [selectedAcceptanceFilter, setSelectedAcceptanceFilter] = useState<string>("ALL");
+  const [selectedTagFilter, setSelectedTagFilter] = useState<string>("ALL");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<"list" | "traceability" | "matrix">("list");
@@ -103,6 +104,15 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
   const [newFolderParentId, setNewFolderParentId] = useState<string | null>(null);
   const [newFolderName, setNewFolderName] = useState("");
   const [newFolderType, setNewFolderType] = useState<FolderType>("EPIC");
+
+  // Parse tags from JSON string
+  const parseTags = useCallback((tagsStr: string): string[] => {
+    try {
+      return JSON.parse(tagsStr);
+    } catch {
+      return [];
+    }
+  }, []);
 
   useEffect(() => {
     loadRequirements(project.id);
@@ -140,6 +150,17 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
     return { total, completed, inProgress, draft, pendingReview, approved, uncovered, coverageRate, passRate };
   }, [requirements]);
 
+  // Collect all unique tags from requirements
+  const allTags = useMemo(() => {
+    if (!requirements) return [];
+    const tagSet = new Set<string>();
+    requirements.forEach(req => {
+      const tags = parseTags(req.tags);
+      tags.forEach(tag => tagSet.add(tag));
+    });
+    return Array.from(tagSet).sort();
+  }, [requirements, parseTags]);
+
   const filteredRequirements = useMemo(() => {
     if (!requirements) return [];
     return requirements.filter(req => {
@@ -149,11 +170,14 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
       const matchesStatus = selectedStatusFilter === "ALL" || req.status === selectedStatusFilter;
       const matchesPriority = selectedPriorityFilter === "ALL" || req.priority === selectedPriorityFilter;
       const matchesAcceptance = selectedAcceptanceFilter === "ALL" || req.acceptanceStatus === selectedAcceptanceFilter;
+      // Tag filter
+      const reqTags = parseTags(req.tags);
+      const matchesTags = selectedTagFilter === "ALL" || reqTags.includes(selectedTagFilter);
       // Folder filter: null means show all, otherwise filter by folderId
       const matchesFolder = selectedFolderId === null || req.folderId === selectedFolderId;
-      return matchesSearch && matchesStatus && matchesPriority && matchesAcceptance && matchesFolder;
+      return matchesSearch && matchesStatus && matchesPriority && matchesAcceptance && matchesTags && matchesFolder;
     });
-  }, [requirements, searchQuery, selectedStatusFilter, selectedPriorityFilter, selectedAcceptanceFilter, selectedFolderId]);
+  }, [requirements, searchQuery, selectedStatusFilter, selectedPriorityFilter, selectedAcceptanceFilter, selectedTagFilter, selectedFolderId, parseTags]);
 
   // Traceability view sorted requirements (uses shared filters from filteredRequirements)
   const traceabilityRequirements = useMemo(() => {
@@ -183,7 +207,7 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedStatusFilter, selectedPriorityFilter, selectedAcceptanceFilter, selectedFolderId]);
+  }, [searchQuery, selectedStatusFilter, selectedPriorityFilter, selectedAcceptanceFilter, selectedTagFilter, selectedFolderId]);
 
   // Handle folder creation
   const handleCreateFolder = (parentId: string | null) => {
@@ -258,14 +282,6 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
       setSelectedIds(selectedIds.filter(i => i !== id));
     } else {
       setSelectedIds([...selectedIds, id]);
-    }
-  };
-
-  const parseTags = (tagsStr: string): string[] => {
-    try {
-      return JSON.parse(tagsStr);
-    } catch {
-      return [];
     }
   };
 
@@ -664,6 +680,19 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
                   <option key={key} value={key}>{labelZh}</option>
                 ))}
               </select>
+
+              {allTags.length > 0 && (
+                <select
+                  className="px-3 py-2 border border-zinc-200 rounded-xl text-zinc-600 hover:bg-zinc-50 flex items-center text-sm font-medium bg-white"
+                  value={selectedTagFilter}
+                  onChange={e => setSelectedTagFilter(e.target.value)}
+                >
+                  <option value="ALL">所有标签</option>
+                  {allTags.map(tag => (
+                    <option key={tag} value={tag}>{tag}</option>
+                  ))}
+                </select>
+              )}
             </div>
           )}
 
@@ -938,6 +967,19 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
                 <option key={key} value={key}>{labelZh}</option>
               ))}
             </select>
+
+            {allTags.length > 0 && (
+              <select
+                className="px-3 py-2 border border-zinc-200 rounded-xl text-zinc-600 hover:bg-zinc-50 flex items-center text-sm font-medium bg-white"
+                value={selectedTagFilter}
+                onChange={e => setSelectedTagFilter(e.target.value)}
+              >
+                <option value="ALL">所有标签</option>
+                {allTags.map(tag => (
+                  <option key={tag} value={tag}>{tag}</option>
+                ))}
+              </select>
+            )}
           </div>
 
           {/* List Header */}

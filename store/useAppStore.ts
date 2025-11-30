@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { createProjectSlice, ProjectSlice } from './slices/projectSlice';
 import { createTestCaseSlice, TestCaseSlice } from './slices/testCaseSlice';
 import { createUISlice, UISlice } from './slices/uiSlice';
@@ -12,7 +13,26 @@ type AppState = ProjectSlice & TestCaseSlice & UISlice & TestPlanSlice & DefectS
   refreshData: () => Promise<void>;
 };
 
-export const useAppStore = create<AppState>((set, get, store) => ({
+// Custom storage that handles SSR safely
+const customStorage = {
+  getItem: (name: string) => {
+    if (typeof window === 'undefined') return null;
+    const value = sessionStorage.getItem(name);
+    return value ? JSON.parse(value) : null;
+  },
+  setItem: (name: string, value: unknown) => {
+    if (typeof window === 'undefined') return;
+    sessionStorage.setItem(name, JSON.stringify(value));
+  },
+  removeItem: (name: string) => {
+    if (typeof window === 'undefined') return;
+    sessionStorage.removeItem(name);
+  },
+};
+
+export const useAppStore = create<AppState>()(
+  persist(
+    (set, get, store) => ({
   ...createProjectSlice(set, get, store),
   ...createTestCaseSlice(set, get, store),
   ...createUISlice(set, get, store),
@@ -31,7 +51,7 @@ export const useAppStore = create<AppState>((set, get, store) => ({
         fetch('/api/suites'),
         fetch('/api/users') // Fetch users
       ]);
-      
+
       const pData = await pRes.json();
       const tcData = await tcRes.json();
       const sData = await sRes.json();
@@ -44,7 +64,17 @@ export const useAppStore = create<AppState>((set, get, store) => ({
       set({ loading: false });
     }
   },
-}));
+    }),
+    {
+      name: 'nexusqa-storage',
+      storage: customStorage,
+      partialize: (state) => ({
+        currentUser: state.currentUser,
+      }),
+      skipHydration: false,
+    }
+  )
+);
 
 // Temporarily expose store for Playwright debugging
 if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {

@@ -184,20 +184,23 @@ export const NEXUSQA_TEST_CASES = [
   // F-RQ-008 功能验收 (index: 68)
   { suite: '需求管理', title: 'TC-RQ-020 验证功能验收操作', priority: 'P1', status: 'PASSED', reqIndex: 68 },
 
-  // F-RQ-009 需求评审 (index: 69)
+  // F-RQ-010 需求评审 (index: 69) - 已完成
   { suite: '需求管理', title: 'TC-RQ-021 验证需求评审流程', priority: 'P1', status: 'PASSED', reqIndex: 69 },
+  { suite: '需求管理', title: 'TC-RQ-022 验证评审状态变更', priority: 'P1', status: 'PASSED', reqIndex: 69 },
+  { suite: '需求管理', title: 'TC-RQ-023 验证评审意见记录', priority: 'P1', status: 'PASSED', reqIndex: 69 },
 
-  // F-RQ-010 追溯矩阵视图 (index: 70)
-  { suite: '需求管理', title: 'TC-RQ-022 验证追溯矩阵展示', priority: 'P1', status: 'PASSED', reqIndex: 70 },
+  // F-RQ-011 需求层级结构 (index: 70)
+  { suite: '需求管理', title: 'TC-RQ-024 验证需求树形展示', priority: 'P1', status: 'PASSED', reqIndex: 70 },
+  { suite: '需求管理', title: 'TC-RQ-025 验证文件夹筛选需求', priority: 'P1', status: 'PASSED', reqIndex: 70 },
 
-  // F-RQ-011 需求筛选/搜索 (index: 71)
-  { suite: '需求管理', title: 'TC-RQ-023 验证需求搜索功能', priority: 'P1', status: 'PASSED', reqIndex: 71 },
-
-  // F-RQ-012 需求导入 (index: 72)
-  { suite: '需求管理', title: 'TC-RQ-024 验证需求导入功能', priority: 'P2', status: 'UNTESTED', reqIndex: 72 },
-
-  // F-RQ-013 需求导出 (index: 73)
-  { suite: '需求管理', title: 'TC-RQ-025 验证需求导出功能', priority: 'P2', status: 'UNTESTED', reqIndex: 73 },
+  // F-RQ-012 需求文件夹管理 (index: 71)
+  { suite: '需求管理', title: 'TC-RQ-026 验证文件夹创建删除', priority: 'P1', status: 'PASSED', reqIndex: 71 },
+  { suite: '需求管理', title: 'TC-RQ-027 验证需求移动到文件夹', priority: 'P1', status: 'PASSED', reqIndex: 71 },
+  // API 集成测试 - 验证全部需求统计 (Bug fix: rootRequirementsCount)
+  { suite: '需求管理', title: 'TC-RQ-028 API测试-全部需求统计返回总数', priority: 'P0', status: 'PASSED', reqIndex: 71 },
+  { suite: '需求管理', title: 'TC-RQ-029 API测试-文件夹内需求统计正确', priority: 'P0', status: 'PASSED', reqIndex: 71 },
+  { suite: '需求管理', title: 'TC-RQ-030 API测试-未分类需求统计正确', priority: 'P1', status: 'PASSED', reqIndex: 71 },
+  { suite: '需求管理', title: 'TC-RQ-031 API测试-文件夹树形结构构建', priority: 'P1', status: 'PASSED', reqIndex: 71 },
 ];
 
 // Constants for random data generation

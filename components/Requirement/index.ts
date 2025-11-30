@@ -11,6 +11,11 @@ export type { ValidationError, ValidationResult } from "./useFormValidation";
 export { AIButton } from "./AIButton";
 export { BasicInfoTab } from "./BasicInfoTab";
 export { UserStoryTab } from "./UserStoryTab";
+export { DesignTab } from "./DesignTab";
+export { AcceptanceCriteriaTab } from "./AcceptanceCriteriaTab";
+export { TestCasesTab } from "./TestCasesTab";
+export { ReviewTab } from "./ReviewTab";
+export { AcceptanceTab } from "./AcceptanceTab";
 export {
   SubmitFeedback,
   ValidationErrorsBanner,

@@ -45,14 +45,20 @@ export async function GET(request: Request) {
       }
     });
 
-    // Get count of requirements without folder (root level)
-    const rootRequirementsCount = await prisma.internalRequirement.count({
+    // Get count of requirements without folder (uncategorized)
+    const uncategorizedCount = await prisma.internalRequirement.count({
       where: { projectId, folderId: null }
+    });
+
+    // Get total count of all requirements in the project
+    const totalRequirementsCount = await prisma.internalRequirement.count({
+      where: { projectId }
     });
 
     return NextResponse.json({
       folders: rootFolders,
-      rootRequirementsCount
+      rootRequirementsCount: totalRequirementsCount, // "全部需求" should show total count
+      uncategorizedCount // Count of requirements without folder
     });
   } catch (error) {
     console.error("Failed to fetch folders:", error);
