@@ -83,6 +83,10 @@ test.describe('Regression: Case Suite Selection', () => {
     await page.getByRole('heading', { name: projectName }).click();
     await expect(page.getByRole('heading', { name: projectName })).toBeVisible();
 
+    // 2.5 Navigate to Test Cases tab (project defaults to Requirements tab)
+    await page.getByRole('button', { name: 'Test Cases' }).click();
+    await page.waitForTimeout(500);
+
     // 3. Create a suite
     const suiteName = `Backend Suite ${timestamp}`;
     await page.locator('button:has(svg.lucide-folder-plus)').click();

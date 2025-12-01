@@ -41,7 +41,7 @@ export function DesignTab({
         </div>
 
         {designReferences.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {designReferences.map(ref => {
               const TypeIcon = DESIGN_TYPE_OPTIONS.find(o => o.value === ref.type)?.icon || LinkIcon;
               return (

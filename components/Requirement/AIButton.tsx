@@ -9,6 +9,8 @@ interface AIButtonProps {
   className?: string;
   generating: string | null;
   onGenerate: (fieldType: string) => void;
+  icon?: React.ReactNode;
+  disabled?: boolean;
 }
 
 export function AIButton({
@@ -17,9 +19,11 @@ export function AIButton({
   className = "",
   generating,
   onGenerate,
+  icon,
+  disabled = false,
 }: AIButtonProps) {
   const isGenerating = generating === fieldType;
-  const isDisabled = generating !== null;
+  const isDisabled = generating !== null || disabled;
 
   return (
     <button
@@ -39,7 +43,7 @@ export function AIButton({
         </>
       ) : (
         <>
-          <Sparkles className="w-3 h-3" />
+          {icon || <Sparkles className="w-3 h-3" />}
           {label}
         </>
       )}

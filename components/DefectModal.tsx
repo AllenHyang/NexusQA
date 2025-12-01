@@ -90,34 +90,34 @@ export function DefectModal({ isOpen, onClose, onSave, initialData, projectId, c
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="px-6 py-4 border-b border-zinc-100 flex justify-between items-center flex-shrink-0 bg-zinc-50/50">
-            <div className="flex items-center gap-4">
-                <h3 className="text-lg font-bold text-zinc-900">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/50 backdrop-blur-sm">
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col h-[85vh] sm:h-auto sm:max-h-[90vh]">
+        <div className="px-4 sm:px-6 py-4 border-b border-zinc-100 flex justify-between items-center flex-shrink-0 bg-zinc-50/50">
+            <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+                <h3 className="text-base sm:text-lg font-bold text-zinc-900 truncate">
                     {initialData ? "Edit Defect" : "Report New Defect"}
                 </h3>
                 {initialData && (
-                    <div className="flex bg-zinc-100 p-1 rounded-lg">
-                        <button 
+                    <div className="flex bg-zinc-100 p-1 rounded-lg flex-shrink-0">
+                        <button
                             onClick={() => setActiveTab('DETAILS')}
-                            className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${activeTab === 'DETAILS' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
+                            className={`px-2 sm:px-3 py-1 rounded-md text-xs font-bold transition-all ${activeTab === 'DETAILS' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
                         >
                             Details
                         </button>
-                        <button 
+                        <button
                             onClick={() => setActiveTab('DISCUSSION')}
-                            className={`px-3 py-1 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${activeTab === 'DISCUSSION' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
+                            className={`px-2 sm:px-3 py-1 rounded-md text-xs font-bold transition-all flex items-center gap-1 sm:gap-1.5 ${activeTab === 'DISCUSSION' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
                         >
-                            <MessageSquare className="w-3 h-3" /> Discussion
+                            <MessageSquare className="w-3 h-3" /> <span className="hidden sm:inline">Discussion</span><span className="sm:hidden">Chat</span>
                         </button>
                     </div>
                 )}
             </div>
-            <button onClick={onClose}><XCircle className="w-6 h-6 text-zinc-400 hover:text-zinc-600"/></button>
+            <button onClick={onClose} className="flex-shrink-0"><XCircle className="w-6 h-6 text-zinc-400 hover:text-zinc-600"/></button>
         </div>
         
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 min-h-[50vh] sm:min-h-0">
             {activeTab === 'DETAILS' ? (
                 <div className="space-y-4">
                     <div>
@@ -139,7 +139,7 @@ export function DefectModal({ isOpen, onClose, onSave, initialData, projectId, c
                         />
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-xs font-bold text-zinc-500 uppercase mb-1">Severity</label>
                             <select 
@@ -183,7 +183,7 @@ export function DefectModal({ isOpen, onClose, onSave, initialData, projectId, c
                         </select>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-xs font-bold text-zinc-500 uppercase mb-1">External ID (Jira)</label>
                             <input 

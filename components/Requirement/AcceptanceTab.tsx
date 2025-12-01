@@ -29,7 +29,7 @@ export function AcceptanceTab({
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl">
           <div className="text-sm text-zinc-500 mb-1">执行进度</div>
           <div className="text-2xl font-bold text-zinc-900">

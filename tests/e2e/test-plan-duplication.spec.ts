@@ -32,6 +32,10 @@ async function createProjectAndNavigate(page: Page, projectName: string) {
     await createProjectPromise;
     await expect(page.getByRole('heading', { name: projectName })).toBeVisible();
     await page.getByRole('heading', { name: projectName }).click(); // Enter project
+
+    // Navigate to Test Cases tab (project defaults to Requirements tab)
+    await page.getByRole('button', { name: 'Test Cases' }).click();
+    await page.waitForTimeout(500);
 }
 
 test.describe('Test Plan Duplication', () => {
@@ -81,7 +85,10 @@ test.describe('Test Plan Duplication', () => {
     await expect(page.getByRole('cell', { name: caseTitle2 })).toBeVisible();
     
     // Get IDs of created cases
-    const testCasesResponse = await page.request.get(`/api/testcases?projectId=${page.url().split('/').pop()}`);
+    // Extract projectId from URL (handle ?tab=cases query param)
+    const urlPath = new URL(page.url()).pathname;
+    const projectId = urlPath.split('/').pop();
+    const testCasesResponse = await page.request.get(`/api/testcases?projectId=${projectId}`);
     const testCasesData = await testCasesResponse.json();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const caseId1 = testCasesData.find((tc: any) => tc.title === caseTitle1)?.id;
@@ -120,7 +127,9 @@ test.describe('Test Plan Duplication', () => {
 
     // 6. Go back to Test Plans list
     await page.getByLabel('Back to plans list').click();
-    await page.waitForURL(`/project/*/plans`); // Wait for URL change
+    // After going back, page defaults to Requirements tab - navigate to Test Plans
+    await page.getByRole('button', { name: 'Test Plans' }).click();
+    await page.waitForTimeout(500);
     await expect(page.getByRole('heading', { name: 'Test Plans' })).toBeVisible({ timeout: 10000 });
 
     // 7. Duplicate the plan
@@ -129,9 +138,7 @@ test.describe('Test Plan Duplication', () => {
     await expect(duplicateButton).toBeVisible();
 
     // Get the original plan ID programmatically before clicking
-    // URL is like /project/[id]/plans. We need the ID.
-    const urlParts = page.url().split('/');
-    const projectId = urlParts[urlParts.length - 2];
+    // Reuse projectId extracted earlier
     const planResponse = await page.request.get(`/api/projects/${projectId}/plans`);
     const plansData = await planResponse.json();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

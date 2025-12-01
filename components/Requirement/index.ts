@@ -9,6 +9,7 @@ export type { ValidationError, ValidationResult } from "./useFormValidation";
 
 // Components
 export { AIButton } from "./AIButton";
+export { AITestAssistant } from "./AITestAssistant";
 export { BasicInfoTab } from "./BasicInfoTab";
 export { UserStoryTab } from "./UserStoryTab";
 export { DesignTab } from "./DesignTab";

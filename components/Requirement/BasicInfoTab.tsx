@@ -20,6 +20,7 @@ import {
 } from "./constants";
 import { AIButton } from "./AIButton";
 import { FieldError, RequiredIndicator } from "./SubmitFeedback";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { InternalRequirement, RelatedRequirement, TestCase, RequirementStatus } from "@/types";
 
 interface BasicInfoTabProps extends TabProps {
@@ -139,7 +140,7 @@ export function BasicInfoTab({
             <label className="block text-xs font-bold text-zinc-400 uppercase mb-2">需求描述</label>
             {formState.description ? (
               <div className="p-3 bg-white rounded-lg border border-zinc-100">
-                <p className="text-sm text-zinc-700 whitespace-pre-wrap">{formState.description}</p>
+                <MarkdownRenderer content={formState.description} />
               </div>
             ) : (
               <span className="text-sm text-zinc-400">暂无描述</span>
@@ -178,7 +179,7 @@ export function BasicInfoTab({
             <BarChart3 className="w-4 h-4 text-zinc-500" />
             <label className="text-xs font-bold text-zinc-500 uppercase">测试覆盖情况</label>
           </div>
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div className="p-3 bg-white rounded-lg border border-zinc-200">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-zinc-500">执行进度</span>
@@ -307,7 +308,7 @@ export function BasicInfoTab({
       </div>
 
       {/* Status & Priority */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-bold text-zinc-500 uppercase mb-1.5">状态</label>
           <select
@@ -341,7 +342,7 @@ export function BasicInfoTab({
       </div>
 
       {/* Target Version & Effort */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-bold text-zinc-500 uppercase mb-1.5">目标版本</label>
           <input

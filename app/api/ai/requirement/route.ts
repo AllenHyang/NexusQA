@@ -75,17 +75,34 @@ ${titleContext}${descContext}${additionalContext}
         break;
 
       case "testCaseSuggestions":
-        prompt = `你是一位资深的测试工程师。请根据以下需求推荐应该创建的测试用例。
-${titleContext}${descContext}${additionalContext}
+        // Parse context for existing test cases
+        let suggestionsContext: { acceptanceCriteria?: string[]; existingTestCases?: { title: string; description?: string }[] } = {};
+        try {
+          suggestionsContext = JSON.parse(context || "{}");
+        } catch {
+          suggestionsContext = {};
+        }
+        const existingTCs = suggestionsContext.existingTestCases || [];
+        const reqACList = suggestionsContext.acceptanceCriteria || [];
 
-要求:
+        prompt = `你是一位资深的测试工程师。请根据以下需求推荐应该创建的测试用例。
+${titleContext}${descContext}
+
+${reqACList.length > 0 ? `## 验收标准
+${reqACList.map((ac, i) => `${i + 1}. ${ac}`).join("\n")}` : ""}
+
+${existingTCs.length > 0 ? `## 已有测试用例（请勿推荐相似的）
+${existingTCs.map((tc, i) => `${i + 1}. ${tc.title}${tc.description ? ` - ${tc.description}` : ""}`).join("\n")}` : ""}
+
+## 要求
 1. 覆盖正常流程(Happy Path)
 2. 覆盖异常和边界情况
 3. 考虑安全性和性能测试场景
 4. 每个测试用例建议包含标题和简要描述
 5. 生成5-8个测试用例建议
+6. **重要：不要推荐与已有测试用例相似或重复的内容！如果某个场景已被现有用例覆盖，请跳过**
 
-输出格式(JSON数组):
+## 输出格式(JSON数组)
 [
   {"title": "测试用例标题", "description": "简要描述测试目的和关键步骤", "priority": "HIGH|MEDIUM|LOW"},
   ...
@@ -121,6 +138,150 @@ ${titleContext}${descContext}${additionalContext}
 5. 适当使用Markdown格式增强可读性
 
 直接输出优化后的需求描述，不要添加任何解释。`;
+        break;
+
+      case "autoLinkACTestCases":
+        // Auto-link test cases to acceptance criteria
+        let acLinkData;
+        try {
+          acLinkData = JSON.parse(context || "{}");
+        } catch {
+          acLinkData = {};
+        }
+        const acList = acLinkData.acceptanceCriteria || [];
+        const linkedTCs = acLinkData.linkedTestCases || [];
+
+        prompt = `你是一位资深的测试管理专家。请分析以下验收标准和测试用例，自动将测试用例分配到最匹配的验收标准。
+
+## 验收标准列表
+${acList.map((ac: {id: string; description: string}, i: number) => `AC-${i + 1} (ID: ${ac.id}): ${ac.description}`).join("\n")}
+
+## 已关联的测试用例
+${linkedTCs.map((tc: {id: string; title: string; description?: string; userStory?: string; acceptanceCriteria?: string}, i: number) => `
+用例 ${i + 1}:
+- ID: ${tc.id}
+- 标题: ${tc.title}
+${tc.description ? `- 描述: ${tc.description}` : ""}
+${tc.userStory ? `- 用户故事: ${tc.userStory}` : ""}
+${tc.acceptanceCriteria ? `- 验收条件: ${tc.acceptanceCriteria}` : ""}
+`).join("\n")}
+
+## 任务
+请分析每个测试用例与各个验收标准的匹配程度，将测试用例分配到最相关的验收标准。
+
+匹配原则:
+1. 测试用例的功能范围是否与AC描述的功能相符
+2. 测试用例能否验证该AC是否满足
+3. 一个测试用例可以关联到多个AC（如果确实相关）
+4. 只输出有匹配关系的记录
+
+## 输出格式 (严格JSON)
+{
+  "mappings": [
+    {"acId": "验收标准ID", "testCaseIds": ["用例ID1", "用例ID2"], "reason": "简要说明匹配原因"}
+  ]
+}
+
+只输出JSON对象，不要添加任何其他内容。`;
+        break;
+
+      case "aiSmartMatch":
+        // Parse context for available test cases
+        let contextData;
+        try {
+          contextData = JSON.parse(context || "{}");
+        } catch {
+          contextData = {};
+        }
+        const availableTestCases = contextData.availableTestCases || [];
+        const reqAcceptanceCriteria = contextData.acceptanceCriteria || [];
+        const reqUserStories = contextData.userStories || [];
+
+        prompt = `你是一位资深的测试管理专家和QA分析师。请分析以下需求，并从可用的测试用例中找出应该关联的测试用例。
+
+## 需求信息
+标题: "${title}"
+${description ? `描述: "${description}"` : ""}
+
+${reqUserStories.length > 0 ? `### 用户故事
+${reqUserStories.map((s: {role?: string; goal?: string; benefit?: string}, i: number) => `${i + 1}. 作为${s.role || "用户"}，我希望${s.goal || "完成任务"}，以便${s.benefit || "获得价值"}`).join("\n")}` : ""}
+
+${reqAcceptanceCriteria.length > 0 ? `### 验收标准
+${reqAcceptanceCriteria.map((ac: {description?: string}, i: number) => `${i + 1}. ${ac.description || ""}`).join("\n")}` : ""}
+
+## 可用的测试用例
+${availableTestCases.map((tc: {id: string; title: string; description?: string; userStory?: string; acceptanceCriteria?: string}, i: number) => `
+### 测试用例 ${i + 1}
+- ID: ${tc.id}
+- 标题: ${tc.title}
+${tc.description ? `- 描述: ${tc.description}` : ""}
+${tc.userStory ? `- 用户故事: ${tc.userStory}` : ""}
+${tc.acceptanceCriteria ? `- 验收标准: ${tc.acceptanceCriteria}` : ""}
+`).join("\n")}
+
+## 任务
+请分析每个测试用例与需求的相关性，找出应该关联到此需求的测试用例。
+
+评判标准:
+1. 测试用例的功能范围是否与需求相关
+2. 测试用例是否能够验证需求的验收标准
+3. 测试用例的用户故事是否与需求的用户故事相符
+4. 匹配度score: 90-100表示高度相关，70-89表示中等相关，50-69表示部分相关
+
+## 输出格式 (严格JSON数组)
+只输出匹配度≥50的测试用例，格式如下:
+[
+  {"id": "测试用例ID", "title": "测试用例标题", "reason": "关联原因的简要说明", "score": 85},
+  ...
+]
+
+如果没有匹配的测试用例，输出空数组: []
+
+只输出JSON数组，不要添加任何其他内容。`;
+        break;
+
+      case "checkDuplicate":
+        // Check if a test case suggestion is duplicate
+        let dupCheckData;
+        try {
+          dupCheckData = JSON.parse(context || "{}");
+        } catch {
+          dupCheckData = {};
+        }
+        const existingTestCases = dupCheckData.availableTestCases || [];
+
+        prompt = `你是一位测试管理专家。请判断以下测试用例建议是否与已有用例重复。
+
+## 待检查的用例建议
+标题: "${title}"
+${description ? `描述: "${description}"` : ""}
+
+## 已有的测试用例列表
+${existingTestCases.map((tc: {id: string; title: string; description?: string}, i: number) => `
+${i + 1}. ID: ${tc.id}
+   标题: ${tc.title}
+   ${tc.description ? `描述: ${tc.description}` : ""}
+`).join("\n")}
+
+## 任务
+请分析待检查的用例与已有用例的相似度，判断是否重复。
+
+判断标准:
+1. 标题语义相似度
+2. 测试目的是否相同
+3. 覆盖的功能点是否重叠
+4. 相似度≥70%视为重复
+
+## 输出格式 (严格JSON)
+{
+  "isDuplicate": true/false,
+  "similarity": 0-100,
+  "duplicateId": "重复用例的ID（如果有）",
+  "duplicateTitle": "重复用例的标题（如果有）",
+  "reason": "判断理由"
+}
+
+只输出JSON对象，不要添加任何其他内容。`;
         break;
 
       default:

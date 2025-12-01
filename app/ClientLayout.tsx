@@ -11,8 +11,9 @@ import { TestCaseModal } from "@/components/TestCaseModal";
 import { HistoryModal } from "@/components/HistoryModal";
 import { ImportCasesModal } from "@/components/ImportCasesModal";
 import { ImportProjectModal } from "@/components/ImportProjectModal";
+import { AIChatModal } from "@/components/AIChatModal";
 import { ExecutionRecord, Project, TestCase, TestStatus, Priority, TestStep, ReviewStatus, Defect } from "@/types";
-import { XCircle } from "lucide-react"; 
+import { XCircle, Sparkles } from "lucide-react"; 
 import { safeParseTags } from "@/lib/formatters";
 
 interface Toast {
@@ -35,11 +36,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   };
   
   // Store
-  const { 
+  const {
     currentUser, users, login, logout,
-    projects, suites, defects, refreshData,
+    projects, suites, defects, requirements, refreshData,
     createProject, updateProject,
-    saveTestCase, 
+    saveTestCase,
     generateStepsForCase, generateMockupForCase, generateFieldForCase
   } = useAppStore();
 
@@ -59,6 +60,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     historyViewCase, closeHistoryModal,
     showImportCasesModal, importTargetProjectId, closeImportCasesModal,
     showImportProjectModal, closeImportProjectModal,
+    showAIChatModal, openAIChatModal, closeAIChatModal,
     loadingAI, setLoadingAI,
     executionNote, setExecutionNote,
     executionEnv, setExecutionEnv,
@@ -344,6 +346,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             
             onExecute={handleExecute}
             suites={suites}
+            requirements={requirements}
             onStepFeedback={handleStepFeedback}
             onVisualFeedback={handleVisualFeedback}
             onGenerateField={handleGenerateField}
@@ -424,7 +427,26 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
               />
             )}
       
-            {/* Toast Notifications */}      <div className="fixed bottom-4 right-4 z-[99] space-y-2">
+            {/* AI Chat Modal */}
+            <AIChatModal
+              isOpen={showAIChatModal}
+              onClose={closeAIChatModal}
+              currentUserId={currentUser?.id}
+            />
+
+            {/* AI Assistant Floating Button */}
+            {!showAIChatModal && (
+              <button
+                onClick={openAIChatModal}
+                className="fixed bottom-20 right-4 z-[9999] p-4 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 group"
+                title="AI 助手"
+              >
+                <Sparkles className="w-6 h-6 group-hover:animate-pulse" />
+              </button>
+            )}
+
+            {/* Toast Notifications */}
+            <div className="fixed bottom-4 right-4 z-[99] space-y-2">
         {toasts.map((toast) => (
           <div 
             key={toast.id}

@@ -371,15 +371,15 @@ export function StatCard({ title, value, icon }: StatCardProps) {
 
 export function Modal({ onClose, title, children }: { onClose: () => void; title: string; children: React.ReactNode; }) {
     return (
-        <div className="fixed inset-0 modal-overlay flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-            <div className="bg-white border border-zinc-100 rounded-[2rem] w-full max-w-md overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-400 shadow-2xl">
-                <div className="px-6 py-5 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
-                    <h3 className="font-bold text-zinc-800 text-lg tracking-tight">{title}</h3>
-                    <button onClick={onClose} className="rounded-full p-1.5 hover:bg-zinc-200 transition-colors text-zinc-400 hover:text-zinc-600">
+        <div className="fixed inset-0 modal-overlay flex items-end sm:items-center justify-center z-50 sm:p-4 animate-in fade-in duration-300">
+            <div className="bg-white border border-zinc-100 rounded-t-[2rem] sm:rounded-[2rem] w-full max-w-md overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-400 shadow-2xl max-h-[85vh] sm:max-h-[90vh] flex flex-col">
+                <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50 flex-shrink-0">
+                    <h3 className="font-bold text-zinc-800 text-base sm:text-lg tracking-tight truncate">{title}</h3>
+                    <button onClick={onClose} className="rounded-full p-1.5 hover:bg-zinc-200 transition-colors text-zinc-400 hover:text-zinc-600 flex-shrink-0">
                         <XCircle className="w-5 h-5" />
                     </button>
                 </div>
-                <div className="p-6 bg-white">
+                <div className="p-4 sm:p-6 bg-white overflow-y-auto flex-1">
                     {children}
                 </div>
             </div>

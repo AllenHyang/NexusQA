@@ -129,6 +129,11 @@ test.describe('Project Import Flow', () => {
     // 8. Verify Details (Optional: Click into project)
     await page.locator('div.group', { hasText: importedProjectName }).first().click();
     await expect(page.getByRole('heading', { name: importedProjectName })).toBeVisible();
+
+    // Navigate to Test Cases tab (project defaults to Requirements tab)
+    await page.getByRole('button', { name: 'Test Cases' }).click();
+    await page.waitForTimeout(500);
+
     // Check for Suite
     await expect(page.getByText('Frontend Suite')).toBeVisible();
     // Check for Root Case (might need to look at the list)

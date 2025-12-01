@@ -1,5 +1,5 @@
 import React from "react";
-import { TestCase, Priority, TestSuite, ReviewStatus, User } from "@/types";
+import { TestCase, Priority, TestSuite, ReviewStatus, User, InternalRequirement } from "@/types";
 import { Folder, Link2, Tag, BookOpen, CheckCircle2, Clock, Sparkles, Info } from "lucide-react";
 import { TagBadge, Tooltip } from "../ui";
 import { safeParseTags } from "@/lib/formatters";
@@ -11,9 +11,10 @@ interface TestCaseFormProps {
   currentUser: User;
   onGenerateField: (field: 'userStory' | 'acceptanceCriteria' | 'preconditions') => void;
   loadingAI: boolean;
+  requirements?: InternalRequirement[];
 }
 
-export function TestCaseForm({ editCase, setEditCase, suites, currentUser, onGenerateField, loadingAI }: TestCaseFormProps) {
+export function TestCaseForm({ editCase, setEditCase, suites, currentUser, onGenerateField, loadingAI, requirements = [] }: TestCaseFormProps) {
   const [tagInput, setTagInput] = React.useState("");
 
   const handleAddTag = (e: React.KeyboardEvent) => {
@@ -44,18 +45,26 @@ export function TestCaseForm({ editCase, setEditCase, suites, currentUser, onGen
           />
           <div className="flex items-center mt-5 pt-4 border-t border-zinc-100">
              <Link2 className="w-4 h-4 text-zinc-400 mr-2" />
-             <input 
-                type="text" 
-                className="flex-1 text-sm outline-none text-zinc-500 placeholder-zinc-300 bg-transparent font-medium"
-                placeholder="Requirement ID (e.g. JIRA-1024, REQ-50)"
+             <select
+                className="flex-1 text-sm outline-none text-zinc-600 bg-transparent font-medium cursor-pointer focus:ring-2 focus:ring-zinc-900/5 rounded-lg px-2 py-1 border border-transparent hover:border-zinc-200 transition-colors"
                 value={editCase.requirementId || ""}
-                onChange={e => setEditCase({...editCase, requirementId: e.target.value})}
-             />
+                onChange={e => setEditCase({...editCase, requirementId: e.target.value || undefined})}
+             >
+                <option value="">关联需求 (选填)</option>
+                {requirements
+                  .filter(r => r.projectId === editCase.projectId)
+                  .map(r => (
+                    <option key={r.id} value={r.id}>
+                      {r.title}
+                    </option>
+                  ))
+                }
+             </select>
           </div>
         </div>
 
         {/* Metadata: Suite, Priority, Review Status */}
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div className="glass-input p-5 rounded-2xl border border-zinc-200 shadow-sm">
                 <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2 flex items-center">
                     <Folder className="w-3.5 h-3.5 mr-1.5" /> Test Suite

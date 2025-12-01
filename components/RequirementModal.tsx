@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   InternalRequirement,
   RequirementStatus,
@@ -24,6 +24,7 @@ import {
   Palette,
   Target,
   MessageSquare,
+  Sparkles,
 } from "lucide-react";
 import { useAppStore } from "@/store/useAppStore";
 import { BasicInfoTab, UserStoryTab, DesignTab, AcceptanceCriteriaTab, TestCasesTab, ReviewTab, AcceptanceTab } from "./Requirement";
@@ -62,6 +63,11 @@ export function RequirementModal({
     loadReviewHistory,
     performReviewAction
   } = useAppStore();
+
+  // Handler to open test case detail page in new tab
+  const handleViewTestCase = useCallback((testCaseId: string) => {
+    window.open(`/project/${projectId}/case/${testCaseId}`, '_blank');
+  }, [projectId]);
 
   const [activeTab, setActiveTab] = useState<TabType>("BASIC");
   const [isEditMode, setIsEditMode] = useState(false);
@@ -129,6 +135,14 @@ export function RequirementModal({
   const [aiError, setAiError] = useState<string | null>(null);
   const [showTestCaseSuggestions, setShowTestCaseSuggestions] = useState(false);
   const [testCaseSuggestions, setTestCaseSuggestions] = useState<{title: string; description: string; priority: string}[]>([]);
+
+  // AI Smart Match State
+  const [showAIMatchResults, setShowAIMatchResults] = useState(false);
+  const [aiMatchedTestCases, setAiMatchedTestCases] = useState<{id: string; title: string; reason: string; score: number}[]>([]);
+
+  // AC Link Prompt State
+  const [showACLinkPrompt, setShowACLinkPrompt] = useState(false);
+  const [prevLinkedCount, setPrevLinkedCount] = useState(0);
 
   // Other requirements in the same project (for relation linking)
   const otherRequirements = useMemo(() => {
@@ -239,6 +253,21 @@ export function RequirementModal({
     };
     fetchReviews();
   }, [requirementId, isOpen, activeTab, loadReviewHistory]);
+
+  // Detect when test cases are newly linked and prompt for AC linking
+  useEffect(() => {
+    const currentCount = linkedTestCases.length;
+    const hasAC = acceptanceCriteria.length > 0;
+    const hasUncoveredAC = acCoverage.some(item => item.total === 0);
+
+    // If linked count increased and there are ACs that need linking
+    if (currentCount > prevLinkedCount && hasAC && hasUncoveredAC && isEditMode) {
+      setShowACLinkPrompt(true);
+      // Auto-dismiss after 5 seconds
+      setTimeout(() => setShowACLinkPrompt(false), 5000);
+    }
+    setPrevLinkedCount(currentCount);
+  }, [linkedTestCases.length, acceptanceCriteria.length, acCoverage, isEditMode, prevLinkedCount]);
 
   if (!isOpen) return null;
 
@@ -487,6 +516,27 @@ export function RequirementModal({
     }
   };
 
+  // Helper to extract JSON from AI responses (may be wrapped in markdown code blocks)
+  const extractJSON = (text: string): string => {
+    const trimmed = text.trim();
+    // Try to extract from markdown code block
+    const codeBlockMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeBlockMatch) {
+      return codeBlockMatch[1].trim();
+    }
+    // Try to extract JSON array
+    const arrayMatch = trimmed.match(/\[[\s\S]*\]/);
+    if (arrayMatch) {
+      return arrayMatch[0];
+    }
+    // Try to extract JSON object
+    const objectMatch = trimmed.match(/\{[\s\S]*\}/);
+    if (objectMatch) {
+      return objectMatch[0];
+    }
+    return trimmed;
+  };
+
   // AI Generation handler
   const handleAIGenerate = async (fieldType: string) => {
     if (!title.trim()) {
@@ -498,6 +548,20 @@ export function RequirementModal({
     setAiError(null);
 
     try {
+      // Build context based on field type
+      let context = preconditions || (userStories.length > 0 ? JSON.stringify(userStories) : "");
+
+      // For test case suggestions, include existing test cases for deduplication
+      if (fieldType === "testCaseSuggestions") {
+        context = JSON.stringify({
+          acceptanceCriteria: acceptanceCriteria.map(ac => ac.description),
+          existingTestCases: linkedTestCases.map(tc => ({
+            title: tc.title,
+            description: tc.description,
+          })),
+        });
+      }
+
       const response = await fetch("/api/ai/requirement", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -505,7 +569,7 @@ export function RequirementModal({
           title,
           description,
           fieldType,
-          context: preconditions || (userStories.length > 0 ? JSON.stringify(userStories) : ""),
+          context,
         }),
       });
 
@@ -564,7 +628,8 @@ export function RequirementModal({
           break;
         case "businessRules":
           try {
-            const rules = JSON.parse(result.trim());
+            const jsonStr = extractJSON(result);
+            const rules = JSON.parse(jsonStr);
             if (Array.isArray(rules)) {
               const newRules = rules.map((r, i) => ({
                 id: `br-${Date.now()}-${i}`,
@@ -585,13 +650,26 @@ export function RequirementModal({
           break;
         case "testCaseSuggestions":
           try {
-            const suggestions = JSON.parse(result.trim());
+            const jsonStr = extractJSON(result);
+            const suggestions = JSON.parse(jsonStr);
             if (Array.isArray(suggestions)) {
               setTestCaseSuggestions(suggestions);
               setShowTestCaseSuggestions(true);
             }
           } catch {
             setAiError("无法解析测试用例建议，请重试");
+          }
+          break;
+        case "aiSmartMatch":
+          try {
+            const jsonStr = extractJSON(result);
+            const matches = JSON.parse(jsonStr);
+            if (Array.isArray(matches)) {
+              setAiMatchedTestCases(matches);
+              setShowAIMatchResults(true);
+            }
+          } catch {
+            setAiError("无法解析匹配结果，请重试");
           }
           break;
       }
@@ -603,6 +681,76 @@ export function RequirementModal({
     }
   };
 
+  // AI Smart Match handler - analyze available test cases
+  const handleAISmartMatch = async () => {
+    if (!title.trim()) {
+      setAiError("请先填写需求标题");
+      return;
+    }
+
+    if (availableTestCases.length === 0) {
+      setAiError("没有可用的测试用例进行匹配");
+      return;
+    }
+
+    setAiGenerating("aiSmartMatch");
+    setAiError(null);
+
+    try {
+      const response = await fetch("/api/ai/requirement", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          description,
+          fieldType: "aiSmartMatch",
+          context: JSON.stringify({
+            acceptanceCriteria,
+            userStories,
+            availableTestCases: availableTestCases.map(tc => ({
+              id: tc.id,
+              title: tc.title,
+              description: tc.description,
+              userStory: tc.userStory,
+              acceptanceCriteria: tc.acceptanceCriteria,
+            })),
+          }),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("AI matching failed");
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No response body");
+
+      const decoder = new TextDecoder();
+      let result = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        result += decoder.decode(value, { stream: true });
+      }
+
+      try {
+        const jsonStr = extractJSON(result);
+        const matches = JSON.parse(jsonStr);
+        if (Array.isArray(matches)) {
+          setAiMatchedTestCases(matches);
+          setShowAIMatchResults(true);
+        }
+      } catch {
+        setAiError("无法解析匹配结果，请重试");
+      }
+    } catch (error) {
+      console.error("AI smart match error:", error);
+      setAiError("AI 匹配失败，请稍后重试");
+    } finally {
+      setAiGenerating(null);
+    }
+  };
 
   // Tab configuration
   const tabs: { id: TabType; label: string; icon: React.ReactNode; showForNew?: boolean }[] = [
@@ -618,8 +766,8 @@ export function RequirementModal({
   const availableTabs = requirement ? tabs : tabs.filter(t => t.showForNew);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/50 backdrop-blur-sm">
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col h-[85vh] sm:h-auto sm:max-h-[90vh]">
         {/* Header */}
         <div className="px-6 py-4 border-b border-zinc-100 flex justify-between items-center flex-shrink-0 bg-zinc-50/50">
           <div className="flex items-center gap-3">
@@ -676,8 +824,8 @@ export function RequirementModal({
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        {/* Content - Responsive min-height to prevent layout shift when switching tabs */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 min-h-[50vh] sm:min-h-[400px]">
           {/* AI Error Banner */}
           {aiError && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between">
@@ -745,8 +893,6 @@ export function RequirementModal({
               formActions={formActions}
               currentUser={currentUser}
               projectId={projectId}
-              acCoverage={acCoverage}
-              linkedTestCases={linkedTestCases}
               aiGenerating={aiGenerating}
               onAIGenerate={handleAIGenerate}
               onAddAC={handleAddAC}
@@ -760,11 +906,30 @@ export function RequirementModal({
             <TestCasesTab
               linkedTestCases={linkedTestCases}
               availableTestCases={availableTestCases}
+              acceptanceCriteria={acceptanceCriteria}
+              acCoverage={acCoverage}
+              testStats={testStats}
               aiGenerating={aiGenerating}
               showTestCaseSuggestions={showTestCaseSuggestions}
               testCaseSuggestions={testCaseSuggestions}
-              onAIGenerate={handleAIGenerate}
+              showAIMatchResults={showAIMatchResults}
+              aiMatchedTestCases={aiMatchedTestCases}
+              isEditMode={isEditMode}
+              formState={formState}
+              formActions={formActions}
+              requirementTitle={requirement?.title}
+              requirementDescription={requirement?.description ?? undefined}
+              projectId={projectId}
+              requirementId={requirement?.id}
+              onAIGenerate={(fieldType) => {
+                if (fieldType === "aiSmartMatch") {
+                  handleAISmartMatch();
+                } else {
+                  handleAIGenerate(fieldType);
+                }
+              }}
               onCloseSuggestions={() => setShowTestCaseSuggestions(false)}
+              onCloseAIMatch={() => setShowAIMatchResults(false)}
               onLinkTestCases={async (ids) => {
                 if (requirement) {
                   await linkTestCases(requirement.id, ids);
@@ -772,6 +937,34 @@ export function RequirementModal({
                 }
               }}
               onUnlinkTestCase={handleUnlinkTestCase}
+              onViewTestCase={handleViewTestCase}
+              onCreateTestCase={async (suggestion) => {
+                // Create test case from AI suggestion
+                try {
+                  const response = await fetch("/api/testcases", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      title: suggestion.title,
+                      description: suggestion.description,
+                      priority: suggestion.priority === "HIGH" ? "P1" : suggestion.priority === "MEDIUM" ? "P2" : "P3",
+                      projectId,
+                      status: "UNTESTED",
+                    }),
+                  });
+                  if (!response.ok) throw new Error("Failed to create test case");
+                  const created = await response.json();
+                  // Link to current requirement
+                  if (requirement && created.id) {
+                    await linkTestCases(requirement.id, [created.id]);
+                    await loadRequirement(requirement.id);
+                  }
+                  return created;
+                } catch (error) {
+                  console.error("Create test case error:", error);
+                  return null;
+                }
+              }}
             />
           )}
 
@@ -810,6 +1003,33 @@ export function RequirementModal({
             />
           )}
         </div>
+
+        {/* AC Link Prompt Toast */}
+        {showACLinkPrompt && (
+          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="flex items-center gap-3 px-4 py-3 bg-violet-600 text-white rounded-lg shadow-lg">
+              <Sparkles className="w-5 h-5 flex-shrink-0" />
+              <span className="text-sm font-medium">
+                检测到有未覆盖的验收标准，建议使用 AI 自动关联
+              </span>
+              <button
+                onClick={() => {
+                  setShowACLinkPrompt(false);
+                  setActiveTab("ACCEPTANCE_CRITERIA");
+                }}
+                className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-sm font-medium transition-colors"
+              >
+                前往关联
+              </button>
+              <button
+                onClick={() => setShowACLinkPrompt(false)}
+                className="p-1 hover:bg-white/20 rounded transition-colors"
+              >
+                <XCircle className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         {isEditMode && (

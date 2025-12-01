@@ -72,7 +72,11 @@ test.describe('Test Plan Management', () => {
     
     // 2. Enter Project
     await page.getByRole('heading', { name: projectName }).click();
-    
+
+    // 2.5 Navigate to Test Cases tab (project defaults to Requirements tab)
+    await page.getByRole('button', { name: 'Test Cases' }).click();
+    await page.waitForTimeout(500);
+
     // 3. Create Two Test Cases
     // Case 1
     await page.getByRole('button', { name: 'Create Case' }).first().click();
@@ -192,6 +196,10 @@ test.describe('Test Plan Management', () => {
 
     // 2. Enter Project
     await page.getByRole('heading', { name: projectName }).click();
+
+    // 2.5 Navigate to Test Cases tab (project defaults to Requirements tab)
+    await page.getByRole('button', { name: 'Test Cases' }).click();
+    await page.waitForTimeout(500);
 
     // 3. Create a Test Case in the library
     await page.getByRole('button', { name: 'Create Case' }).first().click();

@@ -50,13 +50,13 @@ export function NewProjectModal({ onClose, onSubmit, loadingAI, initialData }: N
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label className="block text-sm font-bold text-zinc-500 mb-2 flex items-center">
                     <Calendar className="w-3.5 h-3.5 mr-1.5 text-zinc-400" /> Start Date
                 </label>
-                <input 
-                    type="date" 
+                <input
+                    type="date"
                     className="w-full px-4 py-2.5 glass-input rounded-xl focus:ring-2 focus:ring-zinc-900/5 focus:border-zinc-400 outline-none transition-all text-sm font-medium text-zinc-600"
                     value={startDate}
                     onChange={e => setStartDate(e.target.value)}
@@ -66,8 +66,8 @@ export function NewProjectModal({ onClose, onSubmit, loadingAI, initialData }: N
                 <label className="block text-sm font-bold text-zinc-500 mb-2 flex items-center">
                     <Calendar className="w-3.5 h-3.5 mr-1.5 text-zinc-400" /> Due Date
                 </label>
-                <input 
-                    type="date" 
+                <input
+                    type="date"
                     className="w-full px-4 py-2.5 glass-input rounded-xl focus:ring-2 focus:ring-zinc-900/5 focus:border-zinc-400 outline-none transition-all text-sm font-medium text-zinc-600"
                     value={dueDate}
                     onChange={e => setDueDate(e.target.value)}

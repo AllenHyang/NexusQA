@@ -37,6 +37,11 @@ interface UIContextType {
   openImportProjectModal: () => void;
   closeImportProjectModal: () => void;
 
+  // AI Chat Modal
+  showAIChatModal: boolean;
+  openAIChatModal: () => void;
+  closeAIChatModal: () => void;
+
   // Loading State
   loadingAI: boolean;
   setLoadingAI: (loading: boolean) => void;
@@ -48,7 +53,7 @@ interface UIContextType {
   setExecutionEnv: (env: string) => void;
   executionEvidence: string;
   setExecutionEvidence: (evidence: string) => void;
-  
+
   // Execution Defect Selection (New)
   executionSelectedDefectId: string | null;
   setExecutionSelectedDefectId: (id: string | null) => void;
@@ -58,7 +63,7 @@ interface UIContextType {
   // Evidence Attachments (F-TE-005)
   executionStagedFiles: File[];
   setExecutionStagedFiles: (files: File[]) => void;
-  
+
   // Global Search
   searchQuery: string;
   setSearchQuery: (query: string) => void;
@@ -86,6 +91,9 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
 
   // Import Project Modal
   const [showImportProjectModal, setShowImportProjectModal] = useState(false);
+
+  // AI Chat Modal
+  const [showAIChatModal, setShowAIChatModal] = useState(false);
 
   // Loading
   const [loadingAI, setLoadingAI] = useState(false);
@@ -168,6 +176,14 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
     setShowImportProjectModal(false);
   };
 
+  const openAIChatModal = () => {
+    setShowAIChatModal(true);
+  };
+
+  const closeAIChatModal = () => {
+    setShowAIChatModal(false);
+  };
+
   return (
     <UIContext.Provider value={{
       showNewProjectModal, editingProject, openNewProjectModal, openEditProjectModal, closeNewProjectModal,
@@ -175,6 +191,7 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
       historyViewCase, openHistoryModal, closeHistoryModal,
       showImportCasesModal, importTargetProjectId, openImportCasesModal, closeImportCasesModal,
       showImportProjectModal, openImportProjectModal, closeImportProjectModal,
+      showAIChatModal, openAIChatModal, closeAIChatModal,
       loadingAI, setLoadingAI,
       executionNote, setExecutionNote,
       executionEnv, setExecutionEnv,
