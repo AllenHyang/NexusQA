@@ -17,13 +17,25 @@ export function NewProjectModal({ onClose, onSubmit, loadingAI, initialData }: N
   const [startDate, setStartDate] = useState("");
   const [dueDate, setDueDate] = useState("");
 
+  // Helper to convert ISO date string to yyyy-MM-dd format for date input
+  const formatDateForInput = (dateStr: string | undefined | null): string => {
+    if (!dateStr) return "";
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return "";
+      return date.toISOString().split('T')[0];
+    } catch {
+      return "";
+    }
+  };
+
   useEffect(() => {
     if (initialData) {
         setName(initialData.name);
         setDesc(initialData.description);
         setRepo(initialData.repositoryUrl || "");
-        setStartDate(initialData.startDate || "");
-        setDueDate(initialData.dueDate || "");
+        setStartDate(formatDateForInput(initialData.startDate));
+        setDueDate(formatDateForInput(initialData.dueDate));
     }
   }, [initialData]);
 

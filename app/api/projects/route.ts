@@ -29,6 +29,8 @@ export async function POST(request: Request) {
           description: body.description,
           coverImage: body.coverImage,
           repositoryUrl: body.repositoryUrl,
+          startDate: body.startDate ? new Date(body.startDate) : null,
+          dueDate: body.dueDate ? new Date(body.dueDate) : null,
         }
       });
 
@@ -67,6 +69,8 @@ export async function PUT(request: Request) {
         description: body.description,
         coverImage: body.coverImage,
         repositoryUrl: body.repositoryUrl,
+        startDate: body.startDate ? new Date(body.startDate) : null,
+        dueDate: body.dueDate ? new Date(body.dueDate) : null,
       }
     });
     return NextResponse.json(updatedProject);
