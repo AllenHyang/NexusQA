@@ -1,6 +1,7 @@
 import React from "react";
 import { Project, TestCase, User } from "../types";
 import { StatCard, ProjectCard, AnimatedEmptyState, DonutChart } from "../components/ui";
+import { UpdateNotification } from "../components/UpdateNotification";
 import { CheckSquare, CheckCircle2, Briefcase, Plus, FolderSearch, Activity, ArrowRight } from "lucide-react";
 
 interface DashboardViewProps {
@@ -57,6 +58,9 @@ export function DashboardView({ testCases, projects, currentUser, searchQuery, o
           </button>
         )}
       </div>
+
+      {/* Update Notification */}
+      <UpdateNotification className="mb-6" />
 
       {/* Bento Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

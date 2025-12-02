@@ -8,7 +8,14 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest --config jest.config.js",
-    "prepare": "husky"
+    "prepare": "husky",
+    "db:seed": "npx prisma db seed",
+    "db:reset": "npx prisma migrate reset --force",
+    "db:export": "npx tsx prisma/export-db.ts",
+    "release": "./scripts/release.sh",
+    "release:patch": "./scripts/release.sh patch",
+    "release:minor": "./scripts/release.sh minor",
+    "release:major": "./scripts/release.sh major"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
@@ -17,6 +24,7 @@
     "@google/genai": "^1.30.0",
     "@prisma/client": "^5.10.0",
     "@types/uuid": "^10.0.0",
+    "date-fns": "^4.1.0",
     "framer-motion": "^12.23.24",
     "lucide-react": "^0.554.0",
     "next": "15.2.1",

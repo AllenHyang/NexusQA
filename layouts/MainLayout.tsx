@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { SidebarItem } from "@/components/ui";
 import { LayoutDashboard, Briefcase, Menu, LogOut, Search, Settings, X, Users } from "lucide-react";
 import { User, Project } from "@/types";
+import { APP_VERSION } from "@/lib/version";
 import { useUI } from "@/contexts/UIContext";
 import { NotificationBell } from "@/components/NotificationBell";
 
@@ -139,13 +140,17 @@ export function MainLayout({ currentUser, projects, onLogout, t, children }: Mai
                             </div>
                         )}
                     </div>
-                    <button 
+                    <button
                         onClick={onLogout}
                         className={`mt-2 w-full flex items-center ${(isSidebarOpen || isMobileMenuOpen) ? "px-3" : "justify-center"} py-3 md:py-2 rounded-lg text-xs font-bold text-red-500 hover:bg-red-50 transition-colors`}
                     >
                         <LogOut className={`w-4 h-4 ${(isSidebarOpen || isMobileMenuOpen) && "mr-2"}`} />
                         {(isSidebarOpen || isMobileMenuOpen) && "Sign Out"}
                     </button>
+                    {/* Version */}
+                    <div className={`mt-3 pt-3 border-t border-zinc-100 text-center ${(!isSidebarOpen && !isMobileMenuOpen) && "hidden"}`}>
+                        <span className="text-[10px] font-medium text-zinc-400">v{APP_VERSION}</span>
+                    </div>
                 </div>
             </div>
 
