@@ -42,7 +42,8 @@ describe('TestCaseForm', () => {
     );
 
     expect(screen.getByPlaceholderText('e.g. Verify successful login with valid credentials')).toHaveValue('Initial Title');
-    expect(screen.getByPlaceholderText('Requirement ID (e.g. JIRA-1024, REQ-50)')).toHaveValue('');
+    // Requirement field is now a select dropdown with "关联需求 (选填)" as default option
+    expect(screen.getByText('关联需求 (选填)')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Medium')).toBeInTheDocument();
     expect(screen.getByDisplayValue('As a user, I want to do X, so I can get Y.', { exact: false })).toBeInTheDocument();
     expect(screen.getByPlaceholderText('GIVEN [context], WHEN [event], THEN [outcome]...')).toHaveValue('Given A, When B, Then C.');
