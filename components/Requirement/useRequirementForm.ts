@@ -37,6 +37,7 @@ const initialState: RequirementFormState = {
   targetVersion: "",
   estimatedEffort: "",
   ownerId: "",
+  reviewerId: "",
   businessRules: [],
   designReferences: [],
   relatedRequirements: [],
@@ -76,6 +77,7 @@ export function useRequirementForm({
         targetVersion: requirement.targetVersion || "",
         estimatedEffort: requirement.estimatedEffort || "",
         ownerId: requirement.ownerId || "",
+        reviewerId: requirement.reviewerId || "",
         businessRules: parseJSON(requirement.businessRules, []),
         designReferences: parseJSON(requirement.designReferences, []),
         relatedRequirements: parseJSON(requirement.relatedRequirements, []),
@@ -120,6 +122,9 @@ export function useRequirementForm({
     }, []),
     setOwnerId: useCallback((value: string) => {
       setFormState((prev) => ({ ...prev, ownerId: value }));
+    }, []),
+    setReviewerId: useCallback((value: string) => {
+      setFormState((prev) => ({ ...prev, reviewerId: value }));
     }, []),
     setBusinessRules: useCallback((value: BusinessRule[]) => {
       setFormState((prev) => ({ ...prev, businessRules: value }));

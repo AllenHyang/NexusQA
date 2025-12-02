@@ -13,6 +13,7 @@ export interface RequirementSlice {
   bulkDeleteRequirements: (ids: string[]) => Promise<void>;
 
   updateRequirementStatus: (requirementId: string, status: RequirementStatus) => Promise<void>;
+  updateRequirementOwner: (requirementId: string, ownerId: string | null) => Promise<void>;
   acceptRequirement: (requirementId: string, userId: string, notes?: string) => Promise<void>;
   rejectRequirement: (requirementId: string, userId: string, notes: string) => Promise<void>;
 
@@ -152,6 +153,29 @@ export const createRequirementSlice: StateCreator<RequirementSlice> = (set) => (
       }
     } catch (error) {
       console.error("Failed to update requirement status", error);
+    }
+  },
+
+  updateRequirementOwner: async (requirementId, ownerId) => {
+    try {
+      const res = await fetch(`/api/requirements/${requirementId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ownerId })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        set(state => ({
+          requirements: state.requirements.map(r =>
+            r.id === requirementId ? { ...r, ownerId: updated.ownerId } : r
+          ),
+          selectedRequirement: state.selectedRequirement?.id === requirementId
+            ? { ...state.selectedRequirement, ownerId: updated.ownerId }
+            : state.selectedRequirement
+        }));
+      }
+    } catch (error) {
+      console.error("Failed to update requirement owner", error);
     }
   },
 

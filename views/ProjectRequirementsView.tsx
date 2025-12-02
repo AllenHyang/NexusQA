@@ -31,10 +31,16 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  User as UserIcon,
+  Kanban,
+  Settings,
 } from "lucide-react";
 import { RequirementModal } from "@/components/RequirementModal";
 import { RequirementFolderTree, UNCATEGORIZED_FOLDER_ID } from "@/components/RequirementFolderTree";
 import { MatrixView } from "@/components/MatrixView";
+import { KanbanView } from "@/components/KanbanView";
+import { TagFilterDropdown } from "@/components/TagFilterDropdown";
+import { TagManagementModal } from "@/components/TagManagementModal";
 import * as XLSX from "xlsx";
 
 interface ProjectRequirementsViewProps {
@@ -79,6 +85,9 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
     createFolder,
     loadFolders,
     batchMoveRequirementsToFolder,
+    users,
+    updateRequirementStatus,
+    updateRequirementOwner,
   } = useAppStore();
 
   // Handle test case click - navigate to test case detail page
@@ -93,10 +102,12 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>("ALL");
   const [selectedPriorityFilter, setSelectedPriorityFilter] = useState<string>("ALL");
   const [selectedAcceptanceFilter, setSelectedAcceptanceFilter] = useState<string>("ALL");
-  const [selectedTagFilter, setSelectedTagFilter] = useState<string>("ALL");
+  const [selectedTagFilters, setSelectedTagFilters] = useState<string[]>([]);
+  const [selectedOwnerFilter, setSelectedOwnerFilter] = useState<string>("ALL");
+  const [isTagManagementOpen, setIsTagManagementOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [viewMode, setViewMode] = useState<"list" | "traceability" | "matrix">("list");
+  const [viewMode, setViewMode] = useState<"list" | "kanban" | "traceability" | "matrix">("list");
   const [selectedTraceRequirement, setSelectedTraceRequirement] = useState<InternalRequirement | null>(null);
 
   // Traceability view sorting
@@ -192,16 +203,20 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
       const matchesStatus = selectedStatusFilter === "ALL" || req.status === selectedStatusFilter;
       const matchesPriority = selectedPriorityFilter === "ALL" || req.priority === selectedPriorityFilter;
       const matchesAcceptance = selectedAcceptanceFilter === "ALL" || req.acceptanceStatus === selectedAcceptanceFilter;
-      // Tag filter
+      // Tag filter (multi-select: requirement must have ALL selected tags)
       const reqTags = parseTags(req.tags);
-      const matchesTags = selectedTagFilter === "ALL" || reqTags.includes(selectedTagFilter);
+      const matchesTags = selectedTagFilters.length === 0 || selectedTagFilters.every(tag => reqTags.includes(tag));
+      // Owner filter
+      const matchesOwner = selectedOwnerFilter === "ALL"
+        || (selectedOwnerFilter === "UNASSIGNED" && !req.ownerId)
+        || req.ownerId === selectedOwnerFilter;
       // Folder filter: null means show all, UNCATEGORIZED_FOLDER_ID means only folderId is null
       const matchesFolder = selectedFolderId === null
         || (selectedFolderId === UNCATEGORIZED_FOLDER_ID && !req.folderId)
         || req.folderId === selectedFolderId;
-      return matchesSearch && matchesStatus && matchesPriority && matchesAcceptance && matchesTags && matchesFolder;
+      return matchesSearch && matchesStatus && matchesPriority && matchesAcceptance && matchesTags && matchesOwner && matchesFolder;
     });
-  }, [requirements, searchQuery, selectedStatusFilter, selectedPriorityFilter, selectedAcceptanceFilter, selectedTagFilter, selectedFolderId, parseTags]);
+  }, [requirements, searchQuery, selectedStatusFilter, selectedPriorityFilter, selectedAcceptanceFilter, selectedTagFilters, selectedOwnerFilter, selectedFolderId, parseTags]);
 
   // Traceability view sorted requirements (uses shared filters from filteredRequirements)
   const traceabilityRequirements = useMemo(() => {
@@ -231,7 +246,7 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedStatusFilter, selectedPriorityFilter, selectedAcceptanceFilter, selectedTagFilter, selectedFolderId]);
+  }, [searchQuery, selectedStatusFilter, selectedPriorityFilter, selectedAcceptanceFilter, selectedTagFilters, selectedOwnerFilter, selectedFolderId]);
 
   // Handle folder creation
   const handleCreateFolder = (parentId: string | null) => {
@@ -472,6 +487,43 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
     XLSX.writeFile(wb, `${project.name}-追溯矩阵-${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
+  // Tag management handlers
+  const handleRenameTag = async (oldTag: string, newTag: string) => {
+    const response = await fetch('/api/requirements/tags', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectId: project.id, oldTag, newTag }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || '重命名失败');
+    }
+    // Refresh requirements to reflect changes
+    await loadRequirements(project.id);
+    // Clear tag filters if the renamed tag was selected
+    if (selectedTagFilters.includes(oldTag)) {
+      setSelectedTagFilters(filters =>
+        filters.map(t => t === oldTag ? newTag : t)
+      );
+    }
+  };
+
+  const handleDeleteTag = async (tag: string) => {
+    const response = await fetch(`/api/requirements/tags?projectId=${project.id}&tag=${encodeURIComponent(tag)}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || '删除失败');
+    }
+    // Refresh requirements to reflect changes
+    await loadRequirements(project.id);
+    // Remove from selected filters if present
+    if (selectedTagFilters.includes(tag)) {
+      setSelectedTagFilters(filters => filters.filter(t => t !== tag));
+    }
+  };
+
   return (
     <div className="flex flex-1 min-h-0 overflow-hidden relative">
       {/* Folder Sidebar */}
@@ -521,6 +573,14 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
                 }`}
               >
                 <List className="w-3.5 h-3.5" /> 列表
+              </button>
+              <button
+                onClick={() => setViewMode("kanban")}
+                className={`px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1.5 transition-all ${
+                  viewMode === "kanban" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700"
+                }`}
+              >
+                <Kanban className="w-3.5 h-3.5" /> 看板
               </button>
               <button
                 onClick={() => setViewMode("traceability")}
@@ -747,18 +807,36 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
                 ))}
               </select>
 
+              {/* Tag Filter (Multi-select) */}
               {allTags.length > 0 && (
-                <select
-                  className="px-3 py-2 border border-zinc-200 rounded-xl text-zinc-600 hover:bg-zinc-50 flex items-center text-sm font-medium bg-white"
-                  value={selectedTagFilter}
-                  onChange={e => setSelectedTagFilter(e.target.value)}
-                >
-                  <option value="ALL">所有标签</option>
-                  {allTags.map(tag => (
-                    <option key={tag} value={tag}>{tag}</option>
-                  ))}
-                </select>
+                <div className="flex items-center gap-1">
+                  <TagFilterDropdown
+                    tags={allTags}
+                    selectedTags={selectedTagFilters}
+                    onChange={setSelectedTagFilters}
+                  />
+                  <button
+                    onClick={() => setIsTagManagementOpen(true)}
+                    className="p-2 border border-zinc-200 rounded-xl text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 transition-colors"
+                    title="管理标签"
+                  >
+                    <Settings className="w-4 h-4" />
+                  </button>
+                </div>
               )}
+
+              {/* Owner Filter */}
+              <select
+                className="px-3 py-2 border border-zinc-200 rounded-xl text-zinc-600 hover:bg-zinc-50 flex items-center text-sm font-medium bg-white"
+                value={selectedOwnerFilter}
+                onChange={e => setSelectedOwnerFilter(e.target.value)}
+              >
+                <option value="ALL">所有负责人</option>
+                <option value="UNASSIGNED">未分配</option>
+                {users.map(user => (
+                  <option key={user.id} value={user.id}>{user.name || user.email}</option>
+                ))}
+              </select>
             </div>
           )}
 
@@ -986,6 +1064,18 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
         />
       )}
 
+      {/* Kanban View */}
+      {viewMode === "kanban" && (
+        <KanbanView
+          requirements={filteredRequirements}
+          users={users}
+          onCardClick={handleEdit}
+          onStatusChange={updateRequirementStatus}
+          onOwnerChange={updateRequirementOwner}
+          parseTags={parseTags}
+        />
+      )}
+
       {/* List View */}
       {viewMode === "list" && (
         <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden mb-6">
@@ -1034,18 +1124,36 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
               ))}
             </select>
 
+            {/* Tag Filter (Multi-select) */}
             {allTags.length > 0 && (
-              <select
-                className="px-3 py-2 border border-zinc-200 rounded-xl text-zinc-600 hover:bg-zinc-50 flex items-center text-sm font-medium bg-white"
-                value={selectedTagFilter}
-                onChange={e => setSelectedTagFilter(e.target.value)}
-              >
-                <option value="ALL">所有标签</option>
-                {allTags.map(tag => (
-                  <option key={tag} value={tag}>{tag}</option>
-                ))}
-              </select>
+              <div className="flex items-center gap-1">
+                <TagFilterDropdown
+                  tags={allTags}
+                  selectedTags={selectedTagFilters}
+                  onChange={setSelectedTagFilters}
+                />
+                <button
+                  onClick={() => setIsTagManagementOpen(true)}
+                  className="p-2 border border-zinc-200 rounded-xl text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 transition-colors"
+                  title="管理标签"
+                >
+                  <Settings className="w-4 h-4" />
+                </button>
+              </div>
             )}
+
+            {/* Owner Filter */}
+            <select
+              className="px-3 py-2 border border-zinc-200 rounded-xl text-zinc-600 hover:bg-zinc-50 flex items-center text-sm font-medium bg-white"
+              value={selectedOwnerFilter}
+              onChange={e => setSelectedOwnerFilter(e.target.value)}
+            >
+              <option value="ALL">所有负责人</option>
+              <option value="UNASSIGNED">未分配</option>
+              {users.map(user => (
+                <option key={user.id} value={user.id}>{user.name || user.email}</option>
+              ))}
+            </select>
           </div>
 
           {/* List Header */}
@@ -1063,6 +1171,7 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
               <div className="w-12">优先级</div>
               <div className="flex-1">需求</div>
               <div className="w-24">状态</div>
+              <div className="w-24">负责人</div>
               <div className="w-20">覆盖</div>
               <div className="w-16">验收</div>
               <div className="w-10"></div>
@@ -1144,6 +1253,22 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
                       <span className={`px-2 py-1 rounded-lg text-xs font-bold ${statusConfig.bgColor} ${statusConfig.color}`}>
                         {statusConfig.labelZh}
                       </span>
+                    </div>
+
+                    {/* Owner */}
+                    <div className="w-24 flex-shrink-0" onClick={() => handleEdit(req)}>
+                      {req.ownerId ? (
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                            <UserIcon className="w-3 h-3 text-blue-600" />
+                          </div>
+                          <span className="text-xs text-zinc-700 truncate">
+                            {users.find(u => u.id === req.ownerId)?.name || "-"}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-zinc-400">未分配</span>
+                      )}
                     </div>
 
                     {/* Coverage */}
@@ -1255,6 +1380,15 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
           initialTab={modalInitialTab}
         />
       )}
+
+      {/* Tag Management Modal */}
+      <TagManagementModal
+        isOpen={isTagManagementOpen}
+        onClose={() => setIsTagManagementOpen(false)}
+        requirements={requirements || []}
+        onRenameTag={handleRenameTag}
+        onDeleteTag={handleDeleteTag}
+      />
 
       {/* Create Folder Modal */}
       {isCreatingFolder && (

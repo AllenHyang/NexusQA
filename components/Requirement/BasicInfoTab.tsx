@@ -92,37 +92,56 @@ export function BasicInfoTab({
         <div className="p-5 bg-gradient-to-br from-zinc-50 to-white rounded-xl border border-zinc-200 shadow-sm">
           <h4 className="text-xl font-bold text-zinc-900 mb-4">{formState.title || "无标题"}</h4>
 
-          {/* Status Badges */}
-          <div className="flex items-center flex-wrap gap-2 mb-4">
-            <span
-              className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold ${getStatusBadgeStyle(
-                formState.status
-              )}`}
-            >
-              {STATUS_OPTIONS.find((s) => s.value === formState.status)?.label}
-            </span>
-            <span
-              className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold ${getPriorityBadgeStyle(
-                formState.priority
-              )}`}
-            >
-              {PRIORITY_OPTIONS.find((p) => p.value === formState.priority)?.label}
-            </span>
-            <span
-              className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold ${
-                requirement.acceptanceStatus === "ACCEPTED"
-                  ? "bg-green-100 text-green-700"
+          {/* Status Badges & Key People */}
+          <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
+            <div className="flex items-center flex-wrap gap-2">
+              <span
+                className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold ${getStatusBadgeStyle(
+                  formState.status
+                )}`}
+              >
+                {STATUS_OPTIONS.find((s) => s.value === formState.status)?.label}
+              </span>
+              <span
+                className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold ${getPriorityBadgeStyle(
+                  formState.priority
+                )}`}
+              >
+                {PRIORITY_OPTIONS.find((p) => p.value === formState.priority)?.label}
+              </span>
+              <span
+                className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold ${
+                  requirement.acceptanceStatus === "ACCEPTED"
+                    ? "bg-green-100 text-green-700"
+                    : requirement.acceptanceStatus === "REJECTED"
+                    ? "bg-red-100 text-red-700"
+                    : "bg-zinc-100 text-zinc-600"
+                }`}
+              >
+                {requirement.acceptanceStatus === "ACCEPTED"
+                  ? "已验收"
                   : requirement.acceptanceStatus === "REJECTED"
-                  ? "bg-red-100 text-red-700"
-                  : "bg-zinc-100 text-zinc-600"
-              }`}
-            >
-              {requirement.acceptanceStatus === "ACCEPTED"
-                ? "已验收"
-                : requirement.acceptanceStatus === "REJECTED"
-                ? "已拒绝"
-                : "待验收"}
-            </span>
+                  ? "已拒绝"
+                  : "待验收"}
+              </span>
+            </div>
+            {/* Owner & Reviewer - Prominent Display */}
+            <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-1.5">
+                <UserIcon className="w-4 h-4 text-blue-500" />
+                <span className="text-zinc-500">负责人:</span>
+                <span className="font-medium text-zinc-900">
+                  {formState.ownerId ? (users.find(u => u.id === formState.ownerId)?.name || "-") : "-"}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <UserIcon className="w-4 h-4 text-purple-500" />
+                <span className="text-zinc-500">评审人:</span>
+                <span className="font-medium text-zinc-900">
+                  {formState.reviewerId ? (users.find(u => u.id === formState.reviewerId)?.name || "-") : "-"}
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Tags */}

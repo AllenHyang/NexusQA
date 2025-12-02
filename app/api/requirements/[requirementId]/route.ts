@@ -164,6 +164,21 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ re
       return NextResponse.json(updated);
     }
 
+    // Handle owner update (for kanban drag-drop)
+    if ('ownerId' in body) {
+      const updated = await prisma.internalRequirement.update({
+        where: { id: requirementId },
+        data: { ownerId: body.ownerId },
+        include: {
+          author: {
+            select: { id: true, name: true, email: true, avatar: true }
+          }
+        }
+      });
+
+      return NextResponse.json(updated);
+    }
+
     // Handle move to folder action
     if (body.action === 'MOVE_TO_FOLDER') {
       const { folderId, order } = body;
