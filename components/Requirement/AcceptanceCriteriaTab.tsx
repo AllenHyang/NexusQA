@@ -9,7 +9,8 @@ import {
 } from "lucide-react";
 import { TabProps } from "./types";
 import { AIButton } from "./AIButton";
-import { AcceptanceCriteria } from "@/types";
+import { CommentsTab } from "./CommentsTab";
+import { AcceptanceCriteria, User } from "@/types";
 
 interface AcceptanceCriteriaTabProps extends TabProps {
   aiGenerating: string | null;
@@ -17,16 +18,19 @@ interface AcceptanceCriteriaTabProps extends TabProps {
   onAddAC: () => void;
   onUpdateAC: (index: number, field: keyof AcceptanceCriteria, value: string) => void;
   onRemoveAC: (index: number) => void;
+  currentUser: User;
 }
 
 export function AcceptanceCriteriaTab({
   isEditMode,
+  requirement,
   formState,
   aiGenerating,
   onAIGenerate,
   onAddAC,
   onUpdateAC,
   onRemoveAC,
+  currentUser,
 }: AcceptanceCriteriaTabProps) {
   const { acceptanceCriteria } = formState;
 
@@ -68,6 +72,16 @@ export function AcceptanceCriteriaTab({
         <p className="text-xs text-zinc-400 text-center pt-2">
           测试覆盖情况请查看「关联用例」标签页
         </p>
+
+        {/* Discussion Section */}
+        {requirement && (
+          <CommentsTab
+            requirementId={requirement.id}
+            currentUser={currentUser}
+            topic="ACCEPTANCE_CRITERIA"
+            compact
+          />
+        )}
       </div>
     );
   }

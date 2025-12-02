@@ -36,7 +36,30 @@ export const translations = {
 
     "role.ADMIN": "Admin",
     "role.QA_LEAD": "QA Lead",
-    "role.TESTER": "Tester"
+    "role.TESTER": "Tester",
+    "role.PM": "PM",
+    "role.DEVELOPER": "Developer",
+
+    // Comments
+    "comments.discussion": "Discussion",
+    "comments.requirement_discussion": "Requirement Discussion",
+    "comments.user_story_discussion": "User Story Discussion",
+    "comments.acceptance_criteria_discussion": "Acceptance Criteria Discussion",
+    "comments.loading": "Loading comments...",
+    "comments.no_comments": "No comments yet. Start the discussion!",
+    "comments.add_placeholder": "Add a comment...",
+    "comments.send_hint": "Press Cmd/Ctrl + Enter to send",
+    "comments.edit": "Edit",
+    "comments.delete": "Delete",
+    "comments.save": "Save",
+    "comments.cancel": "Cancel",
+    "comments.edited": "(edited)",
+    "comments.delete_confirm": "Are you sure you want to delete this comment?",
+    "comments.error_load": "Failed to load comments",
+    "comments.error_add": "Failed to add comment",
+    "comments.error_update": "Failed to update comment",
+    "comments.error_delete": "Failed to delete comment",
+    "comments.reply": "Reply"
   },
   zh: {
     "app.dashboard": "仪表盘",
@@ -75,7 +98,30 @@ export const translations = {
 
     "role.ADMIN": "管理员",
     "role.QA_LEAD": "QA 负责人",
-    "role.TESTER": "测试人员"
+    "role.TESTER": "测试人员",
+    "role.PM": "产品经理",
+    "role.DEVELOPER": "开发人员",
+
+    // Comments
+    "comments.discussion": "讨论",
+    "comments.requirement_discussion": "需求讨论",
+    "comments.user_story_discussion": "用户故事讨论",
+    "comments.acceptance_criteria_discussion": "验收条件讨论",
+    "comments.loading": "加载评论中...",
+    "comments.no_comments": "暂无评论，开始讨论吧！",
+    "comments.add_placeholder": "添加评论...",
+    "comments.send_hint": "按 Cmd/Ctrl + Enter 发送",
+    "comments.edit": "编辑",
+    "comments.delete": "删除",
+    "comments.save": "保存",
+    "comments.cancel": "取消",
+    "comments.edited": "(已编辑)",
+    "comments.delete_confirm": "确定要删除这条评论吗？",
+    "comments.error_load": "加载评论失败",
+    "comments.error_add": "添加评论失败",
+    "comments.error_update": "更新评论失败",
+    "comments.error_delete": "删除评论失败",
+    "comments.reply": "回复"
   }
 };
 

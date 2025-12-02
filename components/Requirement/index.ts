@@ -17,6 +17,7 @@ export { AcceptanceCriteriaTab } from "./AcceptanceCriteriaTab";
 export { TestCasesTab } from "./TestCasesTab";
 export { ReviewTab } from "./ReviewTab";
 export { AcceptanceTab } from "./AcceptanceTab";
+export { CommentsTab } from "./CommentsTab";
 export {
   SubmitFeedback,
   ValidationErrorsBanner,

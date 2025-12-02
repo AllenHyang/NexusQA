@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { User, Role } from "@/types";
 import { useAppStore } from "@/store/useAppStore";
 import { Users, Plus, Search, Edit2, Trash2, X, AlertTriangle, Loader2 } from "lucide-react";
@@ -239,20 +240,49 @@ function DeleteConfirmModal({ isOpen, onClose, onConfirm, userName, isLoading, e
 
 export function UserManagementView() {
   const { users, loadUsers, createUser, updateUser, deleteUser } = useAppStore();
+  const searchParams = useSearchParams();
+  const highlightUserId = searchParams.get("highlight");
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteDetails, setDeleteDetails] = useState<Record<string, number> | undefined>(undefined);
 
+  // Refs for scrolling to highlighted user
+  const userRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
   useEffect(() => {
     loadUsers();
   }, [loadUsers]);
+
+  // Handle highlight effect and scroll to user
+  useEffect(() => {
+    if (highlightUserId && users.length > 0) {
+      setHighlightedId(highlightUserId);
+
+      // Scroll to the highlighted user after a short delay
+      setTimeout(() => {
+        const userElement = userRefs.current[highlightUserId];
+        if (userElement) {
+          userElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 100);
+
+      // Remove highlight effect after 3 seconds
+      const timer = setTimeout(() => {
+        setHighlightedId(null);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [highlightUserId, users]);
 
   const filteredUsers = users.filter(
     (u) =>
@@ -372,7 +402,12 @@ export function UserManagementView() {
             {filteredUsers.map((user) => (
               <div
                 key={user.id}
-                className="p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors group"
+                ref={(el) => { userRefs.current[user.id] = el; }}
+                className={`p-4 flex items-center gap-4 hover:bg-gray-50 transition-all duration-500 group ${
+                  highlightedId === user.id
+                    ? "bg-blue-50 ring-2 ring-blue-400 ring-inset"
+                    : ""
+                }`}
               >
                 {/* Avatar */}
                 <div className="w-10 h-10 rounded-full bg-zinc-200 flex items-center justify-center overflow-hidden flex-shrink-0">

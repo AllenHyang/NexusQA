@@ -6,6 +6,7 @@ import { SidebarItem } from "@/components/ui";
 import { LayoutDashboard, Briefcase, Menu, LogOut, Search, Settings, X, Users } from "lucide-react";
 import { User, Project } from "@/types";
 import { useUI } from "@/contexts/UIContext";
+import { NotificationBell } from "@/components/NotificationBell";
 
 interface MainLayoutProps {
     currentUser: User;
@@ -175,6 +176,15 @@ export function MainLayout({ currentUser, projects, onLogout, t, children }: Mai
                      </div>
                      
                      <div className="flex items-center gap-3 shrink-0">
+                         <NotificationBell
+                             userId={currentUser.id}
+                             onNotificationClick={(notification) => {
+                                 if (notification.projectId && notification.requirementId) {
+                                     // 跳转到需求详情的基本信息 Tab（评论在各 Tab 下方）
+                                     router.push(`/project/${notification.projectId}?selected=${notification.requirementId}&openTab=BASIC`);
+                                 }
+                             }}
+                         />
                          <div className="h-8 px-3 rounded-full bg-white border border-zinc-200 flex items-center gap-2 shadow-sm">
                              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
                              <span className="hidden sm:inline text-xs font-bold text-zinc-600">{t("app.system_online")}</span>

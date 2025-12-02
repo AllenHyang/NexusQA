@@ -5,11 +5,13 @@ import { BookOpen, Users, Layers, Code2, Plus, Trash2 } from "lucide-react";
 import { TabProps } from "./types";
 import { TARGET_USER_OPTIONS } from "./constants";
 import { AIButton } from "./AIButton";
-import { UserStory, BusinessRule } from "@/types";
+import { CommentsTab } from "./CommentsTab";
+import { UserStory, BusinessRule, User } from "@/types";
 
 interface UserStoryTabProps extends TabProps {
   aiGenerating: string | null;
   onAIGenerate: (fieldType: string) => void;
+  currentUser: User;
 }
 
 export function UserStoryTab({
@@ -19,6 +21,7 @@ export function UserStoryTab({
   formActions,
   aiGenerating,
   onAIGenerate,
+  currentUser,
 }: UserStoryTabProps) {
   // Add new user story
   const handleAddUserStory = () => {
@@ -178,6 +181,14 @@ export function UserStoryTab({
             <p className="text-sm text-zinc-400 italic">暂无业务规则</p>
           )}
         </div>
+
+        {/* Discussion Section */}
+        <CommentsTab
+          requirementId={requirement.id}
+          currentUser={currentUser}
+          topic="USER_STORY"
+          compact
+        />
       </div>
     );
   }

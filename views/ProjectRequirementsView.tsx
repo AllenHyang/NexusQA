@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAppStore } from "@/store/useAppStore";
 import { InternalRequirement, Project, User, RequirementStatus, AcceptanceStatus, TestCase, FolderType } from "@/types";
 import {
@@ -65,8 +65,11 @@ const PRIORITY_CONFIG: Record<string, { label: string; color: string }> = {
 
 const PAGE_SIZE = 10;
 
+type ModalTabType = "BASIC" | "USER_STORY" | "DESIGN" | "ACCEPTANCE_CRITERIA" | "TEST_CASES" | "REVIEW" | "ACCEPTANCE";
+
 export function ProjectRequirementsView({ project, currentUser }: ProjectRequirementsViewProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const {
     requirements,
     loadRequirements,
@@ -85,6 +88,7 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRequirement, setEditingRequirement] = useState<InternalRequirement | undefined>(undefined);
+  const [modalInitialTab, setModalInitialTab] = useState<ModalTabType | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>("ALL");
   const [selectedPriorityFilter, setSelectedPriorityFilter] = useState<string>("ALL");
@@ -119,6 +123,23 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
     loadRequirements(project.id);
     loadFolders(project.id);
   }, [project.id, loadRequirements, loadFolders]);
+
+  // Handle URL params for notification navigation (selected requirement and tab)
+  useEffect(() => {
+    const selectedId = searchParams.get("selected");
+    const openTab = searchParams.get("openTab") as ModalTabType | null;
+
+    if (selectedId && requirements && requirements.length > 0) {
+      const req = requirements.find(r => r.id === selectedId);
+      if (req) {
+        setEditingRequirement(req);
+        setModalInitialTab(openTab || undefined);
+        setIsModalOpen(true);
+        // Clear URL params after opening modal
+        router.replace(`/project/${project.id}`);
+      }
+    }
+  }, [searchParams, requirements, router, project.id]);
 
   // Statistics calculation
   const stats = useMemo(() => {
@@ -1226,10 +1247,12 @@ export function ProjectRequirementsView({ project, currentUser }: ProjectRequire
           onClose={() => {
             setIsModalOpen(false);
             setEditingRequirement(undefined);
+            setModalInitialTab(undefined);
           }}
           requirement={editingRequirement}
           projectId={project.id}
           currentUser={currentUser}
+          initialTab={modalInitialTab}
         />
       )}
 

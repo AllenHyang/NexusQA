@@ -188,7 +188,10 @@ model User {
   comments        DefectComment[]
   authoredRequirements InternalRequirement[] @relation("AuthoredRequirements")
   requirementReviews RequirementReview[]
+  requirementComments RequirementComment[]
   projectMemberships ProjectMember[]
+  notifications     Notification[]
+  sentNotifications Notification[] @relation("SentNotifications")
 }
 
 // Project Member Management (F-PM-006)
@@ -326,6 +329,9 @@ model InternalRequirement {
   // Review History
   reviews            RequirementReview[]
 
+  // Discussion Comments
+  comments           RequirementComment[]
+
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 }
@@ -348,6 +354,22 @@ model RequirementReview {
   reviewer        User      @relation(fields: [reviewerId], references: [id])
 
   createdAt       DateTime  @default(now())
+}
+
+// Requirement Comment (Discussion)
+model RequirementComment {
+  id              String    @id @default(cuid())
+  content         String    // Comment content (supports markdown)
+  topic           String    @default("BASIC_INFO") // BASIC_INFO or USER_STORY - discussion topic
+
+  requirementId   String
+  requirement     InternalRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 // Requirement Folder Hierarchy (F-RQ-011, F-RQ-012)
@@ -377,4 +399,32 @@ model RequirementFolder {
 
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+}
+
+// Notification System (Mentions & Inbox)
+model Notification {
+  id            String    @id @default(cuid())
+  type          String    // MENTION, COMMENT_REPLY, REVIEW_REQUEST, etc.
+  content       String    // Notification content summary
+
+  // Related entity
+  entityType    String    // REQUIREMENT_COMMENT, DEFECT_COMMENT
+  entityId      String    // Comment ID
+
+  // Related requirement (for quick navigation)
+  requirementId String?
+
+  // Recipient
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Sender
+  senderId      String
+  sender        User      @relation("SentNotifications", fields: [senderId], references: [id])
+
+  // Status
+  isRead        Boolean   @default(false)
+  readAt        DateTime?
+
+  createdAt     DateTime  @default(now())
 }

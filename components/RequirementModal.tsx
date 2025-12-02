@@ -35,6 +35,7 @@ interface RequirementModalProps {
   requirement?: InternalRequirement;
   projectId: string;
   currentUser: User;
+  initialTab?: TabType;
 }
 
 type TabType = "BASIC" | "USER_STORY" | "DESIGN" | "ACCEPTANCE_CRITERIA" | "TEST_CASES" | "REVIEW" | "ACCEPTANCE";
@@ -44,7 +45,8 @@ export function RequirementModal({
   onClose,
   requirement,
   projectId,
-  currentUser
+  currentUser,
+  initialTab
 }: RequirementModalProps) {
   const {
     saveRequirement,
@@ -69,8 +71,15 @@ export function RequirementModal({
     window.open(`/project/${projectId}/case/${testCaseId}`, '_blank');
   }, [projectId]);
 
-  const [activeTab, setActiveTab] = useState<TabType>("BASIC");
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab || "BASIC");
   const [isEditMode, setIsEditMode] = useState(false);
+
+  // Update active tab when initialTab changes (e.g., from notification click)
+  useEffect(() => {
+    if (initialTab && isOpen) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab, isOpen]);
 
   // Basic Form State
   const [title, setTitle] = useState("");

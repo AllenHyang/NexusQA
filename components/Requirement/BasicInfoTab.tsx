@@ -21,13 +21,15 @@ import {
 import { AIButton } from "./AIButton";
 import { FieldError, RequiredIndicator } from "./SubmitFeedback";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
-import { InternalRequirement, RelatedRequirement, TestCase, RequirementStatus } from "@/types";
+import { CommentsTab } from "./CommentsTab";
+import { InternalRequirement, RelatedRequirement, TestCase, RequirementStatus, User } from "@/types";
 
 interface BasicInfoTabProps extends TabProps {
   linkedTestCases: TestCase[];
   otherRequirements: InternalRequirement[];
   aiGenerating: string | null;
   onAIGenerate: (fieldType: string) => void;
+  currentUser: User;
 }
 
 export function BasicInfoTab({
@@ -39,6 +41,7 @@ export function BasicInfoTab({
   otherRequirements,
   aiGenerating,
   onAIGenerate,
+  currentUser,
 }: BasicInfoTabProps) {
   const [tagInput, setTagInput] = useState("");
 
@@ -265,6 +268,14 @@ export function BasicInfoTab({
             </div>
           </div>
         )}
+
+        {/* Discussion Section */}
+        <CommentsTab
+          requirementId={requirement.id}
+          currentUser={currentUser}
+          topic="BASIC_INFO"
+          compact
+        />
       </div>
     );
   }
