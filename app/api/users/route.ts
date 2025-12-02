@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-const VALID_ROLES = ['ADMIN', 'QA_LEAD', 'TESTER', 'PM', 'DEVELOPER'];
+const VALID_ROLES = ['ADMIN', 'QA_LEAD', 'TESTER', 'PM', 'DEVELOPER', 'PRODUCT_MANAGER'];
 
 // GET /api/users
 // Get all users (supports search and project member filtering)

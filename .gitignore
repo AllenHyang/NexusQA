@@ -41,6 +41,7 @@ playwright-report/
 # Database files
 dev.db
 prisma/dev.db
+prisma/exported/
 
 # PID files
 *.pid

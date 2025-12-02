@@ -8,6 +8,7 @@ export interface TestPlanSlice {
   fetchPlan: (planId: string) => Promise<void>;
   createPlan: (projectId: string, data: Partial<TestPlan>) => Promise<void>;
   addCasesToPlan: (planId: string, caseIds: string[]) => Promise<void>;
+  addRequirementsToPlan: (planId: string, requirementIds: string[]) => Promise<{ added: number; skipped: number }>;
   removeCaseFromPlan: (planId: string, caseId: string) => Promise<void>;
   updateRunStatus: (runId: string, status: string, notes?: string) => Promise<void>;
   duplicateTestPlan: (planId: string) => Promise<void>;
@@ -58,6 +59,20 @@ export const createTestPlanSlice: StateCreator<TestPlanSlice, [], [], TestPlanSl
       if (res.ok) {
           await get().fetchPlan(planId);
       }
+  },
+
+  addRequirementsToPlan: async (planId, requirementIds) => {
+      const res = await fetch(`/api/plans/${planId}/requirements`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ requirementIds })
+      });
+      if (res.ok) {
+          const result = await res.json();
+          await get().fetchPlan(planId);
+          return { added: result.added, skipped: result.skipped };
+      }
+      return { added: 0, skipped: 0 };
   },
 
   removeCaseFromPlan: async (planId, caseId) => {

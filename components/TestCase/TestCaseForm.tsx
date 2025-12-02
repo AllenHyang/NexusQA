@@ -1,6 +1,6 @@
 import React from "react";
 import { TestCase, Priority, TestSuite, ReviewStatus, User, InternalRequirement } from "@/types";
-import { Folder, Link2, Tag, BookOpen, CheckCircle2, Clock, Sparkles, Info } from "lucide-react";
+import { Folder, Link2, Tag, BookOpen, CheckCircle2, Clock, Sparkles, Info, User as UserIcon } from "lucide-react";
 import { TagBadge, Tooltip } from "../ui";
 import { safeParseTags } from "@/lib/formatters";
 
@@ -12,9 +12,10 @@ interface TestCaseFormProps {
   onGenerateField: (field: 'userStory' | 'acceptanceCriteria' | 'preconditions') => void;
   loadingAI: boolean;
   requirements?: InternalRequirement[];
+  users?: User[];
 }
 
-export function TestCaseForm({ editCase, setEditCase, suites, currentUser, onGenerateField, loadingAI, requirements = [] }: TestCaseFormProps) {
+export function TestCaseForm({ editCase, setEditCase, suites, currentUser, onGenerateField, loadingAI, requirements = [], users = [] }: TestCaseFormProps) {
   const [tagInput, setTagInput] = React.useState("");
 
   const handleAddTag = (e: React.KeyboardEvent) => {
@@ -63,8 +64,8 @@ export function TestCaseForm({ editCase, setEditCase, suites, currentUser, onGen
           </div>
         </div>
 
-        {/* Metadata: Suite, Priority, Review Status */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        {/* Metadata: Suite, Priority, Assignee */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
             <div className="glass-input p-5 rounded-2xl border border-zinc-200 shadow-sm">
                 <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2 flex items-center">
                     <Folder className="w-3.5 h-3.5 mr-1.5" /> Test Suite
@@ -82,7 +83,7 @@ export function TestCaseForm({ editCase, setEditCase, suites, currentUser, onGen
             </div>
             <div className="glass-input p-5 rounded-2xl border border-zinc-200 shadow-sm">
                 <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Priority</label>
-                <select 
+                <select
                 value={editCase.priority || "MEDIUM"}
                 onChange={e => setEditCase({...editCase, priority: e.target.value as Priority})}
                 className="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white text-sm font-bold focus:ring-2 focus:ring-zinc-900/5 outline-none transition-shadow text-zinc-800"
@@ -91,6 +92,21 @@ export function TestCaseForm({ editCase, setEditCase, suites, currentUser, onGen
                 <option value="MEDIUM">Medium</option>
                 <option value="HIGH">High</option>
                 <option value="CRITICAL">Critical</option>
+                </select>
+            </div>
+            <div className="glass-input p-5 rounded-2xl border border-zinc-200 shadow-sm">
+                <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2 flex items-center">
+                    <UserIcon className="w-3.5 h-3.5 mr-1.5" /> Assignee
+                </label>
+                <select
+                    value={editCase.assignedToId || ""}
+                    onChange={e => setEditCase({ ...editCase, assignedToId: e.target.value || undefined })}
+                    className="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white text-sm font-bold focus:ring-2 focus:ring-zinc-900/5 outline-none transition-shadow text-zinc-800"
+                >
+                    <option value="">Unassigned</option>
+                    {users.map(user => (
+                        <option key={user.id} value={user.id}>{user.name || user.email}</option>
+                    ))}
                 </select>
             </div>
         </div>

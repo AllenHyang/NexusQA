@@ -38,6 +38,7 @@ interface TestCaseModalProps {
   onExecute: (status: TestStatus) => void;
   suites: TestSuite[];
   requirements?: InternalRequirement[];
+  users?: User[];
   onStepFeedback: (stepId: string, feedback: 'up' | 'down') => void;
   onVisualFeedback: (feedback: 'up' | 'down') => void;
   onGenerateField: (field: 'userStory' | 'acceptanceCriteria' | 'preconditions') => void;
@@ -71,6 +72,7 @@ export function TestCaseModal({
   onExecute,
   suites,
   requirements = [],
+  users = [],
   onStepFeedback,
   onVisualFeedback,
   onGenerateField,
@@ -105,6 +107,7 @@ export function TestCaseModal({
                     onGenerateField={onGenerateField}
                     loadingAI={loadingAI}
                     requirements={requirements}
+                    users={users}
                 />
             )}
             {isRunMode && (

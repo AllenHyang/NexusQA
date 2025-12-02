@@ -7,6 +7,7 @@ import { TARGET_USER_OPTIONS } from "./constants";
 import { AIButton } from "./AIButton";
 import { CommentsTab } from "./CommentsTab";
 import { UserStory, BusinessRule, User } from "@/types";
+import { MentionInput } from "@/components/MentionInput";
 
 interface UserStoryTabProps extends TabProps {
   aiGenerating: string | null;
@@ -307,11 +308,11 @@ export function UserStoryTab({
             onGenerate={onAIGenerate}
           />
         </div>
-        <textarea
-          className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-zinc-900 focus:ring-2 focus:ring-zinc-900/5 outline-none min-h-[80px]"
+        <MentionInput
           value={formState.preconditions}
-          onChange={(e) => formActions.setPreconditions(e.target.value)}
+          onChange={formActions.setPreconditions}
           placeholder="描述此需求的前提条件或依赖..."
+          rows={3}
         />
       </div>
 
@@ -351,12 +352,15 @@ export function UserStoryTab({
                   onChange={(e) => handleUpdateBusinessRule(index, "code", e.target.value)}
                   placeholder="BR-001"
                 />
-                <textarea
-                  className="flex-1 px-3 py-1.5 rounded border border-zinc-200 bg-white text-zinc-900 text-sm focus:ring-2 focus:ring-zinc-900/5 outline-none min-h-[40px]"
-                  value={rule.description}
-                  onChange={(e) => handleUpdateBusinessRule(index, "description", e.target.value)}
-                  placeholder="描述业务规则..."
-                />
+                <div className="flex-1">
+                  <MentionInput
+                    value={rule.description}
+                    onChange={(value) => handleUpdateBusinessRule(index, "description", value)}
+                    placeholder="描述业务规则..."
+                    rows={1}
+                    className="bg-white"
+                  />
+                </div>
                 <button
                   onClick={() => handleRemoveBusinessRule(index)}
                   className="p-1.5 text-zinc-400 hover:text-red-500"

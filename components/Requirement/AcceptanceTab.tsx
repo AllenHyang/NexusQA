@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { InternalRequirement } from "@/types";
 import { TestStats } from "./types";
+import { MentionInput } from "@/components/MentionInput";
 
 interface AcceptanceTabProps {
   requirement: InternalRequirement;
@@ -115,11 +116,11 @@ export function AcceptanceTab({
             <label className="block text-xs font-bold text-zinc-500 uppercase mb-1.5">
               验收意见
             </label>
-            <textarea
-              className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-zinc-50 text-zinc-900 focus:ring-2 focus:ring-zinc-900/5 outline-none min-h-[80px]"
+            <MentionInput
               value={acceptanceNotes}
-              onChange={e => onAcceptanceNotesChange(e.target.value)}
+              onChange={onAcceptanceNotesChange}
               placeholder="填写验收意见（拒绝时必填）..."
+              rows={3}
             />
           </div>
           <div className="flex gap-3">

@@ -63,7 +63,8 @@ export function RequirementModal({
     rejectReview,
     requestChanges,
     loadReviewHistory,
-    performReviewAction
+    performReviewAction,
+    users
   } = useAppStore();
 
   // Handler to open test case detail page in new tab
@@ -97,6 +98,7 @@ export function RequirementModal({
   const [targetVersion, setTargetVersion] = useState("");
   const [estimatedEffort, setEstimatedEffort] = useState("");
   const [ownerId, setOwnerId] = useState("");
+  const [reviewerId, setReviewerId] = useState("");
 
   // Business Rules State
   const [businessRules, setBusinessRules] = useState<BusinessRule[]>([]);
@@ -179,6 +181,7 @@ export function RequirementModal({
       setTargetVersion(requirement.targetVersion || "");
       setEstimatedEffort(requirement.estimatedEffort || "");
       setOwnerId(requirement.ownerId || "");
+      setReviewerId(requirement.reviewerId || "");
 
       // Load full requirement data
       loadRequirement(requirement.id);
@@ -197,6 +200,7 @@ export function RequirementModal({
       setTargetVersion("");
       setEstimatedEffort("");
       setOwnerId("");
+      setReviewerId("");
       setBusinessRules([]);
       setDesignReferences([]);
       setRelatedRequirements([]);
@@ -293,6 +297,7 @@ export function RequirementModal({
     targetVersion,
     estimatedEffort,
     ownerId,
+    reviewerId,
     businessRules,
     designReferences,
     relatedRequirements,
@@ -312,6 +317,7 @@ export function RequirementModal({
     setTargetVersion,
     setEstimatedEffort,
     setOwnerId,
+    setReviewerId,
     setBusinessRules,
     setDesignReferences,
     setRelatedRequirements,
@@ -341,6 +347,7 @@ export function RequirementModal({
       targetVersion: targetVersion || null,
       estimatedEffort: estimatedEffort || null,
       ownerId: ownerId || null,
+      reviewerId: reviewerId || null,
       businessRules: JSON.stringify(businessRules),
       designReferences: JSON.stringify(designReferences),
       relatedRequirements: JSON.stringify(relatedRequirements),
@@ -861,6 +868,7 @@ export function RequirementModal({
               otherRequirements={otherRequirements}
               aiGenerating={aiGenerating}
               onAIGenerate={handleAIGenerate}
+              users={users}
             />
           )}
 
@@ -989,6 +997,9 @@ export function RequirementModal({
               reviewComment={reviewComment}
               reviewLoading={reviewLoading}
               reviewError={reviewError}
+              reviewerId={reviewerId}
+              onReviewerIdChange={setReviewerId}
+              users={users}
               onReviewCommentChange={setReviewComment}
               onSubmitForReview={handleSubmitForReview}
               onApproveReview={handleApproveReview}

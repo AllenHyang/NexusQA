@@ -23,6 +23,7 @@ import { FieldError, RequiredIndicator } from "./SubmitFeedback";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { CommentsTab } from "./CommentsTab";
 import { InternalRequirement, RelatedRequirement, TestCase, RequirementStatus, User } from "@/types";
+import { MentionInput } from "@/components/MentionInput";
 
 interface BasicInfoTabProps extends TabProps {
   linkedTestCases: TestCase[];
@@ -30,6 +31,7 @@ interface BasicInfoTabProps extends TabProps {
   aiGenerating: string | null;
   onAIGenerate: (fieldType: string) => void;
   currentUser: User;
+  users?: User[];
 }
 
 export function BasicInfoTab({
@@ -42,6 +44,7 @@ export function BasicInfoTab({
   aiGenerating,
   onAIGenerate,
   currentUser,
+  users = [],
 }: BasicInfoTabProps) {
   const [tagInput, setTagInput] = useState("");
 
@@ -152,7 +155,7 @@ export function BasicInfoTab({
         </div>
 
         {/* Planning Info */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-100">
             <div className="flex items-center gap-2 mb-2">
               <Calendar className="w-4 h-4 text-zinc-400" />
@@ -172,7 +175,18 @@ export function BasicInfoTab({
               <UserIcon className="w-4 h-4 text-zinc-400" />
               <span className="text-xs font-bold text-zinc-500 uppercase">负责人</span>
             </div>
-            <p className="text-sm text-zinc-900">{formState.ownerId || "-"}</p>
+            <p className="text-sm text-zinc-900">
+              {formState.ownerId ? (users.find(u => u.id === formState.ownerId)?.name || formState.ownerId) : "-"}
+            </p>
+          </div>
+          <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-100">
+            <div className="flex items-center gap-2 mb-2">
+              <UserIcon className="w-4 h-4 text-zinc-400" />
+              <span className="text-xs font-bold text-zinc-500 uppercase">评审人</span>
+            </div>
+            <p className="text-sm text-zinc-900">
+              {formState.reviewerId ? (users.find(u => u.id === formState.reviewerId)?.name || formState.reviewerId) : "-"}
+            </p>
           </div>
         </div>
 
@@ -310,11 +324,11 @@ export function BasicInfoTab({
             onGenerate={onAIGenerate}
           />
         </div>
-        <textarea
-          className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-zinc-900 focus:ring-2 focus:ring-zinc-900/5 focus:border-zinc-300 outline-none min-h-[100px]"
+        <MentionInput
           value={formState.description}
-          onChange={(e) => formActions.setDescription(e.target.value)}
+          onChange={formActions.setDescription}
           placeholder="详细描述需求背景..."
+          rows={4}
         />
       </div>
 
@@ -352,8 +366,8 @@ export function BasicInfoTab({
         </div>
       </div>
 
-      {/* Target Version & Effort */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Target Version & Effort & Owner */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label className="block text-xs font-bold text-zinc-500 uppercase mb-1.5">目标版本</label>
           <input
@@ -371,6 +385,21 @@ export function BasicInfoTab({
             onChange={(e) => formActions.setEstimatedEffort(e.target.value)}
             placeholder="如: 3d, 5 story points"
           />
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-zinc-500 uppercase mb-1.5 flex items-center">
+            <UserIcon className="w-3.5 h-3.5 mr-1.5" /> 负责人
+          </label>
+          <select
+            className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-zinc-900"
+            value={formState.ownerId}
+            onChange={(e) => formActions.setOwnerId(e.target.value)}
+          >
+            <option value="">未分配</option>
+            {users.map(user => (
+              <option key={user.id} value={user.id}>{user.name || user.email}</option>
+            ))}
+          </select>
         </div>
       </div>
 

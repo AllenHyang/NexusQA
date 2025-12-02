@@ -11,6 +11,7 @@ import { TabProps } from "./types";
 import { AIButton } from "./AIButton";
 import { CommentsTab } from "./CommentsTab";
 import { AcceptanceCriteria, User } from "@/types";
+import { MentionInput } from "@/components/MentionInput";
 
 interface AcceptanceCriteriaTabProps extends TabProps {
   aiGenerating: string | null;
@@ -120,12 +121,15 @@ export function AcceptanceCriteriaTab({
             <div key={ac.id} className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl">
               <div className="flex items-start gap-2">
                 <span className="text-xs font-bold text-zinc-400 mt-2.5">AC-{index + 1}</span>
-                <textarea
-                  className="flex-1 px-3 py-2 rounded-lg border border-zinc-200 bg-white text-zinc-900 text-sm focus:ring-2 focus:ring-zinc-900/5 outline-none min-h-[60px]"
-                  value={ac.description}
-                  onChange={e => onUpdateAC(index, "description", e.target.value)}
-                  placeholder="描述具体可测的验收标准..."
-                />
+                <div className="flex-1">
+                  <MentionInput
+                    value={ac.description}
+                    onChange={(value) => onUpdateAC(index, "description", value)}
+                    placeholder="描述具体可测的验收标准..."
+                    rows={2}
+                    className="bg-white"
+                  />
+                </div>
                 <button
                   onClick={() => onRemoveAC(index)}
                   className="p-1.5 text-zinc-400 hover:text-red-500"

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAppStore } from "@/store/useAppStore";
-import { ArrowLeft, CheckCircle2, XCircle, AlertCircle, Calendar, Search, Plus, Trash2, Copy, Eye } from "lucide-react"; 
+import { ArrowLeft, CheckCircle2, XCircle, AlertCircle, Calendar, Search, Plus, Trash2, Copy, Eye, FileText } from "lucide-react"; 
 import { StatusBadge, PriorityBadge, ProgressBar } from "@/components/ui";
 import { TestStatus } from "@/types";
 
@@ -12,7 +12,7 @@ export default function PlanDetailPage() {
   const planId = params.planId as string;
   const projectId = params.projectId as string;
   const router = useRouter();
-  const { currentPlan, fetchPlan, updateRunStatus, addCasesToPlan, removeCaseFromPlan, testCases, duplicateTestPlan } = useAppStore(); 
+  const { currentPlan, fetchPlan, updateRunStatus, addCasesToPlan, addRequirementsToPlan, removeCaseFromPlan, testCases, duplicateTestPlan, requirements, loadRequirements } = useAppStore(); 
   
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<TestStatus | "ALL">("ALL");
@@ -21,11 +21,22 @@ export default function PlanDetailPage() {
   const [selectedCaseIds, setSelectedCaseIds] = useState<string[]>([]);
   const [addModalSearch, setAddModalSearch] = useState("");
 
+  // Requirement modal state
+  const [showReqModal, setShowReqModal] = useState(false);
+  const [selectedReqIds, setSelectedReqIds] = useState<string[]>([]);
+  const [reqModalSearch, setReqModalSearch] = useState("");
+
   useEffect(() => {
     if (planId) {
         fetchPlan(planId);
     }
   }, [planId, fetchPlan]);
+
+  useEffect(() => {
+    if (projectId) {
+        loadRequirements(projectId);
+    }
+  }, [projectId, loadRequirements]);
 
   if (!currentPlan) return <div className="flex h-screen items-center justify-center text-zinc-400">Loading plan...</div>;
 
@@ -55,6 +66,17 @@ export default function PlanDetailPage() {
       }
   };
 
+  const handleAddRequirements = async () => {
+      if (selectedReqIds.length > 0) {
+          const result = await addRequirementsToPlan(planId, selectedReqIds);
+          setShowReqModal(false);
+          setSelectedReqIds([]);
+          if (result.added > 0 || result.skipped > 0) {
+              alert(`Added ${result.added} test cases (${result.skipped} already existed)`);
+          }
+      }
+  };
+
   const handleDuplicate = async () => {
       if (!currentPlan) return;
       if (confirm(`Are you sure you want to duplicate "${currentPlan.name}"?`)) {
@@ -64,10 +86,16 @@ export default function PlanDetailPage() {
   };
 
   const existingCaseIds = new Set(runs.map(r => r.testCaseId));
-  const availableCases = testCases.filter(tc => 
-      tc.projectId === projectId && 
+  const availableCases = testCases.filter(tc =>
+      tc.projectId === projectId &&
       !existingCaseIds.has(tc.id) &&
       tc.title.toLowerCase().includes(addModalSearch.toLowerCase())
+  );
+
+  // Filter requirements that have linked test cases
+  const availableRequirements = requirements.filter(req =>
+      req.testCases && req.testCases.length > 0 &&
+      req.title.toLowerCase().includes(reqModalSearch.toLowerCase())
   );
 
   return (
@@ -154,12 +182,20 @@ export default function PlanDetailPage() {
                  ))}
              </div>
          </div>
-         <button 
-            onClick={() => setShowAddModal(true)}
-            className="bg-zinc-900 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center hover:bg-black transition-colors shadow-sm ml-4"
-         >
-             <Plus className="w-4 h-4 mr-2" /> Add Cases
-         </button>
+         <div className="flex gap-2 ml-4">
+             <button
+                onClick={() => setShowReqModal(true)}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center hover:bg-blue-700 transition-colors shadow-sm"
+             >
+                 <FileText className="w-4 h-4 mr-2" /> Add Requirements
+             </button>
+             <button
+                onClick={() => setShowAddModal(true)}
+                className="bg-zinc-900 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center hover:bg-black transition-colors shadow-sm"
+             >
+                 <Plus className="w-4 h-4 mr-2" /> Add Cases
+             </button>
+         </div>
       </div>
 
       {/* Run List */}
@@ -355,18 +391,126 @@ export default function PlanDetailPage() {
                   </div>
 
                   <div className="flex justify-end gap-2 pt-4 border-t border-zinc-100">
-                      <button 
+                      <button
                         onClick={() => setShowAddModal(false)}
                         className="px-4 py-2 text-sm font-bold text-zinc-500 hover:bg-zinc-50 rounded-lg transition-colors"
                       >
                           Cancel
                       </button>
-                      <button 
+                      <button
                         onClick={handleAddCases}
                         disabled={selectedCaseIds.length === 0}
                         className="px-4 py-2 text-sm font-bold bg-zinc-900 text-white rounded-lg hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                           Add Selected ({selectedCaseIds.length})
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
+
+      {/* Add Requirements Modal */}
+      {showReqModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay animate-in fade-in duration-200">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 animate-in zoom-in-95 duration-200 border border-zinc-200 flex flex-col max-h-[80vh]">
+                  <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-bold text-zinc-900">Add Requirements to Plan</h3>
+                      <button onClick={() => setShowReqModal(false)} className="text-zinc-400 hover:text-zinc-600"><XCircle className="w-5 h-5" /></button>
+                  </div>
+
+                  <p className="text-sm text-zinc-500 mb-4">
+                      Select requirements to automatically import all their linked test cases into this plan.
+                  </p>
+
+                  <div className="mb-4">
+                      <input
+                          type="text"
+                          placeholder="Search requirements..."
+                          className="w-full px-4 py-2 rounded-lg bg-zinc-50 border border-zinc-200 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none"
+                          value={reqModalSearch}
+                          onChange={(e) => setReqModalSearch(e.target.value)}
+                      />
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto custom-scrollbar border border-zinc-100 rounded-xl mb-4">
+                      {availableRequirements.length === 0 ? (
+                          <div className="p-8 text-center text-zinc-400 text-sm">No requirements with linked test cases found.</div>
+                      ) : (
+                          <table className="w-full text-left text-sm">
+                              <thead className="bg-zinc-50 sticky top-0">
+                                  <tr>
+                                      <th className="px-4 py-2 w-10">
+                                          <input
+                                              type="checkbox"
+                                              checked={selectedReqIds.length === availableRequirements.length && availableRequirements.length > 0}
+                                              onChange={() => {
+                                                  if (selectedReqIds.length === availableRequirements.length) {
+                                                      setSelectedReqIds([]);
+                                                  } else {
+                                                      setSelectedReqIds(availableRequirements.map(r => r.id));
+                                                  }
+                                              }}
+                                              className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                                          />
+                                      </th>
+                                      <th className="px-4 py-2 font-bold text-zinc-400">Requirement</th>
+                                      <th className="px-4 py-2 font-bold text-zinc-400 w-24">Test Cases</th>
+                                  </tr>
+                              </thead>
+                              <tbody className="divide-y divide-zinc-50">
+                                  {availableRequirements.map(req => (
+                                      <tr key={req.id} className="hover:bg-zinc-50 cursor-pointer" onClick={() => {
+                                          if (selectedReqIds.includes(req.id)) {
+                                              setSelectedReqIds(selectedReqIds.filter(id => id !== req.id));
+                                          } else {
+                                              setSelectedReqIds([...selectedReqIds, req.id]);
+                                          }
+                                      }}>
+                                          <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                                              <input
+                                                  type="checkbox"
+                                                  checked={selectedReqIds.includes(req.id)}
+                                                  onChange={() => {
+                                                      if (selectedReqIds.includes(req.id)) {
+                                                          setSelectedReqIds(selectedReqIds.filter(id => id !== req.id));
+                                                      } else {
+                                                          setSelectedReqIds([...selectedReqIds, req.id]);
+                                                      }
+                                                  }}
+                                                  className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                                              />
+                                          </td>
+                                          <td className="px-4 py-3">
+                                              <div className="font-medium text-zinc-700">{req.title}</div>
+                                              {req.description && (
+                                                  <div className="text-xs text-zinc-400 mt-0.5 line-clamp-1">{req.description}</div>
+                                              )}
+                                          </td>
+                                          <td className="px-4 py-3">
+                                              <span className="bg-blue-50 text-blue-600 text-xs font-bold px-2 py-1 rounded">
+                                                  {req.testCases?.length || 0} cases
+                                              </span>
+                                          </td>
+                                      </tr>
+                                  ))}
+                              </tbody>
+                          </table>
+                      )}
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-4 border-t border-zinc-100">
+                      <button
+                        onClick={() => setShowReqModal(false)}
+                        className="px-4 py-2 text-sm font-bold text-zinc-500 hover:bg-zinc-50 rounded-lg transition-colors"
+                      >
+                          Cancel
+                      </button>
+                      <button
+                        onClick={handleAddRequirements}
+                        disabled={selectedReqIds.length === 0}
+                        className="px-4 py-2 text-sm font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                          Import Cases ({selectedReqIds.length} requirements)
                       </button>
                   </div>
               </div>

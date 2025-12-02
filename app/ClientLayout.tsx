@@ -347,6 +347,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             onExecute={handleExecute}
             suites={suites}
             requirements={requirements}
+            users={users}
             onStepFeedback={handleStepFeedback}
             onVisualFeedback={handleVisualFeedback}
             onGenerateField={handleGenerateField}

@@ -85,6 +85,7 @@ export async function POST(request: Request) {
           targetVersion: body.targetVersion,
           estimatedEffort: body.estimatedEffort,
           ownerId: body.ownerId,
+          reviewerId: body.reviewerId,
           relatedRequirements: body.relatedRequirements,
         },
         include: {
@@ -126,6 +127,7 @@ export async function POST(request: Request) {
           targetVersion: body.targetVersion || null,
           estimatedEffort: body.estimatedEffort || null,
           ownerId: body.ownerId || null,
+          reviewerId: body.reviewerId || null,
           relatedRequirements: body.relatedRequirements || "[]",
         },
         include: {

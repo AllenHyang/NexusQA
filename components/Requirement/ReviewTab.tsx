@@ -15,9 +15,11 @@ import {
   Send,
   RotateCcw,
   History,
+  User as UserIcon,
 } from "lucide-react";
 import { InternalRequirement, RequirementStatus, RequirementReview, User } from "@/types";
 import { STATUS_OPTIONS, getReviewActionColor, getReviewActionLabel } from "./constants";
+import { MentionInput } from "@/components/MentionInput";
 
 interface ReviewTabProps {
   requirement: InternalRequirement;
@@ -29,6 +31,9 @@ interface ReviewTabProps {
   reviewComment: string;
   reviewLoading: boolean;
   reviewError: string | null;
+  reviewerId: string;
+  onReviewerIdChange: (reviewerId: string) => void;
+  users?: User[];
   onReviewCommentChange: (comment: string) => void;
   onSubmitForReview: () => void;
   onApproveReview: () => void;
@@ -48,6 +53,9 @@ export function ReviewTab({
   reviewComment,
   reviewLoading,
   reviewError,
+  reviewerId,
+  onReviewerIdChange,
+  users = [],
   onReviewCommentChange,
   onSubmitForReview,
   onApproveReview,
@@ -124,6 +132,26 @@ export function ReviewTab({
         {status === "DRAFT" && isAuthor && (
           <div className="space-y-3">
             <p className="text-sm text-zinc-500">需求编写完成后，可以提交给评审人进行评审。</p>
+            {/* Reviewer Selection */}
+            <div>
+              <label className="block text-xs font-bold text-zinc-500 uppercase mb-1.5 flex items-center">
+                <UserIcon className="w-3.5 h-3.5 mr-1.5" /> 指定评审人
+              </label>
+              <select
+                className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-zinc-900"
+                value={reviewerId}
+                onChange={(e) => onReviewerIdChange(e.target.value)}
+              >
+                <option value="">未指定（由系统分配）</option>
+                {users
+                  .filter(u => u.role === 'QA_LEAD' || u.role === 'ADMIN' || u.role === 'PM' || u.role === 'PRODUCT_MANAGER')
+                  .map(user => (
+                    <option key={user.id} value={user.id}>{user.name || user.email}</option>
+                  ))
+                }
+              </select>
+              <p className="text-xs text-zinc-400 mt-1">可选择管理员、QA负责人、项目经理或产品经理作为评审人</p>
+            </div>
             <button
               onClick={onSubmitForReview}
               disabled={reviewLoading}
@@ -149,11 +177,11 @@ export function ReviewTab({
                   <label className="block text-xs font-bold text-zinc-500 uppercase mb-1.5">
                     评审意见
                   </label>
-                  <textarea
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-zinc-50 text-zinc-900 focus:ring-2 focus:ring-zinc-900/5 outline-none min-h-[80px]"
+                  <MentionInput
                     value={reviewComment}
-                    onChange={e => onReviewCommentChange(e.target.value)}
+                    onChange={onReviewCommentChange}
                     placeholder="填写评审意见（拒绝或要求修改时必填）..."
+                    rows={3}
                   />
                 </div>
                 <div className="grid grid-cols-3 gap-3">

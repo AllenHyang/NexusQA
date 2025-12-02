@@ -27,6 +27,7 @@ export interface RequirementFormState {
   targetVersion: string;
   estimatedEffort: string;
   ownerId: string;
+  reviewerId: string;
   businessRules: BusinessRule[];
   designReferences: DesignReference[];
   relatedRequirements: RelatedRequirement[];
@@ -46,6 +47,7 @@ export interface RequirementFormActions {
   setTargetVersion: (value: string) => void;
   setEstimatedEffort: (value: string) => void;
   setOwnerId: (value: string) => void;
+  setReviewerId: (value: string) => void;
   setBusinessRules: (value: BusinessRule[]) => void;
   setDesignReferences: (value: DesignReference[]) => void;
   setRelatedRequirements: (value: RelatedRequirement[]) => void;

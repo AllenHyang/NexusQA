@@ -12,6 +12,7 @@ const ROLES: { value: Role; label: string }[] = [
   { value: "TESTER", label: "Tester" },
   { value: "PM", label: "Project Manager" },
   { value: "DEVELOPER", label: "Developer" },
+  { value: "PRODUCT_MANAGER", label: "Product Manager" },
 ];
 
 const getRoleBadgeColor = (role: Role) => {
@@ -21,6 +22,7 @@ const getRoleBadgeColor = (role: Role) => {
     case "TESTER": return "bg-blue-100 text-blue-700";
     case "PM": return "bg-green-100 text-green-700";
     case "DEVELOPER": return "bg-orange-100 text-orange-700";
+    case "PRODUCT_MANAGER": return "bg-teal-100 text-teal-700";
     default: return "bg-gray-100 text-gray-700";
   }
 };
