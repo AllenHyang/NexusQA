@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { useAppStore } from "@/store/useAppStore";
 import { useUI } from "@/contexts/UIContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -22,9 +23,16 @@ interface Toast {
   type: 'success' | 'error' | 'info';
 }
 
+// Routes that don't require authentication
+const PUBLIC_ROUTES = ['/api-docs', '/login'];
+
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const { t } = useLanguage();
-  
+
+  // Check if current route is public (no auth required)
+  const isPublicRoute = PUBLIC_ROUTES.some(route => pathname?.startsWith(route));
+
   const [toasts, setToasts] = React.useState<Toast[]>([]);
 
   const showToast = (message: string, type: Toast['type'] = 'info') => {
@@ -288,6 +296,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setEditCase({ ...editCase, imageFeedback: updatedFeedback } as any);
   };
+
+  // For public routes, render children directly without authentication
+  if (isPublicRoute) {
+    return <>{children}</>;
+  }
 
   if (!currentUser) {
     return <LoginView users={users} onLogin={login} />;

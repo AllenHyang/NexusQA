@@ -309,7 +309,7 @@ export function KanbanView({
             const items = groupedRequirements[columnKey] || [];
             const columnInfo = getColumnInfo(columnKey);
             const isDragOver = dragOverColumn === columnKey;
-            const canDrop = canDropInColumn(columnKey);
+            const canDrop = canDropInColumn();
 
             return (
               <div

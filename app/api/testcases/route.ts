@@ -59,7 +59,9 @@ export async function GET(request: Request) {
           where,
           include: {
             steps: { orderBy: { order: 'asc' } },
-            // requirements: true, // <<< Temporarily commented out to debug defect-management.spec.ts failure
+            internalRequirements: {
+              select: { id: true, title: true, status: true, priority: true }
+            },
             history: {
                 orderBy: { date: 'desc' },
                 include: { defects: true, attachments: true }
@@ -72,13 +74,13 @@ export async function GET(request: Request) {
           ...tc,
           tags: safeParseTags(tc.tags),
           priority: normalizePriority(tc.priority),
+          internalRequirements: tc.internalRequirements,
           history: tc.history.map(h => ({
               ...h,
               environment: h.env,
               defects: h.defects,
               attachments: h.attachments
           }))
-          // requirements: tc.requirements // <<< This was the problematic line for deletion
       }));
       
       return NextResponse.json(parsedCases);
@@ -114,10 +116,19 @@ export async function POST(request: Request) {
       if (body.id) {
           // Update using transaction to replace steps/history
           const result = await prisma.$transaction(async (tx) => {
-              // 1. Update basic info
+              // 1. Update basic info with internalRequirements relation
+              const updateData: Record<string, unknown> = { ...basicPayload };
+
+              // Handle internalRequirements many-to-many relation
+              if (body.internalRequirementIds !== undefined) {
+                  updateData.internalRequirements = {
+                      set: body.internalRequirementIds.map((id: string) => ({ id }))
+                  };
+              }
+
               await tx.testCase.update({
                   where: { id: body.id },
-                  data: basicPayload
+                  data: updateData
               });
 
               // 2. Handle Steps: Delete all and create new
@@ -174,74 +185,93 @@ export async function POST(request: Request) {
 
               return await tx.testCase.findUnique({
                   where: { id: body.id },
-                  include: { 
-                      steps: { orderBy: { order: 'asc' } }, 
-                      history: { 
+                  include: {
+                      steps: { orderBy: { order: 'asc' } },
+                      internalRequirements: {
+                          select: { id: true, title: true, status: true, priority: true }
+                      },
+                      history: {
                           orderBy: { date: 'desc' },
                           include: { defects: true, attachments: true }
-                      } 
+                      }
                   }
               });
           });
-          
+
           if (!result) throw new Error("Update failed");
 
           return NextResponse.json({
               ...result,
               tags: safeParseTags(result.tags),
+              internalRequirements: result.internalRequirements,
               history: result.history.map(h => ({ ...h, environment: h.env }))
           });
       } else {
           if (!body.title || !body.projectId) {
               return NextResponse.json({ error: "Title and Project ID are required" }, { status: 400 });
           }
+
+          // Build create data with optional internalRequirements connection
+          const createData: Record<string, unknown> = {
+              ...basicPayload,
+              steps: {
+                  create: body.steps?.map((s: StepPayload, i: number) => ({
+                      action: s.action,
+                      expected: s.expected,
+                      order: i
+                  })) || []
+              },
+              history: {
+                  create: body.history?.map((h: HistoryPayload) => ({
+                      date: h.date ? new Date(h.date) : new Date(),
+                      status: h.status,
+                      executedBy: h.executedBy,
+                      notes: h.notes,
+                      bugId: h.bugId,
+                      env: h.environment || h.env,
+                      evidence: h.evidence,
+                      defects: {
+                           create: h.defects?.filter(d => !d.id).map((d: DefectPayload) => ({
+                               title: d.title!,
+                               severity: d.severity || "MEDIUM",
+                               status: d.status || "OPEN",
+                               projectId: body.projectId,
+                               authorId: body.authorId,
+                               externalIssueId: d.externalIssueId,
+                               externalUrl: d.externalUrl
+                           })) || [],
+                           connect: h.defects?.filter(d => d.id).map((d: DefectPayload) => ({
+                                id: d.id
+                           })) || []
+                      }
+                  })) || []
+              }
+          };
+
+          // Handle internalRequirements many-to-many relation on create
+          if (body.internalRequirementIds && body.internalRequirementIds.length > 0) {
+              createData.internalRequirements = {
+                  connect: body.internalRequirementIds.map((id: string) => ({ id }))
+              };
+          }
+
           // Create
           const created = await prisma.testCase.create({
-              data: {
-                  ...basicPayload,
-                  steps: {
-                      create: body.steps?.map((s: StepPayload, i: number) => ({
-                          action: s.action,
-                          expected: s.expected,
-                          order: i
-                      })) || []
+              data: createData,
+              include: {
+                  steps: true,
+                  internalRequirements: {
+                      select: { id: true, title: true, status: true, priority: true }
                   },
                   history: {
-                      create: body.history?.map((h: HistoryPayload) => ({
-                          date: h.date ? new Date(h.date) : new Date(),
-                          status: h.status,
-                          executedBy: h.executedBy,
-                          notes: h.notes,
-                          bugId: h.bugId,
-                          env: h.environment || h.env,
-                          evidence: h.evidence,
-                          defects: {
-                               create: h.defects?.filter(d => !d.id).map((d: DefectPayload) => ({
-                                   title: d.title!,
-                                   severity: d.severity || "MEDIUM",
-                                   status: d.status || "OPEN",
-                                   projectId: body.projectId,
-                                   authorId: body.authorId,
-                                   externalIssueId: d.externalIssueId,
-                                   externalUrl: d.externalUrl
-                               })) || [],
-                               connect: h.defects?.filter(d => d.id).map((d: DefectPayload) => ({
-                                    id: d.id
-                               })) || []
-                          }
-                      })) || []
-                  }
-              },
-              include: { 
-                  steps: true, 
-                  history: {
                       include: { defects: true, attachments: true }
-                  } 
+                  }
               }
           });
           return NextResponse.json({
               ...created,
               tags: safeParseTags(created.tags),
+              internalRequirements: created.internalRequirements,
               history: created.history.map(h => ({ ...h, environment: h.env }))
           }, { status: 201 });
       }
